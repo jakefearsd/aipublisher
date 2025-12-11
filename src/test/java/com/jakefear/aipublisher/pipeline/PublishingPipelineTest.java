@@ -5,6 +5,7 @@ import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.config.PipelineProperties;
 import com.jakefear.aipublisher.config.QualityProperties;
 import com.jakefear.aipublisher.document.*;
+import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +42,8 @@ class PublishingPipelineTest {
     private WikiOutputService outputService;
     @Mock
     private ApprovalService approvalService;
+    @Mock
+    private PipelineMonitoringService monitoringService;
 
     private PipelineProperties pipelineProperties;
     private QualityProperties qualityProperties;
@@ -59,7 +62,7 @@ class PublishingPipelineTest {
 
         pipeline = new PublishingPipeline(
                 researchAgent, writerAgent, factCheckerAgent, editorAgent,
-                outputService, approvalService, pipelineProperties, qualityProperties
+                outputService, approvalService, monitoringService, pipelineProperties, qualityProperties
         );
     }
 

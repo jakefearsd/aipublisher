@@ -8,9 +8,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
 
 /**
  * Research Agent: Gathers and synthesizes source material for article creation.
@@ -96,7 +97,7 @@ public class ResearchAgent extends BaseAgent {
         List<String> relatedPages = parseStringArray(root, "relatedPages");
 
         // Parse glossary
-        Map<String, String> glossary = parseGlossary(root);
+        Map<String, String> glossary = parseStringMap(root, "glossary");
 
         // Parse uncertain areas
         List<String> uncertainAreas = parseStringArray(root, "uncertainAreas");
@@ -176,36 +177,4 @@ public class ResearchAgent extends BaseAgent {
         return sources;
     }
 
-    private List<String> parseStringArray(JsonNode root, String fieldName) {
-        List<String> items = new ArrayList<>();
-        JsonNode arrayNode = root.get(fieldName);
-
-        if (arrayNode != null && arrayNode.isArray()) {
-            for (JsonNode itemNode : arrayNode) {
-                String item = itemNode.asText();
-                if (item != null && !item.isBlank()) {
-                    items.add(item);
-                }
-            }
-        }
-
-        return items;
-    }
-
-    private Map<String, String> parseGlossary(JsonNode root) {
-        Map<String, String> glossary = new HashMap<>();
-        JsonNode glossaryNode = root.get("glossary");
-
-        if (glossaryNode != null && glossaryNode.isObject()) {
-            glossaryNode.fields().forEachRemaining(entry -> {
-                String term = entry.getKey();
-                String definition = entry.getValue().asText();
-                if (term != null && !term.isBlank() && definition != null) {
-                    glossary.put(term, definition);
-                }
-            });
-        }
-
-        return glossary;
-    }
 }

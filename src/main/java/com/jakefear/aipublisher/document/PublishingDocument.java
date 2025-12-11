@@ -1,5 +1,7 @@
 package com.jakefear.aipublisher.document;
 
+import com.jakefear.aipublisher.util.PageNameUtils;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,8 +35,7 @@ public class PublishingDocument {
     // Audit trail
     private final List<AgentContribution> contributions;
 
-    // Quality tracking
-    private QualityAssessment qualityAssessment;
+    // Revision tracking
     private int revisionCycleCount;
 
     /**
@@ -44,14 +45,13 @@ public class PublishingDocument {
         Objects.requireNonNull(topicBrief, "topicBrief must not be null");
 
         this.id = UUID.randomUUID();
-        this.pageName = toCamelCase(topicBrief.topic());
+        this.pageName = PageNameUtils.toCamelCase(topicBrief.topic());
         this.title = topicBrief.topic();
         this.state = DocumentState.CREATED;
         this.createdAt = Instant.now();
         this.updatedAt = this.createdAt;
         this.topicBrief = topicBrief;
         this.contributions = new ArrayList<>();
-        this.qualityAssessment = QualityAssessment.initial();
         this.revisionCycleCount = 0;
     }
 
@@ -71,7 +71,6 @@ public class PublishingDocument {
         this.updatedAt = this.createdAt;
         this.topicBrief = topicBrief;
         this.contributions = new ArrayList<>();
-        this.qualityAssessment = QualityAssessment.initial();
         this.revisionCycleCount = 0;
     }
 
@@ -179,13 +178,6 @@ public class PublishingDocument {
         contributions.add(Objects.requireNonNull(contribution));
     }
 
-    /**
-     * Update the quality assessment.
-     */
-    public void setQualityAssessment(QualityAssessment assessment) {
-        this.qualityAssessment = Objects.requireNonNull(assessment);
-    }
-
     // Getters
 
     public UUID getId() {
@@ -241,10 +233,6 @@ public class PublishingDocument {
         return Collections.unmodifiableList(contributions);
     }
 
-    public QualityAssessment getQualityAssessment() {
-        return qualityAssessment;
-    }
-
     public int getRevisionCycleCount() {
         return revisionCycleCount;
     }
@@ -280,34 +268,6 @@ public class PublishingDocument {
     }
 
     // Utility methods
-
-    /**
-     * Convert a topic string to CamelCase for use as a page name.
-     */
-    private static String toCamelCase(String input) {
-        if (input == null || input.isBlank()) {
-            return "";
-        }
-
-        StringBuilder result = new StringBuilder();
-        boolean capitalizeNext = true;
-
-        for (char c : input.toCharArray()) {
-            if (Character.isWhitespace(c) || c == '-' || c == '_') {
-                capitalizeNext = true;
-            } else if (Character.isLetterOrDigit(c)) {
-                if (capitalizeNext) {
-                    result.append(Character.toUpperCase(c));
-                    capitalizeNext = false;
-                } else {
-                    result.append(c);
-                }
-            }
-            // Skip non-alphanumeric characters
-        }
-
-        return result.toString();
-    }
 
     @Override
     public String toString() {

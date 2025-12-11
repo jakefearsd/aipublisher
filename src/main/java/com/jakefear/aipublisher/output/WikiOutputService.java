@@ -3,6 +3,7 @@ package com.jakefear.aipublisher.output;
 import com.jakefear.aipublisher.config.OutputProperties;
 import com.jakefear.aipublisher.document.FinalArticle;
 import com.jakefear.aipublisher.document.PublishingDocument;
+import com.jakefear.aipublisher.util.PageNameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -119,7 +120,7 @@ public class WikiOutputService {
      * @return The filename with extension
      */
     public String generateFilename(String pageName) {
-        return toCamelCase(pageName) + outputProperties.getFileExtension();
+        return PageNameUtils.toCamelCaseOrDefault(pageName, "UnnamedPage") + outputProperties.getFileExtension();
     }
 
     /**
@@ -170,38 +171,6 @@ public class WikiOutputService {
         }
 
         return outputDir;
-    }
-
-    /**
-     * Convert a string to CamelCase for page names.
-     * Removes spaces, hyphens, underscores and capitalizes each word.
-     */
-    private String toCamelCase(String input) {
-        if (input == null || input.isBlank()) {
-            return "UnnamedPage";
-        }
-
-        // If already CamelCase (no spaces/separators), return as-is
-        if (!input.contains(" ") && !input.contains("-") && !input.contains("_")) {
-            // Ensure first letter is uppercase
-            return Character.toUpperCase(input.charAt(0)) + input.substring(1);
-        }
-
-        StringBuilder result = new StringBuilder();
-        boolean capitalizeNext = true;
-
-        for (char c : input.toCharArray()) {
-            if (c == ' ' || c == '-' || c == '_') {
-                capitalizeNext = true;
-            } else if (capitalizeNext) {
-                result.append(Character.toUpperCase(c));
-                capitalizeNext = false;
-            } else {
-                result.append(c);
-            }
-        }
-
-        return result.toString();
     }
 
     /**

@@ -5,6 +5,7 @@ import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.config.PipelineProperties;
 import com.jakefear.aipublisher.config.QualityProperties;
 import com.jakefear.aipublisher.document.*;
+import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ public class PublishingPipeline {
     private final EditorAgent editorAgent;
     private final WikiOutputService outputService;
     private final ApprovalService approvalService;
+    private final PipelineMonitoringService monitoringService;
     private final PipelineProperties pipelineProperties;
     private final QualityProperties qualityProperties;
 
@@ -49,6 +51,7 @@ public class PublishingPipeline {
             EditorAgent editorAgent,
             WikiOutputService outputService,
             ApprovalService approvalService,
+            PipelineMonitoringService monitoringService,
             PipelineProperties pipelineProperties,
             QualityProperties qualityProperties) {
         this.researchAgent = researchAgent;
@@ -57,6 +60,7 @@ public class PublishingPipeline {
         this.editorAgent = editorAgent;
         this.outputService = outputService;
         this.approvalService = approvalService;
+        this.monitoringService = monitoringService;
         this.pipelineProperties = pipelineProperties;
         this.qualityProperties = qualityProperties;
     }
@@ -72,6 +76,7 @@ public class PublishingPipeline {
         PublishingDocument document = new PublishingDocument(topicBrief);
 
         log.info("Starting pipeline for topic: {}", topicBrief.topic());
+        monitoringService.pipelineStarted(document);
 
         try {
             // Phase 1: Research
@@ -91,17 +96,20 @@ public class PublishingPipeline {
 
             Duration totalTime = Duration.between(startTime, Instant.now());
             log.info("Pipeline completed successfully in {} ms", totalTime.toMillis());
+            monitoringService.pipelineCompleted(document, totalTime);
 
             return PipelineResult.success(document, outputPath, totalTime);
 
         } catch (PipelineException e) {
             Duration totalTime = Duration.between(startTime, Instant.now());
             log.error("Pipeline failed at {}: {}", e.getFailedAtState(), e.getMessage());
+            monitoringService.pipelineFailed(document, e.getFailedAtState(), e.getMessage());
             return PipelineResult.failure(document, e.getMessage(), e.getFailedAtState(), totalTime);
 
         } catch (Exception e) {
             Duration totalTime = Duration.between(startTime, Instant.now());
             log.error("Pipeline failed with unexpected error: {}", e.getMessage(), e);
+            monitoringService.pipelineFailed(document, document.getState(), e.getMessage());
             return PipelineResult.failure(document, e.getMessage(), document.getState(), totalTime);
         }
     }
@@ -111,18 +119,23 @@ public class PublishingPipeline {
      */
     private PublishingDocument executeResearchPhase(PublishingDocument document) {
         log.info("Phase 1: Research");
+        DocumentState previousState = document.getState();
         document.transitionTo(DocumentState.RESEARCHING);
+        monitoringService.phaseStarted(document, previousState, DocumentState.RESEARCHING);
 
         try {
+            Instant phaseStart = Instant.now();
             document = researchAgent.process(document);
+            monitoringService.recordAgentProcessing(AgentRole.RESEARCHER, Duration.between(phaseStart, Instant.now()));
 
             if (!researchAgent.validate(document)) {
                 throw new PipelineException("Research validation failed",
                         DocumentState.RESEARCHING);
             }
 
-            log.info("Research complete: {} key facts gathered",
-                    document.getResearchBrief().keyFacts().size());
+            String summary = String.format("%d key facts gathered", document.getResearchBrief().keyFacts().size());
+            log.info("Research complete: {}", summary);
+            monitoringService.phaseCompleted(document, DocumentState.RESEARCHING, summary);
 
             // Check for approval after research
             checkApproval(document);
@@ -140,18 +153,23 @@ public class PublishingPipeline {
      */
     private PublishingDocument executeDraftingPhase(PublishingDocument document) {
         log.info("Phase 2: Drafting");
+        DocumentState previousState = document.getState();
         document.transitionTo(DocumentState.DRAFTING);
+        monitoringService.phaseStarted(document, previousState, DocumentState.DRAFTING);
 
         try {
+            Instant phaseStart = Instant.now();
             document = writerAgent.process(document);
+            monitoringService.recordAgentProcessing(AgentRole.WRITER, Duration.between(phaseStart, Instant.now()));
 
             if (!writerAgent.validate(document)) {
                 throw new PipelineException("Draft validation failed",
                         DocumentState.DRAFTING);
             }
 
-            log.info("Draft complete: {} words",
-                    document.getDraft().estimateWordCount());
+            String summary = String.format("%d words", document.getDraft().estimateWordCount());
+            log.info("Draft complete: {}", summary);
+            monitoringService.phaseCompleted(document, DocumentState.DRAFTING, summary);
 
             // Check for approval after draft
             checkApproval(document);
@@ -169,14 +187,18 @@ public class PublishingPipeline {
      */
     private PublishingDocument executeFactCheckPhase(PublishingDocument document) {
         log.info("Phase 3: Fact Checking");
+        DocumentState previousState = document.getState();
         document.transitionTo(DocumentState.FACT_CHECKING);
+        monitoringService.phaseStarted(document, previousState, DocumentState.FACT_CHECKING);
 
         int revisionCount = 0;
         int maxRevisions = pipelineProperties.getMaxRevisionCycles();
 
         while (revisionCount < maxRevisions) {
             try {
+                Instant phaseStart = Instant.now();
                 document = factCheckerAgent.process(document);
+                monitoringService.recordAgentProcessing(AgentRole.FACT_CHECKER, Duration.between(phaseStart, Instant.now()));
 
                 if (!factCheckerAgent.validate(document)) {
                     throw new PipelineException("Fact check validation failed",
@@ -184,13 +206,15 @@ public class PublishingPipeline {
                 }
 
                 FactCheckReport report = document.getFactCheckReport();
-                log.info("Fact check complete: {} verified, {} questionable, recommendation: {}",
+                String summary = String.format("%d verified, %d questionable, recommendation: %s",
                         report.verifiedClaims().size(),
                         report.questionableClaims().size(),
                         report.recommendedAction());
+                log.info("Fact check complete: {}", summary);
 
                 // Check if approved
                 if (report.isPassed()) {
+                    monitoringService.phaseCompleted(document, DocumentState.FACT_CHECKING, summary);
                     // Check for approval after fact check
                     checkApproval(document);
                     return document;
@@ -208,8 +232,11 @@ public class PublishingPipeline {
                 if (revisionCount < maxRevisions) {
                     log.info("Fact check requires revision ({}/{}), returning to draft",
                             revisionCount, maxRevisions);
+                    monitoringService.revisionStarted(document, revisionCount, maxRevisions);
                     document.transitionTo(DocumentState.DRAFTING);
+                    Instant revisionStart = Instant.now();
                     document = writerAgent.process(document);
+                    monitoringService.recordAgentProcessing(AgentRole.WRITER, Duration.between(revisionStart, Instant.now()));
                     document.transitionTo(DocumentState.FACT_CHECKING);
                 }
 
@@ -230,7 +257,9 @@ public class PublishingPipeline {
      */
     private PublishingDocument executeEditingPhase(PublishingDocument document) {
         log.info("Phase 4: Editing");
+        DocumentState previousState = document.getState();
         document.transitionTo(DocumentState.EDITING);
+        monitoringService.phaseStarted(document, previousState, DocumentState.EDITING);
 
         // Provide existing pages to editor for link integration
         List<String> existingPages = outputService.getExistingPagesList();
@@ -238,7 +267,9 @@ public class PublishingPipeline {
         log.debug("Editor provided with {} existing pages for linking", existingPages.size());
 
         try {
+            Instant phaseStart = Instant.now();
             document = editorAgent.process(document);
+            monitoringService.recordAgentProcessing(AgentRole.EDITOR, Duration.between(phaseStart, Instant.now()));
 
             if (!editorAgent.validate(document)) {
                 throw new PipelineException("Editor validation failed - quality score below threshold",
@@ -246,8 +277,10 @@ public class PublishingPipeline {
             }
 
             FinalArticle article = document.getFinalArticle();
-            log.info("Editing complete: quality score {}, {} links added",
+            String summary = String.format("quality score %.2f, %d links added",
                     article.qualityScore(), article.addedLinks().size());
+            log.info("Editing complete: {}", summary);
+            monitoringService.phaseCompleted(document, DocumentState.EDITING, summary);
 
             // Check quality threshold
             double minScore = qualityProperties.getMinEditorScore();
@@ -273,8 +306,10 @@ public class PublishingPipeline {
      * Check approval at current state and throw if rejected.
      */
     private void checkApproval(PublishingDocument document) {
+        monitoringService.approvalRequested(document, document.getState());
         try {
             boolean approved = approvalService.checkAndApprove(document);
+            monitoringService.approvalReceived(document, document.getState(), approved);
             if (!approved) {
                 // Changes requested - this would typically trigger a retry
                 // For now, we treat it as a pipeline exception
@@ -283,6 +318,7 @@ public class PublishingPipeline {
                         document.getState(), true);
             }
         } catch (ApprovalService.ApprovalRejectedException e) {
+            monitoringService.approvalReceived(document, document.getState(), false);
             throw new PipelineException("Approval rejected: " + e.getMessage(),
                     e.getState(), false);
         }

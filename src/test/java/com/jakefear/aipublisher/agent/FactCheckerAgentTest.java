@@ -217,8 +217,8 @@ class FactCheckerAgentTest {
         }
 
         @Test
-        @DisplayName("Defaults to APPROVE for unknown action")
-        void defaultsToApproveForUnknownAction() {
+        @DisplayName("Defaults to REVISE for unknown action (safe default)")
+        void defaultsToReviseForUnknownAction() {
             String jsonResponse = """
                     {
                       "verifiedClaims": [{"claim": "Fact", "status": "VERIFIED", "sourceIndex": 0}],
@@ -233,7 +233,8 @@ class FactCheckerAgentTest {
 
             PublishingDocument result = agent.process(document);
 
-            assertEquals(RecommendedAction.APPROVE, result.getFactCheckReport().recommendedAction());
+            // Unknown actions default to REVISE for safety - better to require manual review
+            assertEquals(RecommendedAction.REVISE, result.getFactCheckReport().recommendedAction());
         }
 
         @Test

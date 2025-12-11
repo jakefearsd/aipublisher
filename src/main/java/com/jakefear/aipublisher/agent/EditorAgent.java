@@ -7,8 +7,9 @@ import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
 
 /**
  * Editor Agent: Polishes content and prepares final publication-ready article.
@@ -194,19 +195,4 @@ public class EditorAgent extends BaseAgent {
         return DocumentMetadata.create(title, summary);
     }
 
-    private List<String> parseStringArray(JsonNode root, String fieldName) {
-        List<String> items = new ArrayList<>();
-        JsonNode arrayNode = root.get(fieldName);
-
-        if (arrayNode != null && arrayNode.isArray()) {
-            for (JsonNode itemNode : arrayNode) {
-                String item = itemNode.asText();
-                if (item != null && !item.isBlank()) {
-                    items.add(item);
-                }
-            }
-        }
-
-        return items;
-    }
 }

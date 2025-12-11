@@ -8,6 +8,7 @@ import com.jakefear.aipublisher.config.OutputProperties;
 import com.jakefear.aipublisher.config.PipelineProperties;
 import com.jakefear.aipublisher.config.QualityProperties;
 import com.jakefear.aipublisher.document.TopicBrief;
+import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -71,9 +73,12 @@ class PublishingPipelineIntegrationTest {
                 ApprovalDecision.approve(request.id(), "integration-test");
         ApprovalService approvalService = new ApprovalService(pipelineProperties, autoApprove);
 
+        // Monitoring service with no listeners for integration tests
+        PipelineMonitoringService monitoringService = new PipelineMonitoringService(List.of());
+
         pipeline = new PublishingPipeline(
                 researchAgent, writerAgent, factCheckerAgent, editorAgent,
-                outputService, approvalService, pipelineProperties, qualityProperties
+                outputService, approvalService, monitoringService, pipelineProperties, qualityProperties
         );
     }
 

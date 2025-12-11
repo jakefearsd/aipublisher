@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
+
 /**
  * Fact Checker Agent: Verifies claims and checks consistency of article content.
  *
@@ -107,7 +109,7 @@ public class FactCheckerAgent extends BaseAgent {
 
         // Parse recommended action
         String actionStr = getStringOrDefault(root, "recommendedAction", "APPROVE");
-        RecommendedAction recommendedAction = parseRecommendedAction(actionStr);
+        RecommendedAction recommendedAction = RecommendedAction.fromString(actionStr);
 
         // Create and set the fact-check report
         // Use the original draft content as annotatedContent since we don't modify it
@@ -182,35 +184,4 @@ public class FactCheckerAgent extends BaseAgent {
         return claims;
     }
 
-    private List<String> parseStringArray(JsonNode root, String fieldName) {
-        List<String> items = new ArrayList<>();
-        JsonNode arrayNode = root.get(fieldName);
-
-        if (arrayNode != null && arrayNode.isArray()) {
-            for (JsonNode itemNode : arrayNode) {
-                String item = itemNode.asText();
-                if (item != null && !item.isBlank()) {
-                    items.add(item);
-                }
-            }
-        }
-
-        return items;
-    }
-
-    private RecommendedAction parseRecommendedAction(String actionStr) {
-        if (actionStr == null || actionStr.isBlank()) {
-            return RecommendedAction.APPROVE;
-        }
-
-        return switch (actionStr.toUpperCase()) {
-            case "APPROVE" -> RecommendedAction.APPROVE;
-            case "REVISE" -> RecommendedAction.REVISE;
-            case "REJECT" -> RecommendedAction.REJECT;
-            default -> {
-                log.warn("Unknown recommended action '{}', defaulting to APPROVE", actionStr);
-                yield RecommendedAction.APPROVE;
-            }
-        };
-    }
 }

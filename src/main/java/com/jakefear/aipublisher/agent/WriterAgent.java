@@ -8,9 +8,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
 
 /**
  * Writer Agent: Transforms research into well-structured wiki articles.
@@ -147,7 +148,7 @@ public class WriterAgent extends BaseAgent {
         List<String> categories = parseStringArray(root, "categories");
 
         // Parse additional metadata if present
-        Map<String, String> metadata = parseMetadata(root);
+        Map<String, String> metadata = parseStringMap(root, "metadata");
 
         // Create and set the article draft
         ArticleDraft draft = new ArticleDraft(
@@ -190,36 +191,4 @@ public class WriterAgent extends BaseAgent {
         return true;
     }
 
-    private List<String> parseStringArray(JsonNode root, String fieldName) {
-        List<String> items = new ArrayList<>();
-        JsonNode arrayNode = root.get(fieldName);
-
-        if (arrayNode != null && arrayNode.isArray()) {
-            for (JsonNode itemNode : arrayNode) {
-                String item = itemNode.asText();
-                if (item != null && !item.isBlank()) {
-                    items.add(item);
-                }
-            }
-        }
-
-        return items;
-    }
-
-    private Map<String, String> parseMetadata(JsonNode root) {
-        Map<String, String> metadata = new HashMap<>();
-        JsonNode metadataNode = root.get("metadata");
-
-        if (metadataNode != null && metadataNode.isObject()) {
-            metadataNode.fields().forEachRemaining(entry -> {
-                String key = entry.getKey();
-                String value = entry.getValue().asText();
-                if (key != null && !key.isBlank() && value != null) {
-                    metadata.put(key, value);
-                }
-            });
-        }
-
-        return metadata;
-    }
 }
