@@ -9,11 +9,13 @@ import com.jakefear.aipublisher.pipeline.PipelineResult;
 import com.jakefear.aipublisher.pipeline.PublishingPipeline;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -101,6 +103,33 @@ class AiPublisherCommandTest {
             assertEquals("general readers", command.getAudience());
             assertEquals(800, command.getWordCount());
             assertFalse(command.isAutoApprove());
+        }
+
+        @Test
+        @DisplayName("Parses short API key option")
+        void parsesShortApiKeyOption() {
+            CommandLine cmd = new CommandLine(command);
+            cmd.parseArgs("-t", "Topic", "-k", "sk-ant-test-key");
+
+            assertEquals("sk-ant-test-key", command.getApiKey());
+        }
+
+        @Test
+        @DisplayName("Parses long API key option")
+        void parsesLongApiKeyOption() {
+            CommandLine cmd = new CommandLine(command);
+            cmd.parseArgs("-t", "Topic", "--key", "sk-ant-test-key-long");
+
+            assertEquals("sk-ant-test-key-long", command.getApiKey());
+        }
+
+        @Test
+        @DisplayName("Parses key file option")
+        void parsesKeyFileOption() {
+            CommandLine cmd = new CommandLine(command);
+            cmd.parseArgs("-t", "Topic", "--key-file", "/path/to/keyfile");
+
+            assertEquals(Path.of("/path/to/keyfile"), command.getKeyFile());
         }
 
         @Test
@@ -441,6 +470,144 @@ class AiPublisherCommandTest {
             assertTrue(output.contains("Quality score"));
             assertTrue(output.contains("Word count"));
             assertTrue(output.contains("Total time"));
+        }
+    }
+
+    @Nested
+    @DisplayName("API Key Configuration")
+    class ApiKeyConfiguration {
+
+        @Test
+        @DisplayName("Sets system property when API key provided via --key")
+        void setsSystemPropertyWhenKeyProvided() throws Exception {
+            // Arrange
+            String testKey = "sk-ant-test-key-" + System.currentTimeMillis();
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 800);
+            PublishingDocument document = createSuccessfulDocument(topicBrief);
+            PipelineResult successResult = PipelineResult.success(
+                    document,
+                    Path.of("output/Test.md"),
+                    Duration.ofSeconds(10)
+            );
+
+            when(pipeline.execute(any(TopicBrief.class))).thenReturn(successResult);
+
+            command.setStreams(
+                    new BufferedReader(new StringReader("")),
+                    out
+            );
+
+            // Act
+            CommandLine cmd = new CommandLine(command);
+            cmd.execute("-t", "Test", "-k", testKey, "--auto-approve");
+
+            // Assert
+            assertEquals(testKey, System.getProperty("ANTHROPIC_API_KEY"));
+        }
+
+        @Test
+        @DisplayName("Reads API key from key file")
+        void readsApiKeyFromFile(@TempDir Path tempDir) throws Exception {
+            // Arrange
+            String testKey = "sk-ant-file-key-" + System.currentTimeMillis();
+            Path keyFile = tempDir.resolve("api-key.txt");
+            Files.writeString(keyFile, testKey);
+
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 800);
+            PublishingDocument document = createSuccessfulDocument(topicBrief);
+            PipelineResult successResult = PipelineResult.success(
+                    document,
+                    Path.of("output/Test.md"),
+                    Duration.ofSeconds(10)
+            );
+
+            when(pipeline.execute(any(TopicBrief.class))).thenReturn(successResult);
+
+            command.setStreams(
+                    new BufferedReader(new StringReader("")),
+                    out
+            );
+
+            // Act
+            CommandLine cmd = new CommandLine(command);
+            cmd.execute("-t", "Test", "--key-file", keyFile.toString(), "--auto-approve");
+
+            // Assert
+            assertEquals(testKey, System.getProperty("ANTHROPIC_API_KEY"));
+        }
+
+        @Test
+        @DisplayName("Trims whitespace from key file content")
+        void trimsWhitespaceFromKeyFile(@TempDir Path tempDir) throws Exception {
+            // Arrange
+            String testKey = "sk-ant-trimmed-key-" + System.currentTimeMillis();
+            Path keyFile = tempDir.resolve("api-key.txt");
+            Files.writeString(keyFile, "  " + testKey + "\n\n");
+
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 800);
+            PublishingDocument document = createSuccessfulDocument(topicBrief);
+            PipelineResult successResult = PipelineResult.success(
+                    document,
+                    Path.of("output/Test.md"),
+                    Duration.ofSeconds(10)
+            );
+
+            when(pipeline.execute(any(TopicBrief.class))).thenReturn(successResult);
+
+            command.setStreams(
+                    new BufferedReader(new StringReader("")),
+                    out
+            );
+
+            // Act
+            CommandLine cmd = new CommandLine(command);
+            cmd.execute("-t", "Test", "--key-file", keyFile.toString(), "--auto-approve");
+
+            // Assert
+            assertEquals(testKey, System.getProperty("ANTHROPIC_API_KEY"));
+        }
+
+        @Test
+        @DisplayName("Returns error when key file not found")
+        void returnsErrorWhenKeyFileNotFound() {
+            // Arrange
+            command.setStreams(
+                    new BufferedReader(new StringReader("")),
+                    out
+            );
+
+            // Act
+            CommandLine cmd = new CommandLine(command);
+            int exitCode = cmd.execute("-t", "Test", "--key-file", "/nonexistent/path/key.txt", "--auto-approve");
+
+            // Assert
+            assertEquals(1, exitCode);
+            String output = outputWriter.toString();
+            assertTrue(output.contains("ERROR"));
+            assertTrue(output.contains("not found"));
+        }
+
+        @Test
+        @DisplayName("Returns error when key file is empty")
+        void returnsErrorWhenKeyFileEmpty(@TempDir Path tempDir) throws Exception {
+            // Arrange
+            Path keyFile = tempDir.resolve("empty-key.txt");
+            Files.writeString(keyFile, "   \n");
+
+            command.setStreams(
+                    new BufferedReader(new StringReader("")),
+                    out
+            );
+
+            // Act
+            CommandLine cmd = new CommandLine(command);
+            int exitCode = cmd.execute("-t", "Test", "--key-file", keyFile.toString(), "--auto-approve");
+
+            // Assert
+            assertEquals(1, exitCode);
+            String output = outputWriter.toString();
+            assertTrue(output.contains("ERROR"));
+            assertTrue(output.contains("empty"));
         }
     }
 

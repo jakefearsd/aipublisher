@@ -14,6 +14,8 @@ import picocli.CommandLine.Option;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -38,9 +40,13 @@ import java.util.concurrent.Callable;
                 "  aipublisher -t \"Apache Kafka\"",
                 "  aipublisher --topic \"Machine Learning\" --audience \"beginners\" --words 1500",
                 "  aipublisher -t \"Docker\" -a \"DevOps engineers\" -w 1000 --auto-approve",
+                "  aipublisher -t \"Kubernetes\" -k sk-ant-api03-xxxxx",
+                "  aipublisher -t \"Kubernetes\" --key-file ~/.anthropic-key",
                 "",
-                "Environment Variables:",
-                "  ANTHROPIC_API_KEY  Your Anthropic API key (required)"
+                "API Key (one of these is required):",
+                "  -k, --key         Pass API key directly on command line",
+                "  --key-file        Read API key from a file",
+                "  ANTHROPIC_API_KEY Environment variable"
         }
 )
 public class AiPublisherCommand implements Callable<Integer> {
@@ -89,6 +95,14 @@ public class AiPublisherCommand implements Callable<Integer> {
             description = "Suppress non-essential output")
     private boolean quiet;
 
+    @Option(names = {"-k", "--key"},
+            description = "Anthropic API key (overrides environment variable)")
+    private String apiKey;
+
+    @Option(names = {"--key-file"},
+            description = "Path to file containing Anthropic API key")
+    private Path keyFile;
+
     // For testing - allows injecting a custom reader
     private BufferedReader inputReader;
     private PrintWriter outputWriter;
@@ -112,6 +126,11 @@ public class AiPublisherCommand implements Callable<Integer> {
         BufferedReader in = inputReader != null ? inputReader : new BufferedReader(new InputStreamReader(System.in));
 
         try {
+            // Configure API key if provided via CLI
+            if (!configureApiKey(out)) {
+                return 1;
+            }
+
             // Interactive mode if topic not specified
             if (topic == null || topic.isBlank()) {
                 topic = promptForTopic(in, out);
@@ -215,6 +234,51 @@ public class AiPublisherCommand implements Callable<Integer> {
         return request -> ApprovalDecision.approve(request.id(), "auto-approved");
     }
 
+    /**
+     * Configure the API key from CLI options.
+     * Priority: --key > --key-file > ANTHROPIC_API_KEY env var
+     *
+     * @return true if API key is configured, false on error
+     */
+    private boolean configureApiKey(PrintWriter out) {
+        String key = null;
+
+        // Priority 1: Direct key from command line
+        if (apiKey != null && !apiKey.isBlank()) {
+            key = apiKey.trim();
+            if (verbose) {
+                out.println("Using API key from --key option");
+            }
+        }
+        // Priority 2: Key file
+        else if (keyFile != null) {
+            try {
+                if (!Files.exists(keyFile)) {
+                    out.println("ERROR: Key file not found: " + keyFile);
+                    return false;
+                }
+                key = Files.readString(keyFile).trim();
+                if (key.isBlank()) {
+                    out.println("ERROR: Key file is empty: " + keyFile);
+                    return false;
+                }
+                if (verbose) {
+                    out.println("Using API key from file: " + keyFile);
+                }
+            } catch (Exception e) {
+                out.println("ERROR: Failed to read key file: " + e.getMessage());
+                return false;
+            }
+        }
+
+        // Set the API key as system property if provided via CLI
+        if (key != null) {
+            System.setProperty("ANTHROPIC_API_KEY", key);
+        }
+
+        return true;
+    }
+
     // Getters for testing
     public String getTopic() {
         return topic;
@@ -230,5 +294,13 @@ public class AiPublisherCommand implements Callable<Integer> {
 
     public boolean isAutoApprove() {
         return autoApprove;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public Path getKeyFile() {
+        return keyFile;
     }
 }
