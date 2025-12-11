@@ -1034,139 +1034,397 @@ public interface PipelineListener {
 
 ## 11. Implementation Plan
 
-### Phase 1: Foundation (Steps 1-5)
+This plan is optimized for implementation by Claude Code, organizing work into larger
+coherent units that produce complete, testable features. The approach favors vertical
+slices (complete features) over horizontal layers (all interfaces, then all implementations).
 
-**Step 1: Create Document Model**
+### Design Principles
+
+1. **Configuration-first**: Establish all properties before building components
+2. **Vertical slices**: Each step produces working, testable functionality
+3. **Template-then-replicate**: Build one agent well, then apply the pattern to others
+4. **Cohesive packages**: Complete one package fully before moving to the next
+5. **Tests with implementation**: Write tests alongside code, not as a separate phase
+
+### Session Structure
+
+The implementation is organized into focused sessions, each producing deployable increments:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         IMPLEMENTATION ROADMAP                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  SESSION 1: Foundation                                                      │
+│  ├── Step 1: Configuration & Data Model                                     │
+│  └── Step 2: Agent Framework + Research Agent                               │
+│                                                                             │
+│  SESSION 2: Agent Suite                                                     │
+│  └── Step 3: Writer, Fact Checker, and Editor Agents                        │
+│                                                                             │
+│  SESSION 3: Pipeline Integration                                            │
+│  ├── Step 4: Output System                                                  │
+│  ├── Step 5: Pipeline Orchestration                                         │
+│  └── Step 6: CLI & Integration                                              │
+│                                                                             │
+│  SESSION 4: Polish (As Needed)                                              │
+│  ├── Step 7: Human Approval Workflow                                        │
+│  └── Step 8: Monitoring & Documentation                                     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Session 1: Foundation
+
+#### Step 1: Configuration & Data Model
+
+Establish all configuration and the complete document model in a single cohesive unit.
+This creates the "vocabulary" used by all subsequent components.
+
+**Configuration (`config` package)**
+- [ ] Create `config` package
+- [ ] Implement `ClaudeConfig` class with LangChain4j bean definitions
+- [ ] Implement `PipelineProperties` class for pipeline settings
+- [ ] Implement `OutputProperties` class for output settings
+- [ ] Update `application.properties` with comprehensive settings:
+  ```properties
+  # Claude API
+  anthropic.api.key=${ANTHROPIC_API_KEY}
+  anthropic.model=claude-sonnet-4-20250514
+  anthropic.max-tokens=4096
+  anthropic.temperature.research=0.3
+  anthropic.temperature.writer=0.7
+  anthropic.temperature.factchecker=0.1
+  anthropic.temperature.editor=0.5
+
+  # Pipeline
+  pipeline.max-revision-cycles=3
+  pipeline.phase-timeout=PT5M
+  pipeline.approval.after-research=false
+  pipeline.approval.after-draft=false
+  pipeline.approval.after-factcheck=false
+  pipeline.approval.before-publish=true
+
+  # Output
+  output.directory=./output
+  output.file-extension=.md
+
+  # Quality
+  quality.min-factcheck-confidence=MEDIUM
+  quality.min-editor-score=0.8
+  ```
+
+**Document Model (`document` package)**
 - [ ] Create `document` package
-- [ ] Implement `DocumentState` enum
-- [ ] Implement `TopicBrief` record
-- [ ] Implement `ResearchBrief` record
-- [ ] Implement `ArticleDraft` record
-- [ ] Implement `FactCheckReport` record
-- [ ] Implement `FinalArticle` record
-- [ ] Implement `DocumentMetadata` record
-- [ ] Implement `PublishingDocument` main entity
-- [ ] Implement `AgentContribution` record
-- [ ] Add unit tests for document state transitions
+- [ ] Implement `DocumentState` enum with state transition validation:
+  - States: CREATED, RESEARCHING, DRAFTING, FACT_CHECKING, EDITING, PUBLISHED, REJECTED
+  - Include `canTransitionTo(DocumentState next)` method
+- [ ] Implement all data records:
+  - `TopicBrief` - initial input from user
+  - `ResearchBrief` - output from Research Agent
+  - `ArticleDraft` - output from Writer Agent
+  - `FactCheckReport` - output from Fact Checker Agent
+  - `FinalArticle` - output from Editor Agent
+  - `DocumentMetadata` - title, summary, author, timestamps
+  - `AgentContribution` - audit trail entry
+  - `QualityAssessment` - scores and metrics
+- [ ] Implement `PublishingDocument` main entity with:
+  - All phase content fields
+  - State machine logic
+  - Contribution history
+- [ ] Add unit tests for:
+  - State transition validation
+  - Document lifecycle
 
-**Step 2: Create Agent Framework**
+**Deliverable**: Complete data model and configuration. All subsequent components
+can be built with proper externalization from the start.
+
+---
+
+#### Step 2: Agent Framework + Research Agent
+
+Build the complete agent infrastructure and validate it with a working Research Agent.
+
+**Agent Framework (`agent` package)**
 - [ ] Create `agent` package
-- [ ] Define `Agent` interface
-- [ ] Define `AgentRole` enum
-- [ ] Implement `BaseAgent` abstract class with common functionality
-- [ ] Create `AgentPrompts` class with system prompt constants
-- [ ] Add unit tests for base agent
+- [ ] Define `Agent` interface:
+  ```java
+  public interface Agent {
+      PublishingDocument process(PublishingDocument document);
+      boolean validate(PublishingDocument document);
+      AgentRole getRole();
+  }
+  ```
+- [ ] Define `AgentRole` enum: RESEARCHER, WRITER, FACT_CHECKER, EDITOR
+- [ ] Create `AgentPrompts` class with ALL four system prompts as constants
+- [ ] Implement `BaseAgent` abstract class with:
+  - LangChain4j ChatLanguageModel integration
+  - Retry logic with exponential backoff
+  - JSON response parsing utilities
+  - Common validation helpers
+  - Contribution recording
 
-**Step 3: Implement Research Agent**
-- [ ] Implement `ResearchAgent` extending `BaseAgent`
-- [ ] Define research system prompt
-- [ ] Implement input preparation (TopicBrief → prompt)
-- [ ] Implement output parsing (response → ResearchBrief)
-- [ ] Implement validation logic
-- [ ] Add integration test with Claude
+**Research Agent**
+- [ ] Implement `ResearchAgent` extending `BaseAgent`:
+  - System prompt from `AgentPrompts.RESEARCH`
+  - `buildUserPrompt(TopicBrief)` method
+  - `parseResponse(String json)` → `ResearchBrief`
+  - Validation: requires keyFacts, suggestedOutline
+- [ ] Add unit tests for:
+  - Prompt construction
+  - JSON parsing with valid input
+  - JSON parsing with malformed input
+  - Validation logic
+- [ ] Add integration test:
+  - Real Claude API call with simple topic
+  - Verify ResearchBrief is populated
 
-**Step 4: Implement Writer Agent**
-- [ ] Implement `WriterAgent` extending `BaseAgent`
-- [ ] Define writer system prompt with JSPWiki format instructions
-- [ ] Implement input preparation (ResearchBrief → prompt)
-- [ ] Implement output parsing (response → ArticleDraft)
-- [ ] Implement JSPWiki link syntax generation
-- [ ] Implement validation logic
-- [ ] Add integration test with Claude
+**Deliverable**: Working agent framework validated by a Research Agent that can
+call Claude and return structured data. This establishes the pattern for all agents.
 
-**Step 5: Implement Fact Checker Agent**
-- [ ] Implement `FactCheckerAgent` extending `BaseAgent`
-- [ ] Define fact checker system prompt
-- [ ] Implement input preparation (ArticleDraft + ResearchBrief → prompt)
-- [ ] Implement output parsing (response → FactCheckReport)
-- [ ] Implement claim extraction and verification tracking
-- [ ] Implement validation logic (confidence thresholds)
-- [ ] Add integration test with Claude
+---
 
-### Phase 2: Pipeline & Output (Steps 6-9)
+### Session 2: Agent Suite
 
-**Step 6: Implement Editor Agent**
-- [ ] Implement `EditorAgent` extending `BaseAgent`
-- [ ] Define editor system prompt
-- [ ] Implement input preparation (ArticleDraft + FactCheckReport + ExistingPages → prompt)
-- [ ] Implement output parsing (response → FinalArticle)
-- [ ] Implement existing page link integration logic
-- [ ] Implement quality scoring
-- [ ] Implement validation logic
-- [ ] Add integration test with Claude
+#### Step 3: Writer, Fact Checker, and Editor Agents
 
-**Step 7: Create Pipeline Orchestrator**
-- [ ] Create `pipeline` package
-- [ ] Implement `PipelineConfig` record
-- [ ] Implement `PhaseExecutor` for individual phase execution
-- [ ] Implement `RejectionHandler` for quality gate failures
-- [ ] Implement `PublishingPipeline` main orchestrator
-- [ ] Add state transition logic
-- [ ] Add retry logic with exponential backoff
-- [ ] Add unit tests for pipeline flow
+Apply the established agent pattern to implement the remaining three agents.
 
-**Step 8: Implement JSPWiki Output Generator**
+**Writer Agent**
+- [ ] Implement `WriterAgent` extending `BaseAgent`:
+  - System prompt from `AgentPrompts.WRITER`
+  - `buildUserPrompt(ResearchBrief, String pageName)` method
+  - `parseResponse(String json)` → `ArticleDraft`
+  - JSPWiki Markdown format enforcement
+  - Validation: requires markdownContent, summary
+- [ ] Add unit tests for prompt construction, parsing, validation
+- [ ] Add integration test with Claude API
+
+**Fact Checker Agent**
+- [ ] Implement `FactCheckerAgent` extending `BaseAgent`:
+  - System prompt from `AgentPrompts.FACT_CHECKER`
+  - `buildUserPrompt(ArticleDraft, ResearchBrief)` method
+  - `parseResponse(String json)` → `FactCheckReport`
+  - Confidence level assessment
+  - Validation: requires overallConfidence, recommendedAction
+- [ ] Add unit tests for prompt construction, parsing, validation
+- [ ] Add integration test with Claude API
+
+**Editor Agent**
+- [ ] Implement `EditorAgent` extending `BaseAgent`:
+  - System prompt from `AgentPrompts.EDITOR`
+  - `buildUserPrompt(ArticleDraft, FactCheckReport, Set<String> existingPages)` method
+  - `parseResponse(String json)` → `FinalArticle`
+  - Existing page link integration
+  - Quality scoring
+  - Validation: requires markdownContent, qualityScore >= threshold
+- [ ] Add unit tests for prompt construction, parsing, validation, link integration
+- [ ] Add integration test with Claude API
+
+**Deliverable**: All four agents working independently. Each can process input
+and produce structured output via Claude API calls.
+
+---
+
+### Session 3: Pipeline Integration
+
+#### Step 4: Output System
+
+Build the complete output generation system.
+
+**Output Package (`output` package)**
 - [ ] Create `output` package
-- [ ] Implement `LinkProcessor` for internal link handling
-- [ ] Implement existing page discovery (scan target directory for .md files)
-- [ ] Implement `JSPWikiMarkdownGenerator`
-- [ ] Implement `FileExporter` for writing .md files
-- [ ] Add validation for JSPWiki syntax compliance
-- [ ] Add unit tests for output generation
+- [ ] Implement `LinkProcessor`:
+  - `discoverExistingPages(Path directory)` → `Set<String>`
+  - `processLinks(String content, Set<String> existingPages)` → validated content
+  - CamelCase conversion utilities
+- [ ] Implement `JSPWikiMarkdownGenerator`:
+  - `generate(FinalArticle article)` → complete Markdown string
+  - Table of contents insertion for long articles
+  - "See Also" section generation
+  - Metadata comment block generation
+- [ ] Implement `FileExporter`:
+  - `export(FinalArticle article, Path outputDirectory)` → written file path
+  - Filename generation (CamelCase + .md)
+  - Directory creation if needed
+- [ ] Add unit tests for:
+  - Existing page discovery
+  - Link processing and validation
+  - Markdown generation with various inputs
+  - File export
 
-**Step 9: Implement Document Repository**
+**Deliverable**: Can generate valid JSPWiki .md files from FinalArticle objects.
+
+---
+
+#### Step 5: Pipeline Orchestration
+
+Build the complete pipeline that orchestrates agents through document phases.
+
+**Pipeline Package (`pipeline` package)**
+- [ ] Create `pipeline` package
+- [ ] Implement `PipelineConfig` record with all settings
+- [ ] Implement `PhaseExecutor`:
+  - Execute single agent phase
+  - Handle timeouts
+  - Record contributions
+- [ ] Implement `RejectionHandler`:
+  - Route rejections to appropriate earlier phase
+  - Track revision cycle count
+  - Escalate after max cycles
+- [ ] Implement `PublishingPipeline`:
+  - Main `process(TopicBrief)` method
+  - State machine enforcement
+  - Phase sequencing: Research → Write → FactCheck → Edit → Output
+  - Optional approval checkpoints
+  - Error handling and recovery
+- [ ] Add unit tests with mocked agents for:
+  - Happy path through all phases
+  - Rejection and revision cycles
+  - Timeout handling
+  - State transition enforcement
+
+**Repository Package (`repository` package)**
 - [ ] Create `repository` package
 - [ ] Define `DocumentRepository` interface
-- [ ] Implement `FileDocumentRepository` (JSON file storage)
-- [ ] Add document versioning support
-- [ ] Add search/query capabilities
-- [ ] Add unit tests for persistence
+- [ ] Implement `FileDocumentRepository`:
+  - JSON serialization with Jackson
+  - Save after each phase (enables recovery)
+  - Load by document ID
+  - List all documents
+- [ ] Add unit tests for persistence operations
 
-### Phase 3: Integration & CLI (Steps 10-12)
+**Deliverable**: Pipeline can orchestrate agents through all phases. Documents
+are persisted after each phase for recovery.
 
-**Step 10: Create Configuration**
-- [ ] Create `config` package
-- [ ] Implement `ClaudeConfig` for LangChain4j beans
-- [ ] Implement `PipelineProperties` for externalized config
-- [ ] Update `application.properties` with all settings
-- [ ] Add configuration validation
+---
 
-**Step 11: Create CLI Interface**
+#### Step 6: CLI & Integration
+
+Wire everything together and create the command-line interface.
+
+**CLI Package (`cli` package)**
 - [ ] Create `cli` package
-- [ ] Implement `PublishingRunner` as CommandLineRunner
-- [ ] Add interactive topic input
-- [ ] Add progress display during pipeline execution
-- [ ] Add output summary display
-- [ ] Remove or disable HelloClaudeRunner
+- [ ] Implement `PublishingRunner` as CommandLineRunner:
+  - Interactive topic input (title, audience, word count)
+  - Output directory specification
+  - Progress display during pipeline execution
+  - Summary display on completion
+  - Error reporting
+- [ ] Remove or disable `HelloClaudeRunner`
 
-**Step 12: End-to-End Testing**
-- [ ] Create integration test for full pipeline
-- [ ] Test with sample topics of varying complexity
-- [ ] Verify JSPWiki output compatibility
-- [ ] Test error handling and recovery
-- [ ] Test rejection and revision cycles
-- [ ] Performance testing (timing, token usage)
+**Spring Wiring**
+- [ ] Verify all beans are properly configured
+- [ ] Add component scanning for all packages
+- [ ] Configure Jackson for JSON processing
 
-### Phase 4: Polish & Documentation (Steps 13-15)
+**End-to-End Testing**
+- [ ] Create integration test for full pipeline:
+  - Start with TopicBrief
+  - Run through all agents
+  - Verify .md file output
+  - Verify JSPWiki syntax compliance
+- [ ] Test with sample topics:
+  - Simple topic (< 500 words target)
+  - Complex topic (> 1000 words target)
+  - Topic with existing related pages
+- [ ] Test error scenarios:
+  - API timeout recovery
+  - Fact check rejection → revision
+  - Quality threshold not met
 
-**Step 13: Add Human Approval Workflow**
-- [ ] Implement approval checkpoint logic
-- [ ] Add CLI prompts for approval/rejection
-- [ ] Implement feedback routing to agents
-- [ ] Add approval status to document model
+**Deliverable**: Complete working application. Can be run from command line to
+produce wiki articles.
 
-**Step 14: Add Monitoring & Logging**
-- [ ] Add structured logging throughout
-- [ ] Implement `PipelineListener` for events
-- [ ] Add metrics collection (timing, tokens, quality scores)
-- [ ] Create summary report generation
+---
 
-**Step 15: Documentation & Cleanup**
-- [ ] Update README with usage instructions
-- [ ] Document configuration options
-- [ ] Add example topics and outputs
-- [ ] Code cleanup and refactoring
-- [ ] Final testing pass
+### Session 4: Polish (As Needed)
+
+#### Step 7: Human Approval Workflow
+
+Add optional human checkpoints between phases.
+
+- [ ] Implement `ApprovalService`:
+  - Pause pipeline at configured checkpoints
+  - Display document state for review
+  - Accept approve/reject/feedback input
+  - Route feedback to appropriate agent
+- [ ] Update `PublishingRunner` with approval prompts:
+  - Show current document state
+  - Options: approve, reject, provide feedback
+- [ ] Add `AWAITING_APPROVAL` document state
+- [ ] Add tests for approval flow
+
+**Deliverable**: Humans can review and approve documents between phases.
+
+---
+
+#### Step 8: Monitoring & Documentation
+
+Add observability and finalize documentation.
+
+**Monitoring**
+- [ ] Implement `PipelineListener` interface
+- [ ] Implement `LoggingPipelineListener`:
+  - Structured logging for each phase
+  - Timing metrics
+  - Token usage tracking
+- [ ] Implement `MetricsCollector`:
+  - Phase durations
+  - Revision cycle counts
+  - Quality scores
+  - Token consumption
+- [ ] Add summary report generation
+
+**Documentation**
+- [ ] Update README with:
+  - Quick start guide
+  - Configuration reference
+  - Example usage
+- [ ] Add sample topics and expected outputs
+- [ ] Document extension points
+
+**Deliverable**: Production-ready application with observability and documentation.
+
+---
+
+### Implementation Notes for Claude Code
+
+**File Generation Strategy**
+
+For each step, generate complete files rather than incremental edits:
+- All records in a package can be generated in parallel
+- Each agent is a self-contained file
+- Tests are generated alongside implementations
+
+**Template Replication**
+
+After Step 2 establishes the agent pattern with ResearchAgent, Step 3 replicates
+that pattern for the remaining agents. The structure is identical:
+1. Extend BaseAgent
+2. Reference prompt from AgentPrompts
+3. Implement buildUserPrompt()
+4. Implement parseResponse()
+5. Implement validation
+6. Write corresponding tests
+
+**Testing Approach**
+
+Each step includes its own tests. This ensures:
+- Tests inform the implementation design
+- Regressions are caught immediately
+- Each step produces verified, working code
+
+**Verification Points**
+
+After each step, verify:
+1. `mvn compile` passes
+2. `mvn test` passes
+3. New functionality works as expected
+
+This maintains a working codebase throughout development.
 
 ---
 
@@ -1401,6 +1659,7 @@ bin/kafka-server-start.sh config/server.properties
 
 ---
 
-*Document Version: 1.0*
+*Document Version: 1.1*
 *Created: 2025-12-11*
+*Updated: 2025-12-11*
 *Author: AI Publisher Design Team*
