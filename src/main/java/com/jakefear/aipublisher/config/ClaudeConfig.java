@@ -80,11 +80,30 @@ public class ClaudeConfig {
 
     private ChatLanguageModel buildModel(double temperature) {
         return AnthropicChatModel.builder()
-                .apiKey(apiKey)
+                .apiKey(resolveApiKey())
                 .modelName(modelName)
                 .maxTokens(maxTokens)
                 .temperature(temperature)
                 .build();
+    }
+
+    /**
+     * Resolve API key with priority: System property > Environment variable > Config property.
+     * This allows CLI options (-k, --key-file) to override the configured value.
+     */
+    private String resolveApiKey() {
+        // Check system property first (set by CLI options)
+        String key = System.getProperty("ANTHROPIC_API_KEY");
+        if (key != null && !key.isBlank()) {
+            return key;
+        }
+        // Fall back to environment variable
+        key = System.getenv("ANTHROPIC_API_KEY");
+        if (key != null && !key.isBlank()) {
+            return key;
+        }
+        // Finally use the configured value (which may also come from env var via Spring)
+        return apiKey;
     }
 
     // Getters for testing and introspection
