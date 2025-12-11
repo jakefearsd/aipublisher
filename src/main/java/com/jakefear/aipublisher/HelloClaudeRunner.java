@@ -6,7 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-@Component
+// Disabled - replaced by AiPublisherCommand with Picocli
+// @Component
 public class HelloClaudeRunner implements CommandLineRunner {
 
     @Value("${anthropic.api.key}")

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.document.*;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
  * Output: ResearchBrief
  */
 @Component
+@Lazy
 public class ResearchAgent extends BaseAgent {
 
     public ResearchAgent(@Qualifier("researchChatModel") ChatLanguageModel model) {

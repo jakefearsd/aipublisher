@@ -6,6 +6,7 @@ import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.document.TopicBrief;
 import com.jakefear.aipublisher.pipeline.PipelineResult;
 import com.jakefear.aipublisher.pipeline.PublishingPipeline;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -107,7 +108,7 @@ public class AiPublisherCommand implements Callable<Integer> {
     private BufferedReader inputReader;
     private PrintWriter outputWriter;
 
-    public AiPublisherCommand(PublishingPipeline pipeline, ApprovalService approvalService) {
+    public AiPublisherCommand(@Lazy PublishingPipeline pipeline, @Lazy ApprovalService approvalService) {
         this.pipeline = pipeline;
         this.approvalService = approvalService;
     }

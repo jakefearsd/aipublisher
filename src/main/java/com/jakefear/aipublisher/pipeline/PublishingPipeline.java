@@ -9,6 +9,7 @@ import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -30,6 +31,7 @@ import java.util.List;
  * Each phase can be configured with approval checkpoints and revision cycles.
  */
 @Service
+@Lazy
 public class PublishingPipeline {
 
     private static final Logger log = LoggerFactory.getLogger(PublishingPipeline.class);

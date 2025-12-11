@@ -5,12 +5,16 @@ import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 /**
  * Configuration for Claude/Anthropic API integration via LangChain4j.
  * Provides ChatLanguageModel beans for each agent with appropriate temperature settings.
+ *
+ * All beans are lazy-loaded to allow --help and --version to work without an API key.
  */
 @Configuration
+@Lazy
 public class ClaudeConfig {
 
     @Value("${anthropic.api.key}")
