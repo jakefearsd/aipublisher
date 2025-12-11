@@ -67,7 +67,7 @@ Creating high-quality wiki articles requires multiple distinct skills: research 
 │                    └───────────────────────┘                          │
 │                                │                                       │
 │                                ▼                                       │
-│                         [Final .txt File]                              │
+│                         [Final .md File]                               │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -213,18 +213,20 @@ verify the accuracy and consistency of article content. You must:
 
 ### 3.5 Editor Agent
 
-**Purpose**: Polish prose, ensure style consistency, and prepare final output.
+**Purpose**: Polish prose, ensure style consistency, integrate with existing wiki content, and prepare final output.
 
 **Inputs:**
 - Fact-checked article with annotations
 - Style guide
 - JSPWiki format requirements
+- **Existing pages inventory** (list of .md files in target directory)
 
 **Outputs:**
 - Final polished article
 - Edit summary (changes made)
 - Quality assessment score
 - Final metadata
+- **Integrated internal links** to existing wiki pages
 
 **System Prompt Essence:**
 ```
@@ -237,12 +239,15 @@ polish the article to publication quality. You must:
 - Ensure the article has proper structure (headings, TOC, links)
 - Remove any fact-checker annotations from final output
 - Prepare publication-ready metadata
+- Review the list of existing wiki pages and add relevant internal links
+  using [PageName]() syntax where the content naturally references those topics
 ```
 
 **Behavioral Characteristics:**
 - Conservative editor: improves without rewriting
 - Format perfectionist: ensures valid output
 - Quality gatekeeper: can reject if below standards
+- **Link integrator**: connects new content to existing wiki pages
 
 ---
 
@@ -474,7 +479,42 @@ When approval is required:
 
 ## 6. JSPWiki Output Format
 
-### 6.1 Target Syntax
+### 6.1 File Format
+
+**File Extension:** `.md`
+
+JSPWiki automatically detects Markdown files by their `.md` extension and routes them
+to the Markdown parser. This is defined in `AbstractFileProvider.java`:
+
+```java
+public static final String MARKDOWN_EXT = ".md";
+```
+
+When JSPWiki encounters a `.md` file, it automatically:
+1. Sets `markup.syntax=markdown` for the page
+2. Uses `MarkdownParser` instead of the default wiki parser
+3. Renders using `MarkdownRenderer`
+
+**File Naming Convention:**
+- CamelCase page names: `ApacheKafka.md`, `EventStreaming.md`
+- The filename (without extension) becomes the linkable page name
+
+### 6.2 Existing Pages Discovery
+
+Before the Editor Agent runs, the system scans the target output directory for existing
+`.md` files. These represent linkable wiki pages that can be referenced using
+`[PageName]()` syntax.
+
+```java
+// Discover existing pages in target directory
+Set<String> existingPages = LinkProcessor.discoverExistingPages(outputDirectory);
+// Returns: {"ApacheKafka", "EventStreaming", "MessageQueue", ...}
+```
+
+The Editor Agent receives this list and is instructed to add relevant internal links
+where the article content naturally references topics covered by existing pages.
+
+### 6.3 Target Syntax
 
 The system generates JSPWiki-compatible Markdown with these specific conventions:
 
@@ -514,12 +554,12 @@ More content here.
 
 #### Metadata Properties
 Generated as page attributes:
-- `markup.syntax=markdown`
+- `markup.syntax=markdown` (automatically set by JSPWiki for .md files)
 - `summary=<extracted summary>`
 - `author=AI Publisher`
 - `changenote=<edit summary>`
 
-### 6.2 Output Generator
+### 6.4 Output Generator
 
 ```java
 public class JSPWikiMarkdownGenerator {
@@ -553,19 +593,33 @@ public class JSPWikiMarkdownGenerator {
     }
 
     public String generateFilename(String pageName) {
-        // Convert to CamelCase, ensure .txt extension
-        return toCamelCase(pageName) + ".txt";
+        // Convert to CamelCase, use .md extension for Markdown parser detection
+        return toCamelCase(pageName) + ".md";
     }
 }
 ```
 
-### 6.3 Link Processing
+### 6.5 Link Processing
 
-Internal links are processed to ensure validity:
+Internal links are processed to ensure validity and integrate with existing wiki pages:
 
 ```java
 public class LinkProcessor {
     private final Set<String> existingPages;
+
+    /**
+     * Scans the target output directory for existing .md files and builds
+     * an inventory of linkable page names.
+     */
+    public static Set<String> discoverExistingPages(Path outputDirectory) {
+        try (Stream<Path> files = Files.list(outputDirectory)) {
+            return files
+                .filter(p -> p.toString().endsWith(".md"))
+                .map(p -> p.getFileName().toString())
+                .map(name -> name.substring(0, name.length() - 3)) // Remove .md
+                .collect(Collectors.toSet());
+        }
+    }
 
     public String processLinks(String content) {
         // Pattern: [text](target) or [text]()
@@ -588,6 +642,14 @@ public class LinkProcessor {
 
             return "[" + text + "](" + target + ")";
         });
+    }
+
+    /**
+     * Returns the set of existing pages that can be linked to.
+     * Used by the Editor Agent to suggest relevant links.
+     */
+    public Set<String> getExistingPages() {
+        return Collections.unmodifiableSet(existingPages);
     }
 }
 ```
@@ -857,7 +919,7 @@ User Input: "Write an article about Apache Kafka for developers new to event str
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ OUTPUT: ApacheKafka.txt                                                     │
+│ OUTPUT: ApacheKafka.md                                                      │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -931,7 +993,7 @@ pipeline.phase-timeout=PT5M
 # Output Configuration
 output.directory=./output
 output.format=jspwiki-markdown
-output.file-extension=.txt
+output.file-extension=.md
 
 # Quality Thresholds
 quality.min-fact-check-confidence=MEDIUM
@@ -1026,8 +1088,9 @@ public interface PipelineListener {
 **Step 6: Implement Editor Agent**
 - [ ] Implement `EditorAgent` extending `BaseAgent`
 - [ ] Define editor system prompt
-- [ ] Implement input preparation (ArticleDraft + FactCheckReport → prompt)
+- [ ] Implement input preparation (ArticleDraft + FactCheckReport + ExistingPages → prompt)
 - [ ] Implement output parsing (response → FinalArticle)
+- [ ] Implement existing page link integration logic
 - [ ] Implement quality scoring
 - [ ] Implement validation logic
 - [ ] Add integration test with Claude
@@ -1045,8 +1108,9 @@ public interface PipelineListener {
 **Step 8: Implement JSPWiki Output Generator**
 - [ ] Create `output` package
 - [ ] Implement `LinkProcessor` for internal link handling
+- [ ] Implement existing page discovery (scan target directory for .md files)
 - [ ] Implement `JSPWikiMarkdownGenerator`
-- [ ] Implement `FileExporter` for writing .txt files
+- [ ] Implement `FileExporter` for writing .md files
 - [ ] Add validation for JSPWiki syntax compliance
 - [ ] Add unit tests for output generation
 
@@ -1212,6 +1276,9 @@ You are a senior editor preparing wiki content for publication.
 
 YOUR TASK:
 Polish the article to publication quality while preserving factual accuracy.
+You will also be provided with a list of existing wiki pages in the target
+directory. Where appropriate, add internal links to these existing pages
+to connect the new article with the existing wiki content.
 
 OUTPUT FORMAT:
 Produce a JSON object with the following structure:
@@ -1223,7 +1290,8 @@ Produce a JSON object with the following structure:
     "author": "AI Publisher"
   },
   "editSummary": "Brief description of changes made",
-  "qualityScore": 0.0-1.0
+  "qualityScore": 0.0-1.0,
+  "addedLinks": ["PageName1", "PageName2"]
 }
 
 EDITING PRIORITIES:
@@ -1234,10 +1302,19 @@ EDITING PRIORITIES:
 5. Verify JSPWiki Markdown syntax is correct
 6. Ensure proper heading hierarchy
 7. Verify all internal links use correct syntax
+8. Review the EXISTING_PAGES list and add [PageName]() links where the
+   article content naturally references topics covered by those pages
+
+LINK INTEGRATION GUIDELINES:
+- Only add links where they enhance understanding
+- Use the exact page name from EXISTING_PAGES in the link syntax
+- Prefer linking on first mention of a concept
+- Do not over-link; one link per concept is sufficient
+- Links should feel natural, not forced
 
 CONSTRAINTS:
 - Do NOT change factual content
-- Do NOT add new information
+- Do NOT add new information beyond links to existing pages
 - Do NOT remove substantive content
 - Preserve the author's voice where possible
 - Remove any fact-checker annotations from output
@@ -1249,7 +1326,7 @@ CONSTRAINTS:
 
 ### B.1 Sample JSPWiki Article Output
 
-**Filename:** `ApacheKafka.txt`
+**Filename:** `ApacheKafka.md`
 
 ```markdown
 ## Apache Kafka
