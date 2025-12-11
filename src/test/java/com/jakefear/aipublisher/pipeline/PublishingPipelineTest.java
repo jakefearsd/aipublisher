@@ -1,6 +1,7 @@
 package com.jakefear.aipublisher.pipeline;
 
 import com.jakefear.aipublisher.agent.*;
+import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.config.PipelineProperties;
 import com.jakefear.aipublisher.config.QualityProperties;
 import com.jakefear.aipublisher.document.*;
@@ -19,6 +20,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PublishingPipeline")
@@ -37,6 +39,8 @@ class PublishingPipelineTest {
     private EditorAgent editorAgent;
     @Mock
     private WikiOutputService outputService;
+    @Mock
+    private ApprovalService approvalService;
 
     private PipelineProperties pipelineProperties;
     private QualityProperties qualityProperties;
@@ -50,9 +54,12 @@ class PublishingPipelineTest {
         qualityProperties = new QualityProperties();
         qualityProperties.setMinEditorScore(0.7);
 
+        // By default, auto-approve everything (lenient because not all tests use approval)
+        lenient().when(approvalService.checkAndApprove(any())).thenReturn(true);
+
         pipeline = new PublishingPipeline(
                 researchAgent, writerAgent, factCheckerAgent, editorAgent,
-                outputService, pipelineProperties, qualityProperties
+                outputService, approvalService, pipelineProperties, qualityProperties
         );
     }
 
@@ -418,5 +425,70 @@ class PublishingPipelineTest {
                 action == RecommendedAction.REJECT ? ConfidenceLevel.LOW : ConfidenceLevel.MEDIUM,
                 action
         ));
+    }
+
+    @Nested
+    @DisplayName("Approval Workflow")
+    class ApprovalWorkflow {
+
+        @Test
+        @DisplayName("Calls approval service after each phase")
+        void callsApprovalServiceAfterEachPhase() throws IOException {
+            // Arrange
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupSuccessfulMocks();
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success());
+            // Should be called 4 times: after research, draft, fact-check, and editing
+            verify(approvalService, times(4)).checkAndApprove(any());
+        }
+
+        @Test
+        @DisplayName("Fails when approval is rejected")
+        void failsWhenApprovalIsRejected() {
+            // Arrange
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+
+            // Reject after research phase
+            when(approvalService.checkAndApprove(any()))
+                    .thenThrow(new ApprovalService.ApprovalRejectedException(
+                            "Research needs more work",
+                            DocumentState.RESEARCHING
+                    ));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertFalse(result.success());
+            assertTrue(result.errorMessage().contains("rejected"));
+        }
+
+        @Test
+        @DisplayName("Fails when changes are requested")
+        void failsWhenChangesAreRequested() {
+            // Arrange
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+
+            // Auto-approve research, then request changes after draft
+            when(approvalService.checkAndApprove(any()))
+                    .thenReturn(true)  // After research
+                    .thenReturn(false); // After draft - changes requested
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertFalse(result.success());
+            assertTrue(result.errorMessage().contains("Changes requested"));
+        }
     }
 }

@@ -1,6 +1,9 @@
 package com.jakefear.aipublisher.pipeline;
 
 import com.jakefear.aipublisher.agent.*;
+import com.jakefear.aipublisher.approval.ApprovalCallback;
+import com.jakefear.aipublisher.approval.ApprovalDecision;
+import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.config.OutputProperties;
 import com.jakefear.aipublisher.config.PipelineProperties;
 import com.jakefear.aipublisher.config.QualityProperties;
@@ -63,9 +66,14 @@ class PublishingPipelineIntegrationTest {
         QualityProperties qualityProperties = new QualityProperties();
         qualityProperties.setMinEditorScore(0.7);
 
+        // Auto-approve everything for integration tests
+        ApprovalCallback autoApprove = request ->
+                ApprovalDecision.approve(request.id(), "integration-test");
+        ApprovalService approvalService = new ApprovalService(pipelineProperties, autoApprove);
+
         pipeline = new PublishingPipeline(
                 researchAgent, writerAgent, factCheckerAgent, editorAgent,
-                outputService, pipelineProperties, qualityProperties
+                outputService, approvalService, pipelineProperties, qualityProperties
         );
     }
 

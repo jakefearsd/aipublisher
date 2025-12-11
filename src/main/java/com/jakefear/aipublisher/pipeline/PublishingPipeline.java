@@ -1,6 +1,7 @@
 package com.jakefear.aipublisher.pipeline;
 
 import com.jakefear.aipublisher.agent.*;
+import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.config.PipelineProperties;
 import com.jakefear.aipublisher.config.QualityProperties;
 import com.jakefear.aipublisher.document.*;
@@ -37,6 +38,7 @@ public class PublishingPipeline {
     private final FactCheckerAgent factCheckerAgent;
     private final EditorAgent editorAgent;
     private final WikiOutputService outputService;
+    private final ApprovalService approvalService;
     private final PipelineProperties pipelineProperties;
     private final QualityProperties qualityProperties;
 
@@ -46,6 +48,7 @@ public class PublishingPipeline {
             FactCheckerAgent factCheckerAgent,
             EditorAgent editorAgent,
             WikiOutputService outputService,
+            ApprovalService approvalService,
             PipelineProperties pipelineProperties,
             QualityProperties qualityProperties) {
         this.researchAgent = researchAgent;
@@ -53,6 +56,7 @@ public class PublishingPipeline {
         this.factCheckerAgent = factCheckerAgent;
         this.editorAgent = editorAgent;
         this.outputService = outputService;
+        this.approvalService = approvalService;
         this.pipelineProperties = pipelineProperties;
         this.qualityProperties = qualityProperties;
     }
@@ -120,6 +124,9 @@ public class PublishingPipeline {
             log.info("Research complete: {} key facts gathered",
                     document.getResearchBrief().keyFacts().size());
 
+            // Check for approval after research
+            checkApproval(document);
+
             return document;
 
         } catch (AgentException e) {
@@ -145,6 +152,9 @@ public class PublishingPipeline {
 
             log.info("Draft complete: {} words",
                     document.getDraft().estimateWordCount());
+
+            // Check for approval after draft
+            checkApproval(document);
 
             return document;
 
@@ -181,6 +191,8 @@ public class PublishingPipeline {
 
                 // Check if approved
                 if (report.isPassed()) {
+                    // Check for approval after fact check
+                    checkApproval(document);
                     return document;
                 }
 
@@ -246,11 +258,33 @@ public class PublishingPipeline {
                         DocumentState.EDITING);
             }
 
+            // Check for approval before publish
+            checkApproval(document);
+
             return document;
 
         } catch (AgentException e) {
             throw new PipelineException("Editing phase failed: " + e.getMessage(),
                     DocumentState.EDITING, e);
+        }
+    }
+
+    /**
+     * Check approval at current state and throw if rejected.
+     */
+    private void checkApproval(PublishingDocument document) {
+        try {
+            boolean approved = approvalService.checkAndApprove(document);
+            if (!approved) {
+                // Changes requested - this would typically trigger a retry
+                // For now, we treat it as a pipeline exception
+                throw new PipelineException(
+                        "Changes requested during approval at " + document.getState(),
+                        document.getState(), true);
+            }
+        } catch (ApprovalService.ApprovalRejectedException e) {
+            throw new PipelineException("Approval rejected: " + e.getMessage(),
+                    e.getState(), false);
         }
     }
 
