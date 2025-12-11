@@ -21,8 +21,9 @@ import java.util.List;
  *   java -jar aipublisher.jar "Topic Name" "target audience" 1000
  *   java -jar aipublisher.jar --topic="Topic Name" --audience="developers" --words=1000
  */
-@Component
-@ConditionalOnProperty(name = "publisher.enabled", havingValue = "true", matchIfMissing = true)
+// Disabled - replaced by AiPublisherCommand with Picocli
+// @Component
+// @ConditionalOnProperty(name = "publisher.enabled", havingValue = "true", matchIfMissing = true)
 public class PublishingRunner implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(PublishingRunner.class);

@@ -16,11 +16,18 @@ public class ApprovalService {
     private static final Logger log = LoggerFactory.getLogger(ApprovalService.class);
 
     private final PipelineProperties pipelineProperties;
-    private final ApprovalCallback approvalCallback;
+    private ApprovalCallback approvalCallback;
 
     public ApprovalService(PipelineProperties pipelineProperties, ApprovalCallback approvalCallback) {
         this.pipelineProperties = pipelineProperties;
         this.approvalCallback = approvalCallback;
+    }
+
+    /**
+     * Set a custom approval callback (useful for auto-approve mode).
+     */
+    public void setCallback(ApprovalCallback callback) {
+        this.approvalCallback = callback;
     }
 
     /**

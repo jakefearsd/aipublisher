@@ -1,0 +1,234 @@
+package com.jakefear.aipublisher.cli;
+
+import com.jakefear.aipublisher.approval.ApprovalCallback;
+import com.jakefear.aipublisher.approval.ApprovalDecision;
+import com.jakefear.aipublisher.approval.ApprovalService;
+import com.jakefear.aipublisher.document.TopicBrief;
+import com.jakefear.aipublisher.pipeline.PipelineResult;
+import com.jakefear.aipublisher.pipeline.PublishingPipeline;
+import org.springframework.stereotype.Component;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+/**
+ * Main CLI command for AI Publisher.
+ *
+ * Provides a professional command-line interface using Picocli with support for:
+ * - Named and short options
+ * - Auto-generated help
+ * - Interactive mode when topic not specified
+ * - Auto-approve mode for scripting
+ */
+@Component
+@Command(
+        name = "aipublisher",
+        mixinStandardHelpOptions = true,
+        version = "AI Publisher 0.1.0",
+        description = "Generate well-researched, fact-checked articles using AI agents.",
+        footer = {
+                "",
+                "Examples:",
+                "  aipublisher -t \"Apache Kafka\"",
+                "  aipublisher --topic \"Machine Learning\" --audience \"beginners\" --words 1500",
+                "  aipublisher -t \"Docker\" -a \"DevOps engineers\" -w 1000 --auto-approve",
+                "",
+                "Environment Variables:",
+                "  ANTHROPIC_API_KEY  Your Anthropic API key (required)"
+        }
+)
+public class AiPublisherCommand implements Callable<Integer> {
+
+    private final PublishingPipeline pipeline;
+    private final ApprovalService approvalService;
+
+    @Option(names = {"-t", "--topic"},
+            description = "Topic to write about (prompts interactively if not specified)")
+    private String topic;
+
+    @Option(names = {"-a", "--audience"},
+            description = "Target audience for the article",
+            defaultValue = "general readers")
+    private String audience;
+
+    @Option(names = {"-w", "--words"},
+            description = "Target word count",
+            defaultValue = "800")
+    private int wordCount;
+
+    @Option(names = {"-o", "--output"},
+            description = "Output directory for generated articles",
+            defaultValue = "./output")
+    private String outputDirectory;
+
+    @Option(names = {"--sections"},
+            description = "Required sections (comma-separated)",
+            split = ",")
+    private List<String> requiredSections = List.of();
+
+    @Option(names = {"--related"},
+            description = "Related pages for internal linking (comma-separated)",
+            split = ",")
+    private List<String> relatedPages = List.of();
+
+    @Option(names = {"--auto-approve"},
+            description = "Skip all approval prompts (for scripting)")
+    private boolean autoApprove;
+
+    @Option(names = {"-v", "--verbose"},
+            description = "Enable verbose output")
+    private boolean verbose;
+
+    @Option(names = {"-q", "--quiet"},
+            description = "Suppress non-essential output")
+    private boolean quiet;
+
+    // For testing - allows injecting a custom reader
+    private BufferedReader inputReader;
+    private PrintWriter outputWriter;
+
+    public AiPublisherCommand(PublishingPipeline pipeline, ApprovalService approvalService) {
+        this.pipeline = pipeline;
+        this.approvalService = approvalService;
+    }
+
+    /**
+     * Set custom input/output streams for testing.
+     */
+    public void setStreams(BufferedReader reader, PrintWriter writer) {
+        this.inputReader = reader;
+        this.outputWriter = writer;
+    }
+
+    @Override
+    public Integer call() {
+        PrintWriter out = outputWriter != null ? outputWriter : new PrintWriter(System.out, true);
+        BufferedReader in = inputReader != null ? inputReader : new BufferedReader(new InputStreamReader(System.in));
+
+        try {
+            // Interactive mode if topic not specified
+            if (topic == null || topic.isBlank()) {
+                topic = promptForTopic(in, out);
+                if (topic == null) {
+                    return 0; // User cancelled
+                }
+            }
+
+            // Configure auto-approval if requested
+            if (autoApprove) {
+                approvalService.setCallback(createAutoApproveCallback());
+            }
+
+            // Display banner
+            if (!quiet) {
+                printBanner(out);
+                out.println();
+                out.println("Topic: " + topic);
+                out.println("Audience: " + audience);
+                out.println("Target words: " + wordCount);
+                out.println();
+            }
+
+            // Create topic brief and execute pipeline
+            TopicBrief topicBrief = new TopicBrief(
+                    topic,
+                    audience,
+                    wordCount,
+                    requiredSections,
+                    relatedPages,
+                    List.of()
+            );
+
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Display results
+            printResults(out, result);
+
+            return result.success() ? 0 : 1;
+
+        } catch (Exception e) {
+            out.println();
+            out.println("ERROR: " + e.getMessage());
+            if (verbose) {
+                e.printStackTrace(out);
+            }
+            return 1;
+        }
+    }
+
+    private String promptForTopic(BufferedReader in, PrintWriter out) {
+        try {
+            printBanner(out);
+            out.println();
+            out.print("Enter topic (or 'quit' to exit): ");
+            out.flush();
+
+            String input = in.readLine();
+            if (input == null || input.equalsIgnoreCase("quit") || input.equalsIgnoreCase("q")) {
+                out.println("Goodbye!");
+                return null;
+            }
+
+            return input.trim();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void printBanner(PrintWriter out) {
+        out.println("╔═══════════════════════════════════════════════════════════╗");
+        out.println("║                      AI PUBLISHER                         ║");
+        out.println("║     Generate well-researched articles with AI agents      ║");
+        out.println("╚═══════════════════════════════════════════════════════════╝");
+    }
+
+    private void printResults(PrintWriter out, PipelineResult result) {
+        out.println();
+        out.println("═".repeat(60));
+
+        if (result.success()) {
+            out.println("SUCCESS! Article published.");
+            out.println();
+            out.println("Output: " + result.outputPath());
+
+            if (result.document().getFinalArticle() != null) {
+                out.println("Quality score: " + String.format("%.2f", result.document().getFinalArticle().qualityScore()));
+                out.println("Word count: " + result.document().getFinalArticle().estimateWordCount());
+            }
+        } else {
+            out.println("FAILED at phase: " + result.failedAtState());
+            out.println("Error: " + result.errorMessage());
+        }
+
+        out.println();
+        out.println("Total time: " + result.totalTime().toMillis() + " ms");
+        out.println("═".repeat(60));
+    }
+
+    private ApprovalCallback createAutoApproveCallback() {
+        return request -> ApprovalDecision.approve(request.id(), "auto-approved");
+    }
+
+    // Getters for testing
+    public String getTopic() {
+        return topic;
+    }
+
+    public String getAudience() {
+        return audience;
+    }
+
+    public int getWordCount() {
+        return wordCount;
+    }
+
+    public boolean isAutoApprove() {
+        return autoApprove;
+    }
+}

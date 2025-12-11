@@ -1,0 +1,38 @@
+#!/bin/bash
+# AI Publisher - Command line wrapper script
+# Usage: aipublisher [options]
+
+# Resolve the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Find the JAR file
+JAR_FILE="$SCRIPT_DIR/aipublisher.jar"
+
+if [ ! -f "$JAR_FILE" ]; then
+    # Try looking in common locations
+    if [ -f "$SCRIPT_DIR/../lib/aipublisher.jar" ]; then
+        JAR_FILE="$SCRIPT_DIR/../lib/aipublisher.jar"
+    elif [ -f "$SCRIPT_DIR/target/aipublisher.jar" ]; then
+        JAR_FILE="$SCRIPT_DIR/target/aipublisher.jar"
+    else
+        echo "Error: Could not find aipublisher.jar"
+        echo "Expected location: $JAR_FILE"
+        exit 1
+    fi
+fi
+
+# Check for Java
+if ! command -v java &> /dev/null; then
+    echo "Error: Java is not installed or not in PATH"
+    echo "Please install Java 21 or later"
+    exit 1
+fi
+
+# Check Java version
+JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f2 | cut -d'.' -f1)
+if [ "$JAVA_VERSION" -lt 21 ] 2>/dev/null; then
+    echo "Warning: Java 21 or later is recommended (found version $JAVA_VERSION)"
+fi
+
+# Run the application
+exec java -jar "$JAR_FILE" "$@"
