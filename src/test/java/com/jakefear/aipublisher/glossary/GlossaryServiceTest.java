@@ -129,7 +129,8 @@ class GlossaryServiceTest {
                     null,
                     null,
                     List.of(),
-                    true
+                    true,
+                    null
             );
             service.addEntry(entry);
 
@@ -229,7 +230,8 @@ class GlossaryServiceTest {
                     null,
                     null,
                     List.of(),
-                    true
+                    true,
+                    null
             );
             service.addEntry(entry);
 

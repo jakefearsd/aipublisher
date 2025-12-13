@@ -45,7 +45,12 @@ public record GlossaryEntry(
         /**
          * Whether this is a primary/authoritative definition.
          */
-        boolean primary
+        boolean primary,
+
+        /**
+         * Optional explicit wiki page name for linking.
+         */
+        String wikiLinkTarget
 ) {
     public GlossaryEntry {
         Objects.requireNonNull(term, "term must not be null");
@@ -70,14 +75,25 @@ public record GlossaryEntry(
      * Create a simple glossary entry.
      */
     public static GlossaryEntry simple(String term, String definition) {
-        return new GlossaryEntry(term, null, definition, List.of(), null, null, List.of(), true);
+        return new GlossaryEntry(term, null, definition, List.of(), null, null, List.of(), true, null);
     }
 
     /**
      * Create a glossary entry with category.
      */
     public static GlossaryEntry withCategory(String term, String definition, String category) {
-        return new GlossaryEntry(term, null, definition, List.of(), null, category, List.of(), true);
+        return new GlossaryEntry(term, null, definition, List.of(), null, category, List.of(), true, null);
+    }
+
+    /**
+     * Create a glossary entry for wiki linking.
+     * @param term The term (used as display text)
+     * @param definition The definition
+     * @param category The category
+     * @param wikiPage The target wiki page name
+     */
+    public static GlossaryEntry create(String term, String definition, String category, String wikiPage) {
+        return new GlossaryEntry(term, null, definition, List.of(), null, category, List.of(), true, wikiPage);
     }
 
     /**
@@ -100,7 +116,10 @@ public record GlossaryEntry(
      * Get a formatted reference suitable for wiki linking.
      */
     public String getWikiLink() {
-        // Convert to CamelCase for wiki page name
+        // Use explicit target if provided, otherwise convert term to CamelCase
+        if (wikiLinkTarget != null && !wikiLinkTarget.isBlank()) {
+            return wikiLinkTarget;
+        }
         return term.replaceAll("\\s+", "");
     }
 }

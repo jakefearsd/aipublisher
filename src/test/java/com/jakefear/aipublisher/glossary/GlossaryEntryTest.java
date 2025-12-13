@@ -105,7 +105,8 @@ class GlossaryEntryTest {
                     null,
                     null,
                     List.of(),
-                    true
+                    true,
+                    null
             );
 
             assertTrue(entry.matches("ES"));

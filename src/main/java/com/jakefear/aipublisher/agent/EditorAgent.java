@@ -3,6 +3,9 @@ package com.jakefear.aipublisher.agent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.document.*;
+import com.jakefear.aipublisher.linking.LinkCandidate;
+import com.jakefear.aipublisher.linking.LinkEvaluator;
+import com.jakefear.aipublisher.linking.WikiLinkContext;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -23,6 +26,12 @@ public class EditorAgent extends BaseAgent {
     // List of existing wiki pages that can be linked to
     private List<String> existingPages = List.of();
 
+    // Link evaluator for intelligent link suggestions
+    private LinkEvaluator linkEvaluator;
+
+    // Wiki link context for page relationships
+    private WikiLinkContext wikiLinkContext;
+
     /**
      * Default constructor for Spring - uses setter injection.
      */
@@ -38,9 +47,23 @@ public class EditorAgent extends BaseAgent {
         this.model = model;
     }
 
+    /**
+     * Set the link evaluator (optional, called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setLinkEvaluator(LinkEvaluator linkEvaluator) {
+        this.linkEvaluator = linkEvaluator;
+    }
+
     // Constructor for testing
     public EditorAgent(ChatLanguageModel model, String systemPrompt) {
         super(model, systemPrompt);
+    }
+
+    // Constructor for testing with LinkEvaluator
+    public EditorAgent(ChatLanguageModel model, String systemPrompt, LinkEvaluator linkEvaluator) {
+        super(model, systemPrompt);
+        this.linkEvaluator = linkEvaluator;
     }
 
     @Override
@@ -53,6 +76,22 @@ public class EditorAgent extends BaseAgent {
      */
     public void setExistingPages(List<String> existingPages) {
         this.existingPages = existingPages == null ? List.of() : List.copyOf(existingPages);
+        // Build wiki context from existing pages
+        this.wikiLinkContext = new WikiLinkContext();
+        for (String page : this.existingPages) {
+            wikiLinkContext.registerPage(page);
+        }
+    }
+
+    /**
+     * Set the wiki link context with full page relationship data.
+     */
+    public void setWikiLinkContext(WikiLinkContext context) {
+        this.wikiLinkContext = context;
+        // Also update existingPages list from context
+        if (context != null) {
+            this.existingPages = List.copyOf(context.getAllPages());
+        }
     }
 
     /**
@@ -60,6 +99,19 @@ public class EditorAgent extends BaseAgent {
      */
     public List<String> getExistingPages() {
         return existingPages;
+    }
+
+    /**
+     * Get suggested links for content using the link evaluator.
+     */
+    public List<LinkCandidate> getSuggestedLinks(String content) {
+        if (linkEvaluator == null || wikiLinkContext == null || content == null) {
+            return List.of();
+        }
+
+        List<LinkCandidate> candidates = linkEvaluator.findCandidates(content, wikiLinkContext);
+        int wordCount = content.split("\\s+").length;
+        return linkEvaluator.selectBestLinks(candidates, wordCount);
     }
 
     @Override
@@ -100,10 +152,25 @@ public class EditorAgent extends BaseAgent {
             }
         }
 
-        // Existing pages for link integration
-        if (!existingPages.isEmpty()) {
+        // Intelligent link suggestions from LinkEvaluator
+        List<LinkCandidate> suggestedLinks = getSuggestedLinks(draft.markdownContent());
+        if (!suggestedLinks.isEmpty()) {
+            prompt.append("\n--- SUGGESTED LINKS (prioritized) ---\n");
+            prompt.append("These links have been automatically identified as high-value. Consider adding them:\n");
+            for (LinkCandidate link : suggestedLinks) {
+                prompt.append("- \"").append(link.anchorText()).append("\" -> ")
+                      .append(link.toWikiLink())
+                      .append(" (score: ").append(String.format("%.2f", link.relevanceScore()));
+                if (link.firstMention()) {
+                    prompt.append(", first mention");
+                }
+                prompt.append(")\n");
+            }
+            prompt.append("\nLink density target: 3-8% of words. Prioritize first mentions.\n");
+        } else if (!existingPages.isEmpty()) {
+            // Fallback to simple page list if no evaluator
             prompt.append("\n--- EXISTING PAGES (for internal linking) ---\n");
-            prompt.append("Add [PageName]() links where content naturally references these topics:\n");
+            prompt.append("Add [PageName] links where content naturally references these topics:\n");
             for (String page : existingPages) {
                 prompt.append("- ").append(page).append("\n");
             }

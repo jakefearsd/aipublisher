@@ -63,7 +63,8 @@ public class GlossaryService {
                     sourceArticle,
                     null,
                     List.of(),
-                    true
+                    true,
+                    null
             );
             addEntry(glossaryEntry);
         }
