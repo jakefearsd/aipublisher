@@ -4,6 +4,8 @@ import com.jakefear.aipublisher.approval.ApprovalCallback;
 import com.jakefear.aipublisher.approval.ApprovalDecision;
 import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.config.PipelineProperties;
+import com.jakefear.aipublisher.content.ContentType;
+import com.jakefear.aipublisher.content.ContentTypeSelector;
 import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.pipeline.PipelineResult;
 import com.jakefear.aipublisher.pipeline.PublishingPipeline;
@@ -34,13 +36,16 @@ class AiPublisherCommandTest {
     @Mock
     private ApprovalService approvalService;
 
+    private ContentTypeSelector contentTypeSelector;
+
     private AiPublisherCommand command;
     private StringWriter outputWriter;
     private PrintWriter out;
 
     @BeforeEach
     void setUp() {
-        command = new AiPublisherCommand(pipeline, approvalService);
+        contentTypeSelector = new ContentTypeSelector();
+        command = new AiPublisherCommand(pipeline, approvalService, contentTypeSelector);
         outputWriter = new StringWriter();
         out = new PrintWriter(outputWriter, true);
     }
@@ -339,8 +344,9 @@ class AiPublisherCommandTest {
 
             when(pipeline.execute(any(TopicBrief.class))).thenReturn(successResult);
 
-            // Simulate user input
-            String userInput = "Interactive Topic\n";
+            // Simulate user input for the full interactive session
+            // Topic -> ContentType (accept default) -> Audience (accept default) -> Content details (accept default) -> WordCount (accept default) -> Related pages (none) -> Confirm
+            String userInput = "Interactive Topic\n\n\n\n\n\n\ny\n";
             command.setStreams(
                     new BufferedReader(new StringReader(userInput)),
                     out
@@ -348,13 +354,13 @@ class AiPublisherCommandTest {
 
             // Act
             CommandLine cmd = new CommandLine(command);
-            int exitCode = cmd.execute("--auto-approve");
+            int exitCode = cmd.execute();
 
             // Assert
             assertEquals(0, exitCode);
 
             String output = outputWriter.toString();
-            assertTrue(output.contains("Enter topic"));
+            assertTrue(output.contains("STEP 1"));
         }
 
         @Test
@@ -376,7 +382,7 @@ class AiPublisherCommandTest {
             verify(pipeline, never()).execute(any());
 
             String output = outputWriter.toString();
-            assertTrue(output.contains("Goodbye"));
+            assertTrue(output.contains("cancelled"));
         }
     }
 

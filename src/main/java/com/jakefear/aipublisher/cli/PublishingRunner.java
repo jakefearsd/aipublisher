@@ -137,7 +137,12 @@ public class PublishingRunner implements CommandLineRunner {
             return null;
         }
 
-        return new TopicBrief(topic, audience, wordCount, requiredSections, relatedPages, List.of());
+        return TopicBrief.builder(topic)
+                .targetAudience(audience)
+                .targetWordCount(wordCount)
+                .requiredSections(requiredSections)
+                .relatedPages(relatedPages)
+                .build();
     }
 
     private void printUsage() {

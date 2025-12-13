@@ -3,6 +3,8 @@ package com.jakefear.aipublisher.cli;
 import com.jakefear.aipublisher.approval.ApprovalCallback;
 import com.jakefear.aipublisher.approval.ApprovalDecision;
 import com.jakefear.aipublisher.approval.ApprovalService;
+import com.jakefear.aipublisher.content.ContentType;
+import com.jakefear.aipublisher.content.ContentTypeSelector;
 import com.jakefear.aipublisher.document.TopicBrief;
 import com.jakefear.aipublisher.pipeline.PipelineResult;
 import com.jakefear.aipublisher.pipeline.PublishingPipeline;
@@ -29,22 +31,32 @@ import java.util.concurrent.Callable;
  * - Named and short options
  * - Auto-generated help
  * - Interactive mode when topic not specified
+ * - Content type selection
  * - Auto-approve mode for scripting
  */
 @Component
 @Command(
         name = "aipublisher",
         mixinStandardHelpOptions = true,
-        version = "AI Publisher 0.1.0",
+        version = "AI Publisher 0.2.0",
         description = "Generate well-researched, fact-checked articles using AI agents.",
         footer = {
                 "",
                 "Examples:",
-                "  aipublisher -t \"Apache Kafka\"",
-                "  aipublisher --topic \"Machine Learning\" --audience \"beginners\" --words 1500",
+                "  aipublisher                                    # Interactive mode",
+                "  aipublisher -t \"Apache Kafka\"                  # Simple topic",
+                "  aipublisher -t \"How to use Docker\" --type tutorial",
+                "  aipublisher -t \"Kafka vs RabbitMQ\" --type comparison",
                 "  aipublisher -t \"Docker\" -a \"DevOps engineers\" -w 1000 --auto-approve",
-                "  aipublisher -t \"Kubernetes\" -k sk-ant-api03-xxxxx",
-                "  aipublisher -t \"Kubernetes\" --key-file ~/.anthropic-key",
+                "",
+                "Content Types:",
+                "  concept         Explains what something is",
+                "  tutorial        Step-by-step guide",
+                "  reference       Quick lookup information",
+                "  guide           Decision support and best practices",
+                "  comparison      Analyzes alternatives",
+                "  troubleshooting Problem diagnosis and solutions",
+                "  overview        High-level introduction",
                 "",
                 "API Key (one of these is required):",
                 "  -k, --key         Pass API key directly on command line",
@@ -56,10 +68,15 @@ public class AiPublisherCommand implements Callable<Integer> {
 
     private Supplier<PublishingPipeline> pipelineSupplier;
     private Supplier<ApprovalService> approvalServiceSupplier;
+    private Supplier<ContentTypeSelector> contentTypeSelectorSupplier;
 
     @Option(names = {"-t", "--topic"},
-            description = "Topic to write about (prompts interactively if not specified)")
+            description = "Topic to write about (launches interactive mode if not specified)")
     private String topic;
+
+    @Option(names = {"--type"},
+            description = "Content type: concept, tutorial, reference, guide, comparison, troubleshooting, overview")
+    private String contentTypeStr;
 
     @Option(names = {"-a", "--audience"},
             description = "Target audience for the article",
@@ -86,9 +103,21 @@ public class AiPublisherCommand implements Callable<Integer> {
             split = ",")
     private List<String> relatedPages = List.of();
 
+    @Option(names = {"--context"},
+            description = "Domain context (e.g., 'e-commerce', 'microservices')")
+    private String domainContext;
+
+    @Option(names = {"--goal"},
+            description = "Specific goal or outcome for tutorials and guides")
+    private String specificGoal;
+
     @Option(names = {"--auto-approve"},
             description = "Skip all approval prompts (for scripting)")
     private boolean autoApprove;
+
+    @Option(names = {"-i", "--interactive"},
+            description = "Force interactive mode even with topic specified")
+    private boolean forceInteractive;
 
     @Option(names = {"-v", "--verbose"},
             description = "Enable verbose output")
@@ -134,11 +163,20 @@ public class AiPublisherCommand implements Callable<Integer> {
     }
 
     /**
+     * Set the content type selector supplier (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setContentTypeSelectorProvider(ObjectProvider<ContentTypeSelector> contentTypeSelectorProvider) {
+        this.contentTypeSelectorSupplier = contentTypeSelectorProvider::getObject;
+    }
+
+    /**
      * Constructor for testing - uses direct instances.
      */
-    public AiPublisherCommand(PublishingPipeline pipeline, ApprovalService approvalService) {
+    public AiPublisherCommand(PublishingPipeline pipeline, ApprovalService approvalService, ContentTypeSelector contentTypeSelector) {
         this.pipelineSupplier = () -> pipeline;
         this.approvalServiceSupplier = () -> approvalService;
+        this.contentTypeSelectorSupplier = () -> contentTypeSelector;
     }
 
     /**
@@ -160,14 +198,60 @@ public class AiPublisherCommand implements Callable<Integer> {
                 return 1;
             }
 
-            // Interactive mode if topic not specified
-            if (topic == null || topic.isBlank()) {
-                topic = promptForTopic(in, out);
-                if (topic == null) {
+            TopicBrief topicBrief;
+
+            // Determine if we should use interactive mode
+            boolean useInteractive = forceInteractive || (topic == null || topic.isBlank());
+
+            if (useInteractive) {
+                // Run full interactive session
+                InteractiveSession session = new InteractiveSession(in, out, contentTypeSelectorSupplier.get());
+                if (!session.run()) {
                     return 0; // User cancelled
                 }
-                // Also prompt for audience and word count in interactive mode
-                promptForInteractiveOptions(in, out);
+
+                // Build TopicBrief from session
+                topicBrief = TopicBrief.builder(session.getTopic())
+                        .targetAudience(session.getAudience())
+                        .targetWordCount(session.getWordCount())
+                        .contentType(session.getContentType())
+                        .requiredSections(session.getRequiredSections())
+                        .relatedPages(session.getRelatedPages())
+                        .domainContext(session.getDomainContext())
+                        .specificGoal(session.getSpecificGoal())
+                        .build();
+
+                // Set auto-approve for post-interactive execution
+                autoApprove = true;
+
+            } else {
+                // Parse content type if specified
+                ContentType contentType = null;
+                if (contentTypeStr != null && !contentTypeStr.isBlank()) {
+                    contentType = ContentType.fromString(contentTypeStr);
+                    if (contentType == null) {
+                        out.println("WARNING: Unrecognized content type '" + contentTypeStr + "'. Will auto-detect.");
+                    }
+                }
+
+                // Auto-detect content type if not specified
+                if (contentType == null) {
+                    contentType = contentTypeSelectorSupplier.get().detectFromTopic(topic);
+                    if (verbose) {
+                        out.println("Auto-detected content type: " + contentType.getDisplayName());
+                    }
+                }
+
+                // Build TopicBrief from CLI options
+                topicBrief = TopicBrief.builder(topic)
+                        .targetAudience(audience)
+                        .targetWordCount(wordCount)
+                        .contentType(contentType)
+                        .requiredSections(requiredSections)
+                        .relatedPages(relatedPages)
+                        .domainContext(domainContext)
+                        .specificGoal(specificGoal)
+                        .build();
             }
 
             // Configure auto-approval if requested
@@ -175,26 +259,12 @@ public class AiPublisherCommand implements Callable<Integer> {
                 approvalServiceSupplier.get().setCallback(createAutoApproveCallback());
             }
 
-            // Display banner
+            // Display configuration
             if (!quiet) {
-                printBanner(out);
-                out.println();
-                out.println("Topic: " + topic);
-                out.println("Audience: " + audience);
-                out.println("Target words: " + wordCount);
-                out.println();
+                printConfiguration(out, topicBrief);
             }
 
-            // Create topic brief and execute pipeline
-            TopicBrief topicBrief = new TopicBrief(
-                    topic,
-                    audience,
-                    wordCount,
-                    requiredSections,
-                    relatedPages,
-                    List.of()
-            );
-
+            // Execute pipeline
             PipelineResult result = pipelineSupplier.get().execute(topicBrief);
 
             // Display results
@@ -212,60 +282,28 @@ public class AiPublisherCommand implements Callable<Integer> {
         }
     }
 
-    private String promptForTopic(BufferedReader in, PrintWriter out) {
-        try {
-            printBanner(out);
-            out.println();
-            out.print("Enter topic (or 'quit' to exit): ");
-            out.flush();
-
-            String input = in.readLine();
-            if (input == null || input.equalsIgnoreCase("quit") || input.equalsIgnoreCase("q")) {
-                out.println("Goodbye!");
-                return null;
-            }
-
-            return input.trim();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private void promptForInteractiveOptions(BufferedReader in, PrintWriter out) {
-        try {
-            // Prompt for audience
-            out.println();
-            out.print("Target audience [" + audience + "]: ");
-            out.flush();
-            String audienceInput = in.readLine();
-            if (audienceInput != null && !audienceInput.trim().isEmpty()) {
-                audience = audienceInput.trim();
-            }
-
-            // Prompt for word count
-            out.print("Target word count [" + wordCount + "]: ");
-            out.flush();
-            String wordCountInput = in.readLine();
-            if (wordCountInput != null && !wordCountInput.trim().isEmpty()) {
-                try {
-                    int parsed = Integer.parseInt(wordCountInput.trim());
-                    if (parsed > 0) {
-                        wordCount = parsed;
-                    }
-                } catch (NumberFormatException e) {
-                    out.println("Invalid number, using default: " + wordCount);
-                }
-            }
-        } catch (Exception e) {
-            // Keep defaults on error
-        }
-    }
-
-    private void printBanner(PrintWriter out) {
+    private void printConfiguration(PrintWriter out, TopicBrief brief) {
+        out.println();
         out.println("╔═══════════════════════════════════════════════════════════╗");
         out.println("║                      AI PUBLISHER                         ║");
         out.println("║     Generate well-researched articles with AI agents      ║");
         out.println("╚═══════════════════════════════════════════════════════════╝");
+        out.println();
+        out.println("Topic:        " + brief.topic());
+        out.println("Content Type: " + (brief.contentType() != null ? brief.contentType().getDisplayName() : "Auto"));
+        out.println("Audience:     " + brief.targetAudience());
+        out.println("Target words: " + brief.targetWordCount());
+
+        if (brief.domainContext() != null && !brief.domainContext().isEmpty()) {
+            out.println("Context:      " + brief.domainContext());
+        }
+        if (brief.specificGoal() != null && !brief.specificGoal().isEmpty()) {
+            out.println("Goal:         " + brief.specificGoal());
+        }
+        if (!brief.relatedPages().isEmpty()) {
+            out.println("Related:      " + String.join(", ", brief.relatedPages()));
+        }
+        out.println();
     }
 
     private void printResults(PrintWriter out, PipelineResult result) {
@@ -370,5 +408,13 @@ public class AiPublisherCommand implements Callable<Integer> {
 
     public Path getKeyFile() {
         return keyFile;
+    }
+
+    public String getContentTypeStr() {
+        return contentTypeStr;
+    }
+
+    public boolean isForceInteractive() {
+        return forceInteractive;
     }
 }

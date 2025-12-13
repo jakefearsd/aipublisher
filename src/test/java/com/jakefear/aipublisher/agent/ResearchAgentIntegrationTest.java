@@ -82,14 +82,12 @@ class ResearchAgentIntegrationTest {
     @DisplayName("Handles topic with specific requirements")
     void handlesTopicWithRequirements() {
         // Arrange
-        TopicBrief brief = new TopicBrief(
-                "Apache Kafka",
-                "developers new to event streaming",
-                1200,
-                java.util.List.of("Introduction", "Core Concepts", "Use Cases"),
-                java.util.List.of("EventStreaming", "MessageQueue"),
-                java.util.List.of()
-        );
+        TopicBrief brief = TopicBrief.builder("Apache Kafka")
+                .targetAudience("developers new to event streaming")
+                .targetWordCount(1200)
+                .requiredSections(java.util.List.of("Introduction", "Core Concepts", "Use Cases"))
+                .relatedPages(java.util.List.of("EventStreaming", "MessageQueue"))
+                .build();
         PublishingDocument document = new PublishingDocument(brief);
         document.transitionTo(DocumentState.RESEARCHING);
 

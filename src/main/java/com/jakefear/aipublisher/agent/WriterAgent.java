@@ -2,6 +2,8 @@ package com.jakefear.aipublisher.agent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.jakefear.aipublisher.content.ContentType;
+import com.jakefear.aipublisher.content.ContentTypeTemplate;
 import com.jakefear.aipublisher.document.*;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -65,6 +67,27 @@ public class WriterAgent extends BaseAgent {
 
         if (topicBrief.targetWordCount() > 0) {
             prompt.append("TARGET LENGTH: approximately ").append(topicBrief.targetWordCount()).append(" words\n");
+        }
+
+        // Content type guidance
+        ContentType contentType = topicBrief.contentType();
+        if (contentType != null) {
+            ContentTypeTemplate template = ContentTypeTemplate.forType(contentType);
+            if (template != null) {
+                prompt.append("\n--- CONTENT TYPE GUIDANCE ---\n");
+                prompt.append(template.toWriterGuidance());
+                prompt.append("\n");
+            }
+        }
+
+        // Domain context
+        if (topicBrief.domainContext() != null && !topicBrief.domainContext().isBlank()) {
+            prompt.append("\nDOMAIN CONTEXT: ").append(topicBrief.domainContext()).append("\n");
+        }
+
+        // Specific goal
+        if (topicBrief.specificGoal() != null && !topicBrief.specificGoal().isBlank()) {
+            prompt.append("SPECIFIC GOAL: ").append(topicBrief.specificGoal()).append("\n");
         }
 
         // Research brief content
