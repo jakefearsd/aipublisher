@@ -1,42 +1,51 @@
 # AI Publisher
 
-A multi-agent AI system that generates well-researched, fact-checked articles using Claude AI. The system orchestrates four specialized agents through a publishing pipeline to produce high-quality wiki-style documentation.
+A multi-agent AI system that generates well-researched, fact-checked articles using Claude AI. The system orchestrates five specialized agents through a publishing pipeline to produce high-quality JSPWiki-formatted documentation.
 
 ## Overview
 
-AI Publisher uses a team of AI agents, each with a specialized role, to create articles that are thoroughly researched, clearly written, fact-verified, and publication-ready. The agents work in sequence, with optional human approval checkpoints at each stage.
+AI Publisher uses a team of AI agents, each with a specialized role, to create articles that are thoroughly researched, clearly written, fact-verified, syntax-validated, and publication-ready. The agents work in sequence, with optional human approval checkpoints at each stage.
 
 ### The Agent Team
 
 | Agent | Role | Temperature | Purpose |
 |-------|------|-------------|---------|
 | **Research Agent** | Information Gatherer | 0.3 | Collects facts, sources, and creates article outlines |
-| **Writer Agent** | Technical Writer | 0.7 | Transforms research into well-structured wiki articles |
+| **Writer Agent** | Technical Writer | 0.7 | Transforms research into well-structured JSPWiki articles |
 | **Fact Checker Agent** | Quality Assurance | 0.1 | Verifies every claim against sources, flags issues |
 | **Editor Agent** | Final Polish | 0.5 | Refines prose, adds wiki links, calculates quality score |
+| **Critic Agent** | Syntax & Quality Reviewer | 0.3 | Validates JSPWiki syntax, reviews structure, final QA |
 
 ### Pipeline Flow
 
 ```
-TopicBrief --> Research --> Draft --> Fact Check --> Edit --> Publish --> .md file
+TopicBrief --> Research --> Draft --> Fact Check --> Edit --> Critique --> Publish
+                              ^          |            ^         |
+                              |          v            |         v
+                              +-- REVISION LOOP ------+---------+
 ```
 
-Documents progress through five phases:
+Documents progress through six phases:
 
 1. **Research** - Gather key facts, sources, and create an outline
-2. **Drafting** - Write the article in JSPWiki-compatible Markdown
+2. **Drafting** - Write the article in JSPWiki markup syntax
 3. **Fact Checking** - Verify all claims, identify questionable content
 4. **Editing** - Polish prose, integrate wiki links, score quality
-5. **Publishing** - Write the final `.md` file to the output directory
+5. **Critique** - Validate JSPWiki syntax, review structure, final quality check
+6. **Publishing** - Write the final `.md` file to the output directory
 
 ## Features
 
-- **Multi-Agent Architecture** - Four specialized AI agents with role-appropriate temperature settings
-- **Automatic Revision Loop** - Fact checker can trigger re-drafting for quality issues (up to 3 cycles)
+- **Multi-Agent Architecture** - Five specialized AI agents with role-appropriate temperature settings
+- **JSPWiki Syntax Output** - Native JSPWiki markup format (not Markdown) for wiki compatibility
+- **Automatic Revision Loop** - Fact checker and critic can trigger re-drafting for quality issues
+- **Syntax Validation** - Critic agent catches any Markdown syntax that should be JSPWiki
 - **Human Approval Workflow** - Optional review checkpoints at each phase boundary
-- **Quality Scoring** - Editor assigns 0.0-1.0 quality scores with configurable thresholds
+- **Quality Scoring** - Editor and Critic assign 0.0-1.0 quality scores with configurable thresholds
 - **Wiki Integration** - Automatic internal linking to existing pages, CamelCase naming
 - **Comprehensive Fact Checking** - Every claim verified, confidence levels, recommended actions
+- **Web Search Integration** - Optional DuckDuckGo-based web search for research and verification
+- **Source Reliability Assessment** - Automatic classification of source trustworthiness
 - **Pipeline Monitoring** - Event system for tracking progress and metrics
 - **Flexible API Key Management** - Environment variable, CLI flag, or key file
 
@@ -147,6 +156,7 @@ anthropic.temperature.research=0.3
 anthropic.temperature.writer=0.7
 anthropic.temperature.factchecker=0.1
 anthropic.temperature.editor=0.5
+anthropic.temperature.critic=0.3
 ```
 
 ### Pipeline Settings
@@ -165,6 +175,16 @@ pipeline.approval.after-factcheck=false
 pipeline.approval.before-publish=true
 ```
 
+### Web Search Settings
+
+```properties
+# Enable/disable web search for research augmentation
+search.enabled=true
+
+# Maximum search results to return
+search.max-results=5
+```
+
 ### Output Settings
 
 ```properties
@@ -181,6 +201,9 @@ quality.min-factcheck-confidence=MEDIUM
 
 # Minimum editor quality score to publish
 quality.min-editor-score=0.8
+
+# Minimum critic score to publish (syntax validation threshold)
+quality.min-critic-score=0.8
 ```
 
 ## Architecture
@@ -190,10 +213,10 @@ quality.min-editor-score=0.8
 Documents progress through these states:
 
 ```
-CREATED --> RESEARCHING --> DRAFTING --> FACT_CHECKING --> EDITING --> PUBLISHED
-                 ^              |               |
-                 |              v               v
-                 +------ REVISION LOOP --------+
+CREATED --> RESEARCHING --> DRAFTING --> FACT_CHECKING --> EDITING --> CRITIQUING --> PUBLISHED
+                 ^              |               |              ^            |
+                 |              v               v              |            v
+                 +------- REVISION LOOP -------+---------------+-----------+
 
 Any state --> AWAITING_APPROVAL --> Continue or REJECTED
 ```
@@ -205,9 +228,51 @@ Each agent produces structured output that feeds into the next phase:
 | Agent | Output | Key Fields |
 |-------|--------|------------|
 | Research | `ResearchBrief` | Key facts, sources, outline, glossary, uncertainties |
-| Writer | `ArticleDraft` | Markdown content, summary, internal links, categories |
+| Writer | `ArticleDraft` | JSPWiki content, summary, internal links, categories |
 | Fact Checker | `FactCheckReport` | Verified claims, questionable items, confidence, action |
 | Editor | `FinalArticle` | Polished content, metadata, quality score, edit summary |
+| Critic | `CriticReport` | Structure/syntax/readability scores, issues, suggestions |
+
+### JSPWiki Markup Format
+
+The pipeline generates articles in JSPWiki markup format, which differs from Markdown:
+
+| Element | JSPWiki Syntax | Markdown Equivalent |
+|---------|---------------|---------------------|
+| H1 Heading | `!!! Title` | `# Title` |
+| H2 Heading | `!! Section` | `## Section` |
+| H3 Heading | `! Subsection` | `### Subsection` |
+| Bold | `__bold__` | `**bold**` |
+| Italic | `''italic''` | `*italic*` |
+| Inline Code | `{{code}}` | `` `code` `` |
+| Code Block | `{{{ code }}}` | ` ```code``` ` |
+| Internal Link | `[PageName]` | `[text](PageName)` |
+| External Link | `[text\|url]` | `[text](url)` |
+| Bullet List | `* item` | `- item` |
+| Numbered List | `# item` | `1. item` |
+| Table Header | `\|\| H1 \|\| H2` | `\| H1 \| H2 \|` |
+| Table of Contents | `[{TableOfContents}]` | N/A |
+| Categories | `[{SET categories='Cat1,Cat2'}]` | N/A |
+
+### Web Search Integration
+
+The pipeline includes optional web search capabilities for enhanced research and fact-checking:
+
+**Search Features:**
+- DuckDuckGo-based search (no API key required)
+- Automatic source reliability assessment
+- Specialized search methods for verification and documentation
+
+**Source Reliability Levels:**
+
+| Level | Description | Score | Examples |
+|-------|-------------|-------|----------|
+| OFFICIAL | Primary documentation | 1.0 | docs.oracle.com, kafka.apache.org |
+| ACADEMIC | Peer-reviewed sources | 0.95 | arxiv.org, ACM, IEEE |
+| AUTHORITATIVE | Major tech publishers | 0.85 | O'Reilly, Manning, InfoQ |
+| REPUTABLE | Community with oversight | 0.7 | Wikipedia, Stack Overflow |
+| COMMUNITY | User-generated content | 0.5 | Reddit, Quora, forums |
+| UNCERTAIN | Cannot determine | 0.3 | Unknown sources |
 
 ### Fact Check Outcomes
 
@@ -219,6 +284,21 @@ The Fact Checker evaluates every claim and provides:
   - `APPROVE` - Content is ready to proceed
   - `REVISE` - Send back to Writer for improvements
   - `REJECT` - Content cannot meet quality standards
+
+### Critic Review Process
+
+The Critic Agent performs final quality assurance before publication:
+
+**Review Categories:**
+1. **Structure Score** - Article organization, heading hierarchy, sections
+2. **Syntax Score** - JSPWiki markup correctness (critical - flags any Markdown)
+3. **Readability Score** - Paragraph size, tone, technical clarity
+4. **Overall Score** - Combined quality assessment
+
+**Critic Actions:**
+- `APPROVE` - Article ready for publication (score >= 0.8, no critical syntax issues)
+- `REVISE` - Minor issues need fixing (triggers revision loop back to Editor)
+- `REJECT` - Major problems require rework
 
 ### Human Approval Workflow
 
@@ -240,9 +320,11 @@ Use `--auto-approve` to skip all prompts for automated/CI usage.
 src/main/java/com/jakefear/aipublisher/
 ├── agent/                    # AI agent implementations
 │   ├── ResearchAgent.java    # Information gathering
-│   ├── WriterAgent.java      # Article drafting
+│   ├── WriterAgent.java      # Article drafting (JSPWiki)
 │   ├── FactCheckerAgent.java # Claim verification
 │   ├── EditorAgent.java      # Final polish
+│   ├── CriticAgent.java      # Syntax & quality review
+│   ├── BaseAgent.java        # Common agent functionality
 │   └── AgentPrompts.java     # System prompts for all agents
 │
 ├── pipeline/                 # Pipeline orchestration
@@ -255,14 +337,20 @@ src/main/java/com/jakefear/aipublisher/
 │   ├── ResearchBrief.java       # Research output
 │   ├── ArticleDraft.java        # Writer output
 │   ├── FactCheckReport.java     # Verification results
-│   └── FinalArticle.java        # Publication-ready content
+│   ├── FinalArticle.java        # Editor output
+│   └── CriticReport.java        # Critic review results
+│
+├── search/                   # Web search integration
+│   ├── WebSearchService.java    # DuckDuckGo search
+│   ├── SearchResult.java        # Search result model
+│   └── SourceReliability.java   # Source assessment
 │
 ├── approval/                 # Human approval workflow
 │   ├── ApprovalService.java     # Approval management
 │   └── ApprovalCallback.java    # Pluggable handlers
 │
 ├── output/                   # Output generation
-│   └── WikiOutputService.java   # JSPWiki Markdown writer
+│   └── WikiOutputService.java   # JSPWiki file writer
 │
 ├── monitoring/               # Pipeline observability
 │   └── PipelineMonitoringService.java
@@ -303,17 +391,55 @@ Phase 4: Editing
   Quality score: 0.91
   Added 3 internal links
 
-Phase 5: Publishing
+Phase 5: Critique
+  Structure: 0.92, Syntax: 0.98, Readability: 0.89
+  Overall: 0.92, Action: APPROVE
+
+Phase 6: Publishing
   Output: ./output/ApacheKafka.md
 
 ════════════════════════════════════════════════════════════
 SUCCESS! Article published.
 
 Output: ./output/ApacheKafka.md
-Quality score: 0.91
+Quality score: 0.92
 Word count: 1,523
-Total time: 45,231 ms
+Total time: 52,341 ms
 ════════════════════════════════════════════════════════════
+```
+
+### Sample Output (JSPWiki Format)
+
+```
+!!! Apache Kafka
+
+Apache Kafka is an open-source distributed event streaming platform originally
+developed by LinkedIn. It provides high-throughput, fault-tolerant handling of
+real-time data feeds.
+
+[{TableOfContents}]
+
+!! Core Concepts
+
+! Topics and Partitions
+
+A __topic__ is a category for organizing messages. Topics are split into
+{{partitions}} for parallel processing. Each partition maintains an ordered,
+immutable sequence of records.
+
+! Producers and Consumers
+
+[Producers|KafkaProducers] write data to topics, while [consumers|KafkaConsumers]
+read from them. Consumer groups enable parallel processing across multiple
+instances.
+
+!! See Also
+
+* [EventStreaming]
+* [MessageQueues]
+* [DistributedSystems]
+
+[{SET categories='Streaming,Messaging,BigData'}]
 ```
 
 ## Development
@@ -321,14 +447,20 @@ Total time: 45,231 ms
 ### Running Tests
 
 ```bash
-# All tests
+# All unit tests (no API key required)
 mvn test
+
+# Include integration tests (requires API key)
+ANTHROPIC_API_KEY='your-key' mvn test -Dgroups=integration
+
+# Only integration tests
+ANTHROPIC_API_KEY='your-key' mvn test -Dgroups=integration
+
+# Skip integration tests explicitly
+mvn test -DexcludeGroups=integration
 
 # Specific test class
 mvn test -Dtest=PublishingPipelineTest
-
-# Skip integration tests (require API key)
-mvn test -DexcludeGroups=integration
 ```
 
 ### Building
@@ -337,8 +469,11 @@ mvn test -DexcludeGroups=integration
 # Build without tests
 mvn clean package -DskipTests
 
-# Build with tests (unit tests only)
+# Build with unit tests only
 mvn clean package
+
+# Build with all tests (requires API key)
+ANTHROPIC_API_KEY='your-key' mvn clean package
 ```
 
 ### Running from Source

@@ -3,9 +3,10 @@ package com.jakefear.aipublisher.agent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.document.*;
+import com.jakefear.aipublisher.search.SearchResult;
+import com.jakefear.aipublisher.search.WebSearchService;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -16,21 +17,48 @@ import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
 
 /**
  * Research Agent: Gathers and synthesizes source material for article creation.
+ * Now enhanced with web search capabilities for current, verifiable information.
  *
  * Input: TopicBrief
  * Output: ResearchBrief
  */
 @Component
-@Lazy
 public class ResearchAgent extends BaseAgent {
 
-    public ResearchAgent(@Qualifier("researchChatModel") ChatLanguageModel model) {
-        super(model, AgentPrompts.RESEARCH);
+    private WebSearchService webSearchService;
+
+    /**
+     * Default constructor for Spring - uses setter injection.
+     */
+    public ResearchAgent() {
+        super(AgentPrompts.RESEARCH);
+    }
+
+    /**
+     * Set the chat model (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setChatModel(@Qualifier("researchChatModel") ChatLanguageModel model) {
+        this.model = model;
+    }
+
+    /**
+     * Set the web search service (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setWebSearchService(WebSearchService webSearchService) {
+        this.webSearchService = webSearchService;
     }
 
     // Constructor for testing
     public ResearchAgent(ChatLanguageModel model, String systemPrompt) {
         super(model, systemPrompt);
+    }
+
+    // Constructor for testing with web search
+    public ResearchAgent(ChatLanguageModel model, String systemPrompt, WebSearchService webSearchService) {
+        super(model, systemPrompt);
+        this.webSearchService = webSearchService;
     }
 
     @Override
@@ -69,9 +97,67 @@ public class ResearchAgent extends BaseAgent {
             }
         }
 
+        // Add web search results if available
+        List<SearchResult> searchResults = performWebSearch(brief.topic());
+        if (!searchResults.isEmpty()) {
+            prompt.append("\n--- WEB SEARCH RESULTS ---\n");
+            prompt.append("The following are current web search results about this topic.\n");
+            prompt.append("Use these to supplement your knowledge with current information.\n");
+            prompt.append("Cite URLs when using information from these sources.\n\n");
+            for (SearchResult result : searchResults) {
+                prompt.append(result.toPromptFormat());
+            }
+            prompt.append("\n");
+        }
+
+        // Add official docs search results
+        List<SearchResult> docsResults = performOfficialDocsSearch(brief.topic());
+        if (!docsResults.isEmpty()) {
+            prompt.append("\n--- OFFICIAL DOCUMENTATION RESULTS ---\n");
+            for (SearchResult result : docsResults) {
+                prompt.append(result.toPromptFormat());
+            }
+            prompt.append("\n");
+        }
+
         prompt.append("\nProduce a comprehensive research brief as JSON.");
+        prompt.append("\nInclude URLs from the search results in your sources where applicable.");
 
         return prompt.toString();
+    }
+
+    /**
+     * Perform web search for the topic.
+     */
+    private List<SearchResult> performWebSearch(String topic) {
+        if (webSearchService == null || !webSearchService.isEnabled()) {
+            return List.of();
+        }
+        try {
+            List<SearchResult> results = webSearchService.search(topic);
+            log.debug("Web search for '{}' returned {} results", topic, results.size());
+            return results;
+        } catch (Exception e) {
+            log.warn("Web search failed for topic '{}': {}", topic, e.getMessage());
+            return List.of();
+        }
+    }
+
+    /**
+     * Search for official documentation about the topic.
+     */
+    private List<SearchResult> performOfficialDocsSearch(String topic) {
+        if (webSearchService == null || !webSearchService.isEnabled()) {
+            return List.of();
+        }
+        try {
+            List<SearchResult> results = webSearchService.searchOfficialDocs(topic);
+            log.debug("Official docs search for '{}' returned {} results", topic, results.size());
+            return results;
+        } catch (Exception e) {
+            log.warn("Official docs search failed for topic '{}': {}", topic, e.getMessage());
+            return List.of();
+        }
     }
 
     @Override

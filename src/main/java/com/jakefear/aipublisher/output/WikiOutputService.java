@@ -1,11 +1,13 @@
 package com.jakefear.aipublisher.output;
 
 import com.jakefear.aipublisher.config.OutputProperties;
-import com.jakefear.aipublisher.document.FinalArticle;
-import com.jakefear.aipublisher.document.PublishingDocument;
+import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.util.PageNameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -182,6 +184,181 @@ public class WikiOutputService {
             return filename.substring(0, filename.length() - ext.length());
         }
         return filename;
+    }
+
+    /**
+     * Write a failed document to the output directory for debugging.
+     * The filename will include a suffix indicating the failure state.
+     * The content will include comment blocks highlighting the issues.
+     *
+     * @param document The document that failed
+     * @param failedState The state at which the pipeline failed
+     * @param errorMessage The error message describing the failure
+     * @return The path to the written file, or null if writing failed
+     */
+    public Path writeFailedDocument(PublishingDocument document, DocumentState failedState, String errorMessage) {
+        try {
+            Path outputDir = ensureOutputDirectory();
+            String filename = generateFailedFilename(document.getPageName(), failedState);
+            Path outputPath = outputDir.resolve(filename);
+
+            String content = formatFailedDocument(document, failedState, errorMessage);
+
+            Files.writeString(outputPath, content, StandardCharsets.UTF_8);
+
+            log.info("Wrote failed document to {} for debugging (failed at {})", outputPath, failedState);
+
+            return outputPath;
+        } catch (IOException e) {
+            log.error("Failed to write failed document for debugging: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Generate the filename for a failed document.
+     * Format: PageName_FAILED_STATE_timestamp.md
+     *
+     * @param pageName The page name
+     * @param failedState The state at which it failed
+     * @return The filename with failure suffix
+     */
+    public String generateFailedFilename(String pageName, DocumentState failedState) {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String normalizedPageName = PageNameUtils.toCamelCaseOrDefault(pageName, "UnnamedPage");
+        return String.format("%s_FAILED_%s_%s%s",
+                normalizedPageName,
+                failedState.name(),
+                timestamp,
+                outputProperties.getFileExtension());
+    }
+
+    /**
+     * Format a failed document with debugging information and highlighted issues.
+     *
+     * @param document The failed document
+     * @param failedState The state at which it failed
+     * @param errorMessage The error message
+     * @return Formatted content with debugging information
+     */
+    public String formatFailedDocument(PublishingDocument document, DocumentState failedState, String errorMessage) {
+        StringBuilder sb = new StringBuilder();
+
+        // Header with failure information
+        sb.append("<!--\n");
+        sb.append("╔══════════════════════════════════════════════════════════════════════╗\n");
+        sb.append("║                    PIPELINE FAILURE - DEBUG DOCUMENT                  ║\n");
+        sb.append("╚══════════════════════════════════════════════════════════════════════╝\n");
+        sb.append("\n");
+        sb.append("  Topic: ").append(document.getTopicBrief().topic()).append("\n");
+        sb.append("  Failed At: ").append(failedState.name()).append("\n");
+        sb.append("  Timestamp: ").append(LocalDateTime.now()).append("\n");
+        sb.append("  Error: ").append(errorMessage).append("\n");
+        sb.append("-->\n\n");
+
+        // Add fact-check issues if available
+        FactCheckReport factCheckReport = document.getFactCheckReport();
+        if (factCheckReport != null && failedState == DocumentState.FACT_CHECKING) {
+            sb.append(formatFactCheckIssues(factCheckReport));
+        }
+
+        // Add the draft content if available
+        ArticleDraft draft = document.getDraft();
+        if (draft != null) {
+            sb.append("---\n\n");
+            sb.append("# Draft Content\n\n");
+            sb.append(draft.markdownContent());
+            sb.append("\n");
+        }
+
+        // Add research brief summary if available
+        ResearchBrief researchBrief = document.getResearchBrief();
+        if (researchBrief != null) {
+            sb.append("\n---\n\n");
+            sb.append("<!--\n");
+            sb.append("## Research Brief Summary\n");
+            sb.append("Key Facts: ").append(researchBrief.keyFacts().size()).append("\n");
+            sb.append("Sources: ").append(researchBrief.sources().size()).append("\n");
+            if (!researchBrief.uncertainAreas().isEmpty()) {
+                sb.append("\nUncertain Areas:\n");
+                for (String area : researchBrief.uncertainAreas()) {
+                    sb.append("  - ").append(area).append("\n");
+                }
+            }
+            sb.append("-->\n");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Format fact-check issues as a highlighted comment block.
+     *
+     * @param report The fact-check report
+     * @return Formatted issues section
+     */
+    private String formatFactCheckIssues(FactCheckReport report) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("<!--\n");
+        sb.append("╔══════════════════════════════════════════════════════════════════════╗\n");
+        sb.append("║                         FACT-CHECK ISSUES                             ║\n");
+        sb.append("╚══════════════════════════════════════════════════════════════════════╝\n");
+        sb.append("\n");
+        sb.append("Overall Confidence: ").append(report.overallConfidence()).append("\n");
+        sb.append("Recommendation: ").append(report.recommendedAction()).append("\n");
+        sb.append("Verified Claims: ").append(report.verifiedClaims().size()).append("\n");
+        sb.append("Questionable Claims: ").append(report.questionableClaims().size()).append("\n");
+        sb.append("Consistency Issues: ").append(report.consistencyIssues().size()).append("\n");
+        sb.append("\n");
+
+        // Questionable claims
+        if (!report.questionableClaims().isEmpty()) {
+            sb.append("─────────────────────────────────────────────────────────────────────────\n");
+            sb.append("QUESTIONABLE CLAIMS:\n");
+            sb.append("─────────────────────────────────────────────────────────────────────────\n\n");
+
+            int claimNum = 1;
+            for (QuestionableClaim claim : report.questionableClaims()) {
+                sb.append("[").append(claimNum++).append("] CLAIM: \"").append(claim.claim()).append("\"\n");
+                sb.append("    ISSUE: ").append(claim.issue()).append("\n");
+                if (claim.suggestion() != null && !claim.suggestion().isBlank()) {
+                    sb.append("    SUGGESTION: ").append(claim.suggestion()).append("\n");
+                }
+                sb.append("\n");
+            }
+        }
+
+        // Consistency issues
+        if (!report.consistencyIssues().isEmpty()) {
+            sb.append("─────────────────────────────────────────────────────────────────────────\n");
+            sb.append("CONSISTENCY ISSUES:\n");
+            sb.append("─────────────────────────────────────────────────────────────────────────\n\n");
+
+            int issueNum = 1;
+            for (String issue : report.consistencyIssues()) {
+                sb.append("[").append(issueNum++).append("] ").append(issue).append("\n");
+            }
+            sb.append("\n");
+        }
+
+        // Verified claims (for reference)
+        if (!report.verifiedClaims().isEmpty()) {
+            sb.append("─────────────────────────────────────────────────────────────────────────\n");
+            sb.append("VERIFIED CLAIMS (for reference):\n");
+            sb.append("─────────────────────────────────────────────────────────────────────────\n\n");
+
+            int verifiedNum = 1;
+            for (VerifiedClaim claim : report.verifiedClaims()) {
+                sb.append("[").append(verifiedNum++).append("] ").append(claim.claim());
+                sb.append(" (").append(claim.status()).append(")\n");
+            }
+            sb.append("\n");
+        }
+
+        sb.append("-->\n\n");
+
+        return sb.toString();
     }
 
     // Getters for testing

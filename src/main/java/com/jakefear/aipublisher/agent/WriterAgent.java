@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.document.*;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -21,11 +20,21 @@ import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
  * Output: ArticleDraft
  */
 @Component
-@Lazy
 public class WriterAgent extends BaseAgent {
 
-    public WriterAgent(@Qualifier("writerChatModel") ChatLanguageModel model) {
-        super(model, AgentPrompts.WRITER);
+    /**
+     * Default constructor for Spring - uses setter injection.
+     */
+    public WriterAgent() {
+        super(AgentPrompts.WRITER);
+    }
+
+    /**
+     * Set the chat model (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setChatModel(@Qualifier("writerChatModel") ChatLanguageModel model) {
+        this.model = model;
     }
 
     // Constructor for testing

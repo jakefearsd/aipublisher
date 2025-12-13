@@ -34,6 +34,11 @@ public enum DocumentState {
     EDITING,
 
     /**
+     * Critique phase - Critic Agent is reviewing article quality.
+     */
+    CRITIQUING,
+
+    /**
      * Awaiting human approval at a checkpoint.
      */
     AWAITING_APPROVAL,
@@ -55,8 +60,9 @@ public enum DocumentState {
     private static final Set<DocumentState> RESEARCHING_TRANSITIONS = EnumSet.of(DRAFTING, AWAITING_APPROVAL, REJECTED);
     private static final Set<DocumentState> DRAFTING_TRANSITIONS = EnumSet.of(FACT_CHECKING, AWAITING_APPROVAL, REJECTED);
     private static final Set<DocumentState> FACT_CHECKING_TRANSITIONS = EnumSet.of(EDITING, DRAFTING, AWAITING_APPROVAL, REJECTED);
-    private static final Set<DocumentState> EDITING_TRANSITIONS = EnumSet.of(PUBLISHED, FACT_CHECKING, DRAFTING, AWAITING_APPROVAL, REJECTED);
-    private static final Set<DocumentState> AWAITING_APPROVAL_TRANSITIONS = EnumSet.of(RESEARCHING, DRAFTING, FACT_CHECKING, EDITING, PUBLISHED, REJECTED);
+    private static final Set<DocumentState> EDITING_TRANSITIONS = EnumSet.of(CRITIQUING, FACT_CHECKING, DRAFTING, AWAITING_APPROVAL, REJECTED);
+    private static final Set<DocumentState> CRITIQUING_TRANSITIONS = EnumSet.of(PUBLISHED, EDITING, DRAFTING, AWAITING_APPROVAL, REJECTED);
+    private static final Set<DocumentState> AWAITING_APPROVAL_TRANSITIONS = EnumSet.of(RESEARCHING, DRAFTING, FACT_CHECKING, EDITING, CRITIQUING, PUBLISHED, REJECTED);
     private static final Set<DocumentState> TERMINAL_STATES = EnumSet.of(PUBLISHED, REJECTED);
 
     /**
@@ -78,6 +84,7 @@ public enum DocumentState {
             case DRAFTING -> DRAFTING_TRANSITIONS.contains(target);
             case FACT_CHECKING -> FACT_CHECKING_TRANSITIONS.contains(target);
             case EDITING -> EDITING_TRANSITIONS.contains(target);
+            case CRITIQUING -> CRITIQUING_TRANSITIONS.contains(target);
             case AWAITING_APPROVAL -> AWAITING_APPROVAL_TRANSITIONS.contains(target);
             case PUBLISHED, REJECTED -> false; // Terminal states cannot transition
         };
@@ -94,7 +101,7 @@ public enum DocumentState {
      * Check if this state represents active processing by an agent.
      */
     public boolean isProcessing() {
-        return this == RESEARCHING || this == DRAFTING || this == FACT_CHECKING || this == EDITING;
+        return this == RESEARCHING || this == DRAFTING || this == FACT_CHECKING || this == EDITING || this == CRITIQUING;
     }
 
     /**
@@ -108,7 +115,8 @@ public enum DocumentState {
             case RESEARCHING -> DRAFTING;
             case DRAFTING -> FACT_CHECKING;
             case FACT_CHECKING -> EDITING;
-            case EDITING -> PUBLISHED;
+            case EDITING -> CRITIQUING;
+            case CRITIQUING -> PUBLISHED;
             default -> null;
         };
     }
@@ -122,6 +130,7 @@ public enum DocumentState {
         return switch (this) {
             case FACT_CHECKING -> DRAFTING;
             case EDITING -> FACT_CHECKING;
+            case CRITIQUING -> EDITING;
             default -> null;
         };
     }
@@ -136,6 +145,7 @@ public enum DocumentState {
             case DRAFTING -> EnumSet.copyOf(DRAFTING_TRANSITIONS);
             case FACT_CHECKING -> EnumSet.copyOf(FACT_CHECKING_TRANSITIONS);
             case EDITING -> EnumSet.copyOf(EDITING_TRANSITIONS);
+            case CRITIQUING -> EnumSet.copyOf(CRITIQUING_TRANSITIONS);
             case AWAITING_APPROVAL -> EnumSet.copyOf(AWAITING_APPROVAL_TRANSITIONS);
             case PUBLISHED, REJECTED -> EnumSet.noneOf(DocumentState.class);
         };

@@ -9,7 +9,6 @@ import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -26,12 +25,12 @@ import java.util.List;
  * 2. Draft - Write the article
  * 3. Fact Check - Verify claims
  * 4. Edit - Polish and finalize
- * 5. Publish - Write to output
+ * 5. Critique - Final quality and syntax review
+ * 6. Publish - Write to output
  *
  * Each phase can be configured with approval checkpoints and revision cycles.
  */
 @Service
-@Lazy
 public class PublishingPipeline {
 
     private static final Logger log = LoggerFactory.getLogger(PublishingPipeline.class);
@@ -40,6 +39,7 @@ public class PublishingPipeline {
     private final WriterAgent writerAgent;
     private final FactCheckerAgent factCheckerAgent;
     private final EditorAgent editorAgent;
+    private final CriticAgent criticAgent;
     private final WikiOutputService outputService;
     private final ApprovalService approvalService;
     private final PipelineMonitoringService monitoringService;
@@ -51,6 +51,7 @@ public class PublishingPipeline {
             WriterAgent writerAgent,
             FactCheckerAgent factCheckerAgent,
             EditorAgent editorAgent,
+            CriticAgent criticAgent,
             WikiOutputService outputService,
             ApprovalService approvalService,
             PipelineMonitoringService monitoringService,
@@ -60,6 +61,7 @@ public class PublishingPipeline {
         this.writerAgent = writerAgent;
         this.factCheckerAgent = factCheckerAgent;
         this.editorAgent = editorAgent;
+        this.criticAgent = criticAgent;
         this.outputService = outputService;
         this.approvalService = approvalService;
         this.monitoringService = monitoringService;
@@ -93,7 +95,10 @@ public class PublishingPipeline {
             // Phase 4: Editing
             document = executeEditingPhase(document);
 
-            // Phase 5: Publishing
+            // Phase 5: Critique (final quality check)
+            document = executeCritiquePhase(document);
+
+            // Phase 6: Publishing
             Path outputPath = executePublishPhase(document);
 
             Duration totalTime = Duration.between(startTime, Instant.now());
@@ -106,13 +111,21 @@ public class PublishingPipeline {
             Duration totalTime = Duration.between(startTime, Instant.now());
             log.error("Pipeline failed at {}: {}", e.getFailedAtState(), e.getMessage());
             monitoringService.pipelineFailed(document, e.getFailedAtState(), e.getMessage());
-            return PipelineResult.failure(document, e.getMessage(), e.getFailedAtState(), totalTime);
+
+            // Save the failed document for debugging
+            Path failedDocPath = saveFailedDocument(document, e.getFailedAtState(), e.getMessage());
+
+            return PipelineResult.failure(document, e.getMessage(), e.getFailedAtState(), totalTime, failedDocPath);
 
         } catch (Exception e) {
             Duration totalTime = Duration.between(startTime, Instant.now());
             log.error("Pipeline failed with unexpected error: {}", e.getMessage(), e);
             monitoringService.pipelineFailed(document, document.getState(), e.getMessage());
-            return PipelineResult.failure(document, e.getMessage(), document.getState(), totalTime);
+
+            // Save the failed document for debugging
+            Path failedDocPath = saveFailedDocument(document, document.getState(), e.getMessage());
+
+            return PipelineResult.failure(document, e.getMessage(), document.getState(), totalTime, failedDocPath);
         }
     }
 
@@ -327,10 +340,85 @@ public class PublishingPipeline {
     }
 
     /**
+     * Execute the critique phase - final quality and syntax review.
+     */
+    private PublishingDocument executeCritiquePhase(PublishingDocument document) {
+        log.info("Phase 5: Critique");
+        DocumentState previousState = document.getState();
+        document.transitionTo(DocumentState.CRITIQUING);
+        monitoringService.phaseStarted(document, previousState, DocumentState.CRITIQUING);
+
+        int revisionCount = 0;
+        int maxRevisions = pipelineProperties.getMaxRevisionCycles();
+
+        while (revisionCount < maxRevisions) {
+            try {
+                Instant phaseStart = Instant.now();
+                document = criticAgent.process(document);
+                monitoringService.recordAgentProcessing(AgentRole.CRITIC, Duration.between(phaseStart, Instant.now()));
+
+                if (!criticAgent.validate(document)) {
+                    throw new PipelineException("Critic validation failed",
+                            DocumentState.CRITIQUING);
+                }
+
+                CriticReport report = document.getCriticReport();
+                String summary = String.format("overall=%.2f, syntax=%.2f, recommendation=%s",
+                        report.overallScore(), report.syntaxScore(), report.recommendedAction());
+                log.info("Critique complete: {}", summary);
+
+                // Check if approved
+                if (report.isApproved()) {
+                    monitoringService.phaseCompleted(document, DocumentState.CRITIQUING, summary);
+                    // Check for approval after critique
+                    checkApproval(document);
+                    return document;
+                }
+
+                // Check if needs major rework
+                if (report.needsRework()) {
+                    throw new PipelineException(
+                            "Article rejected by critic: " + report.getIssueSummary(),
+                            DocumentState.CRITIQUING);
+                }
+
+                // Needs revision - go back to editing
+                revisionCount++;
+                if (revisionCount < maxRevisions) {
+                    log.info("Critique requires revision ({}/{}), returning to editor",
+                            revisionCount, maxRevisions);
+                    monitoringService.revisionStarted(document, revisionCount, maxRevisions);
+
+                    // Go back to editing to fix issues
+                    document.transitionTo(DocumentState.EDITING);
+
+                    // Provide existing pages to editor again
+                    List<String> existingPages = outputService.getExistingPagesList();
+                    editorAgent.setExistingPages(existingPages);
+
+                    Instant revisionStart = Instant.now();
+                    document = editorAgent.process(document);
+                    monitoringService.recordAgentProcessing(AgentRole.EDITOR, Duration.between(revisionStart, Instant.now()));
+                    document.transitionTo(DocumentState.CRITIQUING);
+                }
+
+            } catch (AgentException e) {
+                throw new PipelineException("Critique phase failed: " + e.getMessage(),
+                        DocumentState.CRITIQUING, e);
+            }
+        }
+
+        // Max revisions exceeded
+        throw new PipelineException(
+                "Maximum revision cycles (" + maxRevisions + ") exceeded during critique",
+                DocumentState.CRITIQUING);
+    }
+
+    /**
      * Execute the publish phase - write to output.
      */
     private Path executePublishPhase(PublishingDocument document) {
-        log.info("Phase 5: Publishing");
+        log.info("Phase 6: Publishing");
 
         try {
             Path outputPath = outputService.writeDocument(document);
@@ -342,6 +430,34 @@ public class PublishingPipeline {
         } catch (IOException e) {
             throw new PipelineException("Publishing failed: " + e.getMessage(),
                     DocumentState.EDITING, e);
+        }
+    }
+
+    /**
+     * Save a failed document for debugging purposes.
+     * The document is saved with a suffix indicating the failure state.
+     *
+     * @param document The failed document
+     * @param failedState The state at which it failed
+     * @param errorMessage The error message
+     * @return Path to the saved file, or null if saving failed
+     */
+    private Path saveFailedDocument(PublishingDocument document, DocumentState failedState, String errorMessage) {
+        // Only save if we have some content (at least a draft)
+        if (document.getDraft() == null && document.getResearchBrief() == null) {
+            log.debug("Not saving failed document - no content to save");
+            return null;
+        }
+
+        try {
+            Path savedPath = outputService.writeFailedDocument(document, failedState, errorMessage);
+            if (savedPath != null) {
+                log.info("Saved failed document for debugging: {}", savedPath);
+            }
+            return savedPath;
+        } catch (Exception e) {
+            log.warn("Could not save failed document for debugging: {}", e.getMessage());
+            return null;
         }
     }
 
@@ -379,6 +495,10 @@ public class PublishingPipeline {
 
     public EditorAgent getEditorAgent() {
         return editorAgent;
+    }
+
+    public CriticAgent getCriticAgent() {
+        return criticAgent;
     }
 
     public WikiOutputService getOutputService() {

@@ -60,9 +60,15 @@ class DocumentStateTest {
         }
 
         @Test
-        @DisplayName("EDITING can transition to PUBLISHED")
-        void editingCanTransitionToPublished() {
-            assertTrue(DocumentState.EDITING.canTransitionTo(DocumentState.PUBLISHED));
+        @DisplayName("EDITING can transition to CRITIQUING")
+        void editingCanTransitionToCritiquing() {
+            assertTrue(DocumentState.EDITING.canTransitionTo(DocumentState.CRITIQUING));
+        }
+
+        @Test
+        @DisplayName("CRITIQUING can transition to PUBLISHED")
+        void critiquingCanTransitionToPublished() {
+            assertTrue(DocumentState.CRITIQUING.canTransitionTo(DocumentState.PUBLISHED));
         }
 
         @Test
@@ -187,7 +193,8 @@ class DocumentStateTest {
             assertEquals(DocumentState.DRAFTING, DocumentState.RESEARCHING.getNextInFlow());
             assertEquals(DocumentState.FACT_CHECKING, DocumentState.DRAFTING.getNextInFlow());
             assertEquals(DocumentState.EDITING, DocumentState.FACT_CHECKING.getNextInFlow());
-            assertEquals(DocumentState.PUBLISHED, DocumentState.EDITING.getNextInFlow());
+            assertEquals(DocumentState.CRITIQUING, DocumentState.EDITING.getNextInFlow());
+            assertEquals(DocumentState.PUBLISHED, DocumentState.CRITIQUING.getNextInFlow());
         }
 
         @Test

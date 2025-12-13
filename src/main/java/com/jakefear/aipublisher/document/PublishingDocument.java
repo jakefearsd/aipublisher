@@ -31,6 +31,7 @@ public class PublishingDocument {
     private ArticleDraft draft;
     private FactCheckReport factCheckReport;
     private FinalArticle finalArticle;
+    private CriticReport criticReport;
 
     // Audit trail
     private final List<AgentContribution> contributions;
@@ -172,6 +173,17 @@ public class PublishingDocument {
     }
 
     /**
+     * Set the critic report (from Critic Agent).
+     */
+    public void setCriticReport(CriticReport criticReport) {
+        if (state != DocumentState.CRITIQUING) {
+            throw new IllegalStateException("Can only set critic report in CRITIQUING state");
+        }
+        this.criticReport = Objects.requireNonNull(criticReport);
+        this.updatedAt = Instant.now();
+    }
+
+    /**
      * Record an agent's contribution.
      */
     public void addContribution(AgentContribution contribution) {
@@ -227,6 +239,10 @@ public class PublishingDocument {
 
     public FinalArticle getFinalArticle() {
         return finalArticle;
+    }
+
+    public CriticReport getCriticReport() {
+        return criticReport;
     }
 
     public List<AgentContribution> getContributions() {

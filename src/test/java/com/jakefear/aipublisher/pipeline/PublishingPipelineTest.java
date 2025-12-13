@@ -39,6 +39,8 @@ class PublishingPipelineTest {
     @Mock
     private EditorAgent editorAgent;
     @Mock
+    private CriticAgent criticAgent;
+    @Mock
     private WikiOutputService outputService;
     @Mock
     private ApprovalService approvalService;
@@ -61,7 +63,7 @@ class PublishingPipelineTest {
         lenient().when(approvalService.checkAndApprove(any())).thenReturn(true);
 
         pipeline = new PublishingPipeline(
-                researchAgent, writerAgent, factCheckerAgent, editorAgent,
+                researchAgent, writerAgent, factCheckerAgent, editorAgent, criticAgent,
                 outputService, approvalService, monitoringService, pipelineProperties, qualityProperties
         );
     }
@@ -95,6 +97,7 @@ class PublishingPipelineTest {
             verify(writerAgent).process(any());
             verify(factCheckerAgent).process(any());
             verify(editorAgent).process(any());
+            verify(criticAgent).process(any());
             verify(outputService).writeDocument(any());
         }
 
@@ -235,6 +238,7 @@ class PublishingPipelineTest {
             });
             when(factCheckerAgent.validate(any())).thenReturn(true);
             setupEditorSuccess();
+            setupCriticSuccess();
             when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
 
             // Act
@@ -309,6 +313,7 @@ class PublishingPipelineTest {
             setupResearchSuccess();
             setupWriterSuccess();
             setupFactCheckSuccess();
+            // No critic setup needed - pipeline fails in editing phase before critic
 
             when(editorAgent.process(any())).thenAnswer(invocation -> {
                 PublishingDocument doc = invocation.getArgument(0);
@@ -360,6 +365,7 @@ class PublishingPipelineTest {
         setupWriterSuccess();
         setupFactCheckSuccess();
         setupEditorSuccess();
+        setupCriticSuccess();
         when(outputService.getExistingPagesList()).thenReturn(List.of());
     }
 
@@ -418,6 +424,19 @@ class PublishingPipelineTest {
         when(editorAgent.validate(any())).thenReturn(true);
     }
 
+    private void setupCriticSuccess() {
+        when(criticAgent.process(any())).thenAnswer(invocation -> {
+            PublishingDocument doc = invocation.getArgument(0);
+            doc.setCriticReport(new CriticReport(
+                    0.9, 0.9, 0.9, 0.9,
+                    List.of(), List.of(), List.of(), List.of(),
+                    RecommendedAction.APPROVE
+            ));
+            return doc;
+        });
+        when(criticAgent.validate(any())).thenReturn(true);
+    }
+
     private void setFactCheckReport(PublishingDocument doc, RecommendedAction action) {
         doc.setFactCheckReport(new FactCheckReport(
                 doc.getDraft().markdownContent(),
@@ -447,8 +466,8 @@ class PublishingPipelineTest {
 
             // Assert
             assertTrue(result.success());
-            // Should be called 4 times: after research, draft, fact-check, and editing
-            verify(approvalService, times(4)).checkAndApprove(any());
+            // Should be called 5 times: after research, draft, fact-check, editing, and critique
+            verify(approvalService, times(5)).checkAndApprove(any());
         }
 
         @Test

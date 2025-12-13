@@ -50,11 +50,13 @@ class PublishingPipelineIntegrationTest {
         ChatLanguageModel writerModel = createModel(apiKey, 0.7);
         ChatLanguageModel factCheckerModel = createModel(apiKey, 0.1);
         ChatLanguageModel editorModel = createModel(apiKey, 0.5);
+        ChatLanguageModel criticModel = createModel(apiKey, 0.3);
 
         ResearchAgent researchAgent = new ResearchAgent(researchModel, AgentPrompts.RESEARCH);
         WriterAgent writerAgent = new WriterAgent(writerModel, AgentPrompts.WRITER);
         FactCheckerAgent factCheckerAgent = new FactCheckerAgent(factCheckerModel, AgentPrompts.FACT_CHECKER);
         EditorAgent editorAgent = new EditorAgent(editorModel, AgentPrompts.EDITOR);
+        CriticAgent criticAgent = new CriticAgent(criticModel, AgentPrompts.CRITIC);
 
         // Configure output service
         OutputProperties outputProperties = new OutputProperties();
@@ -77,7 +79,7 @@ class PublishingPipelineIntegrationTest {
         PipelineMonitoringService monitoringService = new PipelineMonitoringService(List.of());
 
         pipeline = new PublishingPipeline(
-                researchAgent, writerAgent, factCheckerAgent, editorAgent,
+                researchAgent, writerAgent, factCheckerAgent, editorAgent, criticAgent,
                 outputService, approvalService, monitoringService, pipelineProperties, qualityProperties
         );
     }
@@ -125,7 +127,7 @@ class PublishingPipelineIntegrationTest {
                 System.out.println(content.substring(0, Math.min(500, content.length())));
 
                 assertFalse(content.isBlank());
-                assertTrue(content.contains("#")); // Should have headings
+                assertTrue(content.contains("!"), "Should have JSPWiki headings"); // JSPWiki uses ! for headings
             } catch (Exception e) {
                 fail("Failed to read output file: " + e.getMessage());
             }
@@ -157,11 +159,11 @@ class PublishingPipelineIntegrationTest {
             try {
                 String content = Files.readString(result.outputPath());
 
-                System.out.println("=== Markdown Validation ===");
+                System.out.println("=== JSPWiki Validation ===");
 
-                // Check for proper heading structure
-                boolean hasMainHeading = content.contains("## ");
-                System.out.println("Has main heading: " + hasMainHeading);
+                // Check for proper JSPWiki heading structure (! or !!! not ##)
+                boolean hasMainHeading = content.contains("!!!") || content.contains("!! ") || content.contains("! ");
+                System.out.println("Has JSPWiki heading: " + hasMainHeading);
 
                 // Check for metadata comment
                 boolean hasMetadata = content.contains("<!-- ");
@@ -171,7 +173,7 @@ class PublishingPipelineIntegrationTest {
                 int wordCount = content.split("\\s+").length;
                 System.out.println("Approximate word count: " + wordCount);
 
-                assertTrue(hasMainHeading, "Should have main heading");
+                assertTrue(hasMainHeading, "Should have JSPWiki heading (!, !!, or !!!)");
                 assertTrue(hasMetadata, "Should have metadata comment");
                 assertTrue(wordCount > 100, "Should have substantial content");
 

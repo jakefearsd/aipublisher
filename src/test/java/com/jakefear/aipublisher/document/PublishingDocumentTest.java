@@ -145,7 +145,10 @@ class PublishingDocumentTest {
             document.advanceToNextState(); // FACT_CHECKING -> EDITING
             assertEquals(DocumentState.EDITING, document.getState());
 
-            document.advanceToNextState(); // EDITING -> PUBLISHED
+            document.advanceToNextState(); // EDITING -> CRITIQUING
+            assertEquals(DocumentState.CRITIQUING, document.getState());
+
+            document.advanceToNextState(); // CRITIQUING -> PUBLISHED
             assertEquals(DocumentState.PUBLISHED, document.getState());
         }
 
@@ -380,6 +383,7 @@ class PublishingDocumentTest {
             document.transitionTo(DocumentState.DRAFTING);
             document.transitionTo(DocumentState.FACT_CHECKING);
             document.transitionTo(DocumentState.EDITING);
+            document.transitionTo(DocumentState.CRITIQUING);
             document.transitionTo(DocumentState.PUBLISHED);
 
             assertTrue(document.isComplete());

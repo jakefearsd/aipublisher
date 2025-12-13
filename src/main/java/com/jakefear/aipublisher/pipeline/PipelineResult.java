@@ -39,21 +39,35 @@ public record PipelineResult(
         /**
          * State where failure occurred (if failed).
          */
-        DocumentState failedAtState
+        DocumentState failedAtState,
+
+        /**
+         * Path to the failed document saved for debugging (if failed and content was available).
+         */
+        Path failedDocumentPath
 ) {
     /**
      * Create a successful result.
      */
     public static PipelineResult success(PublishingDocument document, Path outputPath, Duration totalTime) {
-        return new PipelineResult(true, document, outputPath, totalTime, null, null);
+        return new PipelineResult(true, document, outputPath, totalTime, null, null, null);
     }
 
     /**
-     * Create a failed result.
+     * Create a failed result without a saved debug document.
      */
     public static PipelineResult failure(PublishingDocument document, String errorMessage,
                                          DocumentState failedAtState, Duration totalTime) {
-        return new PipelineResult(false, document, null, totalTime, errorMessage, failedAtState);
+        return new PipelineResult(false, document, null, totalTime, errorMessage, failedAtState, null);
+    }
+
+    /**
+     * Create a failed result with a saved debug document.
+     */
+    public static PipelineResult failure(PublishingDocument document, String errorMessage,
+                                         DocumentState failedAtState, Duration totalTime,
+                                         Path failedDocumentPath) {
+        return new PipelineResult(false, document, null, totalTime, errorMessage, failedAtState, failedDocumentPath);
     }
 
     /**
@@ -68,5 +82,12 @@ public record PipelineResult(
      */
     public Optional<String> getErrorMessage() {
         return Optional.ofNullable(errorMessage);
+    }
+
+    /**
+     * Get the failed document path if present.
+     */
+    public Optional<Path> getFailedDocumentPath() {
+        return Optional.ofNullable(failedDocumentPath);
     }
 }

@@ -6,11 +6,13 @@ import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.document.TopicBrief;
 import com.jakefear.aipublisher.pipeline.PipelineResult;
 import com.jakefear.aipublisher.pipeline.PublishingPipeline;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+
+import java.util.function.Supplier;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -52,8 +54,8 @@ import java.util.concurrent.Callable;
 )
 public class AiPublisherCommand implements Callable<Integer> {
 
-    private final PublishingPipeline pipeline;
-    private final ApprovalService approvalService;
+    private Supplier<PublishingPipeline> pipelineSupplier;
+    private Supplier<ApprovalService> approvalServiceSupplier;
 
     @Option(names = {"-t", "--topic"},
             description = "Topic to write about (prompts interactively if not specified)")
@@ -108,9 +110,35 @@ public class AiPublisherCommand implements Callable<Integer> {
     private BufferedReader inputReader;
     private PrintWriter outputWriter;
 
-    public AiPublisherCommand(@Lazy PublishingPipeline pipeline, @Lazy ApprovalService approvalService) {
-        this.pipeline = pipeline;
-        this.approvalService = approvalService;
+    /**
+     * Default constructor for Picocli/Spring integration.
+     */
+    public AiPublisherCommand() {
+        // Dependencies will be injected via setters
+    }
+
+    /**
+     * Set the pipeline supplier (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setPipelineProvider(ObjectProvider<PublishingPipeline> pipelineProvider) {
+        this.pipelineSupplier = pipelineProvider::getObject;
+    }
+
+    /**
+     * Set the approval service supplier (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setApprovalServiceProvider(ObjectProvider<ApprovalService> approvalServiceProvider) {
+        this.approvalServiceSupplier = approvalServiceProvider::getObject;
+    }
+
+    /**
+     * Constructor for testing - uses direct instances.
+     */
+    public AiPublisherCommand(PublishingPipeline pipeline, ApprovalService approvalService) {
+        this.pipelineSupplier = () -> pipeline;
+        this.approvalServiceSupplier = () -> approvalService;
     }
 
     /**
@@ -138,11 +166,13 @@ public class AiPublisherCommand implements Callable<Integer> {
                 if (topic == null) {
                     return 0; // User cancelled
                 }
+                // Also prompt for audience and word count in interactive mode
+                promptForInteractiveOptions(in, out);
             }
 
             // Configure auto-approval if requested
             if (autoApprove) {
-                approvalService.setCallback(createAutoApproveCallback());
+                approvalServiceSupplier.get().setCallback(createAutoApproveCallback());
             }
 
             // Display banner
@@ -165,7 +195,7 @@ public class AiPublisherCommand implements Callable<Integer> {
                     List.of()
             );
 
-            PipelineResult result = pipeline.execute(topicBrief);
+            PipelineResult result = pipelineSupplier.get().execute(topicBrief);
 
             // Display results
             printResults(out, result);
@@ -201,6 +231,36 @@ public class AiPublisherCommand implements Callable<Integer> {
         }
     }
 
+    private void promptForInteractiveOptions(BufferedReader in, PrintWriter out) {
+        try {
+            // Prompt for audience
+            out.println();
+            out.print("Target audience [" + audience + "]: ");
+            out.flush();
+            String audienceInput = in.readLine();
+            if (audienceInput != null && !audienceInput.trim().isEmpty()) {
+                audience = audienceInput.trim();
+            }
+
+            // Prompt for word count
+            out.print("Target word count [" + wordCount + "]: ");
+            out.flush();
+            String wordCountInput = in.readLine();
+            if (wordCountInput != null && !wordCountInput.trim().isEmpty()) {
+                try {
+                    int parsed = Integer.parseInt(wordCountInput.trim());
+                    if (parsed > 0) {
+                        wordCount = parsed;
+                    }
+                } catch (NumberFormatException e) {
+                    out.println("Invalid number, using default: " + wordCount);
+                }
+            }
+        } catch (Exception e) {
+            // Keep defaults on error
+        }
+    }
+
     private void printBanner(PrintWriter out) {
         out.println("╔═══════════════════════════════════════════════════════════╗");
         out.println("║                      AI PUBLISHER                         ║");
@@ -224,6 +284,13 @@ public class AiPublisherCommand implements Callable<Integer> {
         } else {
             out.println("FAILED at phase: " + result.failedAtState());
             out.println("Error: " + result.errorMessage());
+
+            // Show path to saved failed document for debugging
+            result.getFailedDocumentPath().ifPresent(path -> {
+                out.println();
+                out.println("Debug document saved: " + path);
+                out.println("(Contains draft content and fact-check issues for review)");
+            });
         }
 
         out.println();

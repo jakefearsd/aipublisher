@@ -3,9 +3,10 @@ package com.jakefear.aipublisher.agent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.document.*;
+import com.jakefear.aipublisher.search.SearchResult;
+import com.jakefear.aipublisher.search.WebSearchService;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -20,16 +21,42 @@ import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
  * Output: FactCheckReport
  */
 @Component
-@Lazy
 public class FactCheckerAgent extends BaseAgent {
 
-    public FactCheckerAgent(@Qualifier("factCheckerChatModel") ChatLanguageModel model) {
-        super(model, AgentPrompts.FACT_CHECKER);
+    private WebSearchService webSearchService;
+
+    /**
+     * Default constructor for Spring - uses setter injection.
+     */
+    public FactCheckerAgent() {
+        super(AgentPrompts.FACT_CHECKER);
+    }
+
+    /**
+     * Set the chat model (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setChatModel(@Qualifier("factCheckerChatModel") ChatLanguageModel model) {
+        this.model = model;
+    }
+
+    /**
+     * Set the web search service (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setWebSearchService(WebSearchService webSearchService) {
+        this.webSearchService = webSearchService;
     }
 
     // Constructor for testing
     public FactCheckerAgent(ChatLanguageModel model, String systemPrompt) {
         super(model, systemPrompt);
+    }
+
+    // Constructor for testing with web search
+    public FactCheckerAgent(ChatLanguageModel model, String systemPrompt, WebSearchService webSearchService) {
+        super(model, systemPrompt);
+        this.webSearchService = webSearchService;
     }
 
     @Override
@@ -85,9 +112,41 @@ public class FactCheckerAgent extends BaseAgent {
             }
         }
 
+        // Add web search verification results
+        String topic = document.getTopicBrief().topic();
+        List<SearchResult> verificationResults = performVerificationSearch(topic);
+        if (!verificationResults.isEmpty()) {
+            prompt.append("\n--- WEB VERIFICATION RESULTS ---\n");
+            prompt.append("The following are current web search results about this topic.\n");
+            prompt.append("Use these to verify claims in the article with current information.\n");
+            prompt.append("Note the reliability rating of each source when weighing evidence.\n\n");
+            for (SearchResult result : verificationResults) {
+                prompt.append(result.toPromptFormat());
+            }
+            prompt.append("\n");
+        }
+
         prompt.append("\nAnalyze every factual claim and produce a fact-check report as JSON.");
+        prompt.append("\nWhen web search results contradict the article, flag this in questionableClaims with the URL as evidence.");
 
         return prompt.toString();
+    }
+
+    /**
+     * Perform web search to help verify claims about the topic.
+     */
+    private List<SearchResult> performVerificationSearch(String topic) {
+        if (webSearchService == null || !webSearchService.isEnabled()) {
+            return List.of();
+        }
+        try {
+            List<SearchResult> results = webSearchService.searchForVerification(topic);
+            log.debug("Verification search for '{}' returned {} results", topic, results.size());
+            return results;
+        } catch (Exception e) {
+            log.warn("Verification search failed for topic '{}': {}", topic, e.getMessage());
+            return List.of();
+        }
     }
 
     @Override

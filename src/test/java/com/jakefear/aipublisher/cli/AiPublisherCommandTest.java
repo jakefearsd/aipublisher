@@ -663,7 +663,14 @@ class AiPublisherCommandTest {
         );
         document.setFinalArticle(finalArticle);
 
-        // Transition to PUBLISHED
+        // Transition through CRITIQUING to PUBLISHED
+        document.transitionTo(DocumentState.CRITIQUING);
+        CriticReport criticReport = new CriticReport(
+                0.9, 0.9, 0.9, 0.9,
+                List.of(), List.of(), List.of(), List.of(),
+                RecommendedAction.APPROVE
+        );
+        document.setCriticReport(criticReport);
         document.transitionTo(DocumentState.PUBLISHED);
 
         return document;

@@ -22,7 +22,12 @@ public enum AgentRole {
     /**
      * Polishes prose, ensures style consistency, and prepares final output.
      */
-    EDITOR("Editor Agent");
+    EDITOR("Editor Agent"),
+
+    /**
+     * Reviews article quality, structure, and format before publication.
+     */
+    CRITIC("Critic Agent");
 
     private final String displayName;
 

@@ -78,7 +78,8 @@ class WriterAgentIntegrationTest {
 
         // Verify content was generated
         assertFalse(draft.markdownContent().isBlank(), "Should have markdown content");
-        assertTrue(draft.markdownContent().contains("#"), "Should have headings");
+        // JSPWiki uses ! for headings (!, !!, !!!)
+        assertTrue(draft.markdownContent().contains("!"), "Should have JSPWiki headings");
 
         // Verify summary was generated
         assertFalse(draft.summary().isBlank(), "Should have summary");

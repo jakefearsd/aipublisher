@@ -130,10 +130,13 @@ public class ConsoleApprovalCallback implements ApprovalCallback {
     private ApprovalDecision readDecision(ApprovalRequest request) {
         while (true) {
             System.out.print("Enter decision (A/R/C): ");
+            System.out.flush();
             try {
                 String input = reader.readLine();
                 if (input == null) {
-                    continue;
+                    // EOF reached (no stdin available) - auto-approve to avoid hanging
+                    log.warn("No stdin available for approval prompt, auto-approving");
+                    return ApprovalDecision.approve(request.id(), "auto-approved-no-stdin");
                 }
 
                 input = input.trim().toUpperCase();

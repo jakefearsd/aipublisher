@@ -1,6 +1,7 @@
 package com.jakefear.aipublisher;
 
 import com.jakefear.aipublisher.cli.AiPublisherCommand;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.SpringApplication;
@@ -17,8 +18,11 @@ public class AiPublisherApplication {
     }
 
     @Bean
-    public CommandLineRunner commandLineRunner(AiPublisherCommand command, IFactory factory) {
+    public CommandLineRunner commandLineRunner(ObjectProvider<AiPublisherCommand> commandProvider,
+                                                ObjectProvider<IFactory> factoryProvider) {
         return args -> {
+            AiPublisherCommand command = commandProvider.getObject();
+            IFactory factory = factoryProvider.getObject();
             exitCode = new CommandLine(command, factory).execute(args);
         };
     }

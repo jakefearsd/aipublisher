@@ -24,7 +24,7 @@ public abstract class BaseAgent implements Agent {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
-    protected final ChatLanguageModel model;
+    protected ChatLanguageModel model;
     protected final String systemPrompt;
     protected final ObjectMapper objectMapper;
 
@@ -32,6 +32,13 @@ public abstract class BaseAgent implements Agent {
     private final int maxRetries;
     private final Duration initialRetryDelay;
     private final double backoffMultiplier;
+
+    /**
+     * Constructor for Spring setter injection - model will be set later.
+     */
+    protected BaseAgent(String systemPrompt) {
+        this(null, systemPrompt, 3, Duration.ofSeconds(1), 2.0);
+    }
 
     protected BaseAgent(ChatLanguageModel model, String systemPrompt) {
         this(model, systemPrompt, 3, Duration.ofSeconds(1), 2.0);
