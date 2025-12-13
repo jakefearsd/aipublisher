@@ -5,6 +5,7 @@ import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.config.PipelineProperties;
 import com.jakefear.aipublisher.config.QualityProperties;
 import com.jakefear.aipublisher.document.*;
+import com.jakefear.aipublisher.glossary.GlossaryService;
 import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
 import org.junit.jupiter.api.*;
@@ -47,6 +48,7 @@ class PublishingPipelineTest {
     @Mock
     private PipelineMonitoringService monitoringService;
 
+    private GlossaryService glossaryService;
     private PipelineProperties pipelineProperties;
     private QualityProperties qualityProperties;
     private PublishingPipeline pipeline;
@@ -59,12 +61,14 @@ class PublishingPipelineTest {
         qualityProperties = new QualityProperties();
         qualityProperties.setMinEditorScore(0.7);
 
+        glossaryService = new GlossaryService();
+
         // By default, auto-approve everything (lenient because not all tests use approval)
         lenient().when(approvalService.checkAndApprove(any())).thenReturn(true);
 
         pipeline = new PublishingPipeline(
                 researchAgent, writerAgent, factCheckerAgent, editorAgent, criticAgent,
-                outputService, approvalService, monitoringService, pipelineProperties, qualityProperties
+                outputService, approvalService, monitoringService, glossaryService, pipelineProperties, qualityProperties
         );
     }
 

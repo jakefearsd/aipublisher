@@ -8,6 +8,7 @@ import com.jakefear.aipublisher.config.OutputProperties;
 import com.jakefear.aipublisher.config.PipelineProperties;
 import com.jakefear.aipublisher.config.QualityProperties;
 import com.jakefear.aipublisher.document.TopicBrief;
+import com.jakefear.aipublisher.glossary.GlossaryService;
 import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
@@ -78,9 +79,12 @@ class PublishingPipelineIntegrationTest {
         // Monitoring service with no listeners for integration tests
         PipelineMonitoringService monitoringService = new PipelineMonitoringService(List.of());
 
+        // Glossary service
+        GlossaryService glossaryService = new GlossaryService();
+
         pipeline = new PublishingPipeline(
                 researchAgent, writerAgent, factCheckerAgent, editorAgent, criticAgent,
-                outputService, approvalService, monitoringService, pipelineProperties, qualityProperties
+                outputService, approvalService, monitoringService, glossaryService, pipelineProperties, qualityProperties
         );
     }
 

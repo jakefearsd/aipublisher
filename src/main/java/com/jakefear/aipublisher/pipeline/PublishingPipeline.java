@@ -5,6 +5,7 @@ import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.config.PipelineProperties;
 import com.jakefear.aipublisher.config.QualityProperties;
 import com.jakefear.aipublisher.document.*;
+import com.jakefear.aipublisher.glossary.GlossaryService;
 import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
 import org.slf4j.Logger;
@@ -43,6 +44,7 @@ public class PublishingPipeline {
     private final WikiOutputService outputService;
     private final ApprovalService approvalService;
     private final PipelineMonitoringService monitoringService;
+    private final GlossaryService glossaryService;
     private final PipelineProperties pipelineProperties;
     private final QualityProperties qualityProperties;
 
@@ -55,6 +57,7 @@ public class PublishingPipeline {
             WikiOutputService outputService,
             ApprovalService approvalService,
             PipelineMonitoringService monitoringService,
+            GlossaryService glossaryService,
             PipelineProperties pipelineProperties,
             QualityProperties qualityProperties) {
         this.researchAgent = researchAgent;
@@ -65,6 +68,7 @@ public class PublishingPipeline {
         this.outputService = outputService;
         this.approvalService = approvalService;
         this.monitoringService = monitoringService;
+        this.glossaryService = glossaryService;
         this.pipelineProperties = pipelineProperties;
         this.qualityProperties = qualityProperties;
     }
@@ -148,7 +152,14 @@ public class PublishingPipeline {
                         DocumentState.RESEARCHING);
             }
 
-            String summary = String.format("%d key facts gathered", document.getResearchBrief().keyFacts().size());
+            // Store glossary terms from research for cross-article consistency
+            ResearchBrief researchBrief = document.getResearchBrief();
+            if (!researchBrief.glossary().isEmpty()) {
+                glossaryService.addFromMap(researchBrief.glossary(), document.getPageName());
+                log.debug("Added {} glossary terms from research", researchBrief.glossary().size());
+            }
+
+            String summary = String.format("%d key facts gathered", researchBrief.keyFacts().size());
             log.info("Research complete: {}", summary);
             monitoringService.phaseCompleted(document, DocumentState.RESEARCHING, summary);
 
@@ -503,5 +514,9 @@ public class PublishingPipeline {
 
     public WikiOutputService getOutputService() {
         return outputService;
+    }
+
+    public GlossaryService getGlossaryService() {
+        return glossaryService;
     }
 }
