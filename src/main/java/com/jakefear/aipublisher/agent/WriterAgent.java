@@ -7,6 +7,8 @@ import com.jakefear.aipublisher.content.ContentTypeTemplate;
 import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.examples.ExamplePlan;
 import com.jakefear.aipublisher.examples.ExamplePlanner;
+import com.jakefear.aipublisher.prerequisites.PrerequisiteAnalyzer;
+import com.jakefear.aipublisher.prerequisites.PrerequisiteSet;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -29,6 +31,9 @@ public class WriterAgent extends BaseAgent {
     // Example planner for generating example requirements
     private ExamplePlanner examplePlanner;
 
+    // Prerequisite analyzer for identifying topic prerequisites
+    private PrerequisiteAnalyzer prerequisiteAnalyzer;
+
     /**
      * Default constructor for Spring - uses setter injection.
      */
@@ -50,6 +55,14 @@ public class WriterAgent extends BaseAgent {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     public void setExamplePlanner(ExamplePlanner examplePlanner) {
         this.examplePlanner = examplePlanner;
+    }
+
+    /**
+     * Set the prerequisite analyzer (optional, called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setPrerequisiteAnalyzer(PrerequisiteAnalyzer prerequisiteAnalyzer) {
+        this.prerequisiteAnalyzer = prerequisiteAnalyzer;
     }
 
     // Constructor for testing
@@ -104,6 +117,19 @@ public class WriterAgent extends BaseAgent {
                 prompt.append("\n--- EXAMPLE REQUIREMENTS ---\n");
                 prompt.append(examplePlan.toWriterPrompt());
                 prompt.append("\n");
+            }
+
+            // Prerequisite guidance
+            if (prerequisiteAnalyzer != null) {
+                PrerequisiteSet prereqs = prerequisiteAnalyzer.analyze(topicBrief.topic(), contentType);
+                if (!prereqs.isEmpty()) {
+                    prompt.append("\n--- PREREQUISITE REQUIREMENTS ---\n");
+                    prompt.append(prereqs.toPromptFormat());
+                    prompt.append("\n");
+                    prompt.append("Include a prerequisite callout at the beginning of the article using this format:\n");
+                    prompt.append(prereqs.toWikiCallout());
+                    prompt.append("\n");
+                }
             }
         }
 
