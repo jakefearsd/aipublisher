@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.content.ContentType;
 import com.jakefear.aipublisher.content.ContentTypeTemplate;
 import com.jakefear.aipublisher.document.*;
+import com.jakefear.aipublisher.examples.ExamplePlan;
+import com.jakefear.aipublisher.examples.ExamplePlanner;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,9 @@ import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
 @Component
 public class WriterAgent extends BaseAgent {
 
+    // Example planner for generating example requirements
+    private ExamplePlanner examplePlanner;
+
     /**
      * Default constructor for Spring - uses setter injection.
      */
@@ -39,9 +44,23 @@ public class WriterAgent extends BaseAgent {
         this.model = model;
     }
 
+    /**
+     * Set the example planner (optional, called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setExamplePlanner(ExamplePlanner examplePlanner) {
+        this.examplePlanner = examplePlanner;
+    }
+
     // Constructor for testing
     public WriterAgent(ChatLanguageModel model, String systemPrompt) {
         super(model, systemPrompt);
+    }
+
+    // Constructor for testing with ExamplePlanner
+    public WriterAgent(ChatLanguageModel model, String systemPrompt, ExamplePlanner examplePlanner) {
+        super(model, systemPrompt);
+        this.examplePlanner = examplePlanner;
     }
 
     @Override
@@ -76,6 +95,14 @@ public class WriterAgent extends BaseAgent {
             if (template != null) {
                 prompt.append("\n--- CONTENT TYPE GUIDANCE ---\n");
                 prompt.append(template.toWriterGuidance());
+                prompt.append("\n");
+            }
+
+            // Example plan guidance
+            if (examplePlanner != null) {
+                ExamplePlan examplePlan = examplePlanner.plan(topicBrief.topic(), contentType);
+                prompt.append("\n--- EXAMPLE REQUIREMENTS ---\n");
+                prompt.append(examplePlan.toWriterPrompt());
                 prompt.append("\n");
             }
         }
