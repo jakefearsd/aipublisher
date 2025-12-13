@@ -6,6 +6,8 @@ import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.linking.LinkCandidate;
 import com.jakefear.aipublisher.linking.LinkEvaluator;
 import com.jakefear.aipublisher.linking.WikiLinkContext;
+import com.jakefear.aipublisher.seealso.SeeAlsoGenerator;
+import com.jakefear.aipublisher.seealso.SeeAlsoSection;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -32,6 +34,9 @@ public class EditorAgent extends BaseAgent {
     // Wiki link context for page relationships
     private WikiLinkContext wikiLinkContext;
 
+    // See Also generator for related topic suggestions
+    private SeeAlsoGenerator seeAlsoGenerator;
+
     /**
      * Default constructor for Spring - uses setter injection.
      */
@@ -53,6 +58,14 @@ public class EditorAgent extends BaseAgent {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     public void setLinkEvaluator(LinkEvaluator linkEvaluator) {
         this.linkEvaluator = linkEvaluator;
+    }
+
+    /**
+     * Set the See Also generator (optional, called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setSeeAlsoGenerator(SeeAlsoGenerator seeAlsoGenerator) {
+        this.seeAlsoGenerator = seeAlsoGenerator;
     }
 
     // Constructor for testing
@@ -173,6 +186,22 @@ public class EditorAgent extends BaseAgent {
             prompt.append("Add [PageName] links where content naturally references these topics:\n");
             for (String page : existingPages) {
                 prompt.append("- ").append(page).append("\n");
+            }
+        }
+
+        // See Also suggestions
+        if (seeAlsoGenerator != null && topicBrief.contentType() != null) {
+            SeeAlsoSection seeAlso = seeAlsoGenerator.generate(
+                    topicBrief.topic(),
+                    topicBrief.contentType(),
+                    wikiLinkContext
+            );
+            if (!seeAlso.isEmpty()) {
+                prompt.append("\n--- SEE ALSO SUGGESTIONS ---\n");
+                prompt.append("Add a 'See Also' section at the end of the article with these related topics:\n");
+                prompt.append(seeAlso.toPromptFormat());
+                prompt.append("\nUse this JSPWiki format:\n");
+                prompt.append(seeAlso.toWikiText());
             }
         }
 
