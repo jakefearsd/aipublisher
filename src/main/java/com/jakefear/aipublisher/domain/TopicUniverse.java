@@ -1,5 +1,7 @@
 package com.jakefear.aipublisher.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -84,6 +86,7 @@ public record TopicUniverse(
     /**
      * Get all accepted topics.
      */
+    @JsonIgnore
     public List<Topic> getAcceptedTopics() {
         return topics.stream()
                 .filter(t -> t.status() == TopicStatus.ACCEPTED)
@@ -93,6 +96,7 @@ public record TopicUniverse(
     /**
      * Get all proposed topics awaiting decision.
      */
+    @JsonIgnore
     public List<Topic> getProposedTopics() {
         return topics.stream()
                 .filter(t -> t.status() == TopicStatus.PROPOSED)
@@ -102,6 +106,7 @@ public record TopicUniverse(
     /**
      * Get topics by priority.
      */
+    @JsonIgnore
     public List<Topic> getTopicsByPriority(Priority priority) {
         return topics.stream()
                 .filter(t -> t.priority() == priority && t.status().isActive())
@@ -111,6 +116,7 @@ public record TopicUniverse(
     /**
      * Get topics ready for generation, ordered by priority and dependencies.
      */
+    @JsonIgnore
     public List<Topic> getGenerationOrder() {
         List<Topic> ready = topics.stream()
                 .filter(Topic::isReadyForGeneration)
@@ -144,6 +150,7 @@ public record TopicUniverse(
     /**
      * Get relationships for a topic.
      */
+    @JsonIgnore
     public List<TopicRelationship> getRelationshipsFor(String topicId) {
         return relationships.stream()
                 .filter(r -> r.sourceTopicId().equals(topicId) ||
@@ -155,6 +162,7 @@ public record TopicUniverse(
     /**
      * Get outgoing relationships from a topic.
      */
+    @JsonIgnore
     public List<TopicRelationship> getOutgoingRelationships(String topicId) {
         return relationships.stream()
                 .filter(r -> r.sourceTopicId().equals(topicId))
@@ -165,6 +173,7 @@ public record TopicUniverse(
     /**
      * Get incoming relationships to a topic.
      */
+    @JsonIgnore
     public List<TopicRelationship> getIncomingRelationships(String topicId) {
         return relationships.stream()
                 .filter(r -> r.targetTopicId().equals(topicId))
@@ -175,6 +184,7 @@ public record TopicUniverse(
     /**
      * Get prerequisites for a topic.
      */
+    @JsonIgnore
     public List<Topic> getPrerequisites(String topicId) {
         return relationships.stream()
                 .filter(r -> r.targetTopicId().equals(topicId))
@@ -189,6 +199,7 @@ public record TopicUniverse(
     /**
      * Get related topics (any active relationship).
      */
+    @JsonIgnore
     public List<Topic> getRelatedTopics(String topicId) {
         Set<String> relatedIds = new HashSet<>();
 
@@ -212,6 +223,7 @@ public record TopicUniverse(
     /**
      * Get total accepted topic count.
      */
+    @JsonIgnore
     public int getAcceptedCount() {
         return (int) topics.stream().filter(t -> t.status().isActive()).count();
     }
@@ -219,6 +231,7 @@ public record TopicUniverse(
     /**
      * Get estimated total word count.
      */
+    @JsonIgnore
     public int getEstimatedWordCount() {
         return topics.stream()
                 .filter(t -> t.status().isActive())
@@ -229,6 +242,7 @@ public record TopicUniverse(
     /**
      * Get count by priority.
      */
+    @JsonIgnore
     public Map<Priority, Long> getCountByPriority() {
         return topics.stream()
                 .filter(t -> t.status().isActive())
@@ -238,6 +252,7 @@ public record TopicUniverse(
     /**
      * Get count by status.
      */
+    @JsonIgnore
     public Map<TopicStatus, Long> getCountByStatus() {
         return topics.stream()
                 .collect(Collectors.groupingBy(Topic::status, Collectors.counting()));

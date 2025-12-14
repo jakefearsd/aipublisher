@@ -205,7 +205,7 @@ public class WriterAgent extends BaseAgent {
             }
         }
 
-        prompt.append("\nProduce the article as JSON with markdownContent, summary, internalLinks, and categories.");
+        prompt.append("\nProduce the article as JSON with wikiContent, summary, internalLinks, and categories.");
 
         return prompt.toString();
     }
@@ -216,10 +216,10 @@ public class WriterAgent extends BaseAgent {
 
         JsonNode root = parseJson(response);
 
-        // Parse markdown content (required)
-        String markdownContent = getStringOrDefault(root, "markdownContent", "");
-        if (markdownContent.isBlank()) {
-            throw new JsonProcessingException("No markdownContent found in response") {};
+        // Parse wiki content (required)
+        String wikiContent = getStringOrDefault(root, "wikiContent", "");
+        if (wikiContent.isBlank()) {
+            throw new JsonProcessingException("No wikiContent found in response") {};
         }
 
         // Parse summary (required)
@@ -239,7 +239,7 @@ public class WriterAgent extends BaseAgent {
 
         // Create and set the article draft
         ArticleDraft draft = new ArticleDraft(
-                markdownContent,
+                wikiContent,
                 summary,
                 internalLinks,
                 categories,

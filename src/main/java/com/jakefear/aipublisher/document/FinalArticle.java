@@ -8,9 +8,9 @@ import java.util.Objects;
  */
 public record FinalArticle(
         /**
-         * The final polished content in JSPWiki Markdown format.
+         * The final polished content in JSPWiki format.
          */
-        String markdownContent,
+        String wikiContent,
 
         /**
          * Article metadata (title, summary, author, timestamps).
@@ -33,7 +33,7 @@ public record FinalArticle(
         List<String> addedLinks
 ) {
     public FinalArticle {
-        Objects.requireNonNull(markdownContent, "markdownContent must not be null");
+        Objects.requireNonNull(wikiContent, "wikiContent must not be null");
         Objects.requireNonNull(metadata, "metadata must not be null");
 
         if (qualityScore < 0.0 || qualityScore > 1.0) {
@@ -55,10 +55,10 @@ public record FinalArticle(
      * Estimate word count of the final content.
      */
     public int estimateWordCount() {
-        if (markdownContent == null || markdownContent.isBlank()) {
+        if (wikiContent == null || wikiContent.isBlank()) {
             return 0;
         }
-        return markdownContent.trim().split("\\s+").length;
+        return wikiContent.trim().split("\\s+").length;
     }
 
     /**

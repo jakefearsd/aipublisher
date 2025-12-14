@@ -270,13 +270,13 @@ class WikiOutputServiceTest {
         @DisplayName("Includes article content")
         void includesArticleContent() {
             // Arrange
-            FinalArticle article = createFinalArticle("## Test Title\n\nContent here.");
+            FinalArticle article = createFinalArticle("!!! Test Title\n\nContent here.");
 
             // Act
             String result = service.formatForOutput(article);
 
             // Assert
-            assertTrue(result.contains("## Test Title"));
+            assertTrue(result.contains("!!! Test Title"));
             assertTrue(result.contains("Content here."));
         }
 
@@ -396,7 +396,7 @@ class WikiOutputServiceTest {
 
         document.transitionTo(DocumentState.DRAFTING);
         document.setDraft(new ArticleDraft(
-                "## " + pageName + "\n\nContent about " + pageName,
+                "!!! " + pageName + "\n\nContent about " + pageName,
                 "Summary of " + pageName,
                 List.of(),
                 List.of(),
@@ -405,7 +405,7 @@ class WikiOutputServiceTest {
 
         document.transitionTo(DocumentState.FACT_CHECKING);
         document.setFactCheckReport(new FactCheckReport(
-                document.getDraft().markdownContent(),
+                document.getDraft().wikiContent(),
                 List.of(),
                 List.of(),
                 List.of(),
@@ -415,7 +415,7 @@ class WikiOutputServiceTest {
 
         document.transitionTo(DocumentState.EDITING);
         document.setFinalArticle(new FinalArticle(
-                "## " + pageName + "\n\nFinal content about " + pageName,
+                "!!! " + pageName + "\n\nFinal content about " + pageName,
                 DocumentMetadata.create(pageName, "Summary of " + pageName),
                 "Article edited for publication",
                 0.85,

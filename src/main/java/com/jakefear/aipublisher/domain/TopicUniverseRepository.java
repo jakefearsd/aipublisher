@@ -38,6 +38,7 @@ public class TopicUniverseRepository {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         this.objectMapper.findAndRegisterModules(); // Auto-register available modules
+        this.objectMapper.disable(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         this.storageDirectory = Path.of(System.getProperty("user.home"), ".aipublisher", "universes");
     }
 

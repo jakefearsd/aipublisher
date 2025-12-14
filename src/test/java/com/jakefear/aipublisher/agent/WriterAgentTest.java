@@ -77,7 +77,7 @@ class WriterAgentTest {
         void parsesValidJsonResponse() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Apache Kafka\\n\\nApache Kafka is a distributed streaming platform...\\n\\n### Core Concepts\\n\\nTopics organize messages...",
+                      "wikiContent": "!!! Apache Kafka\\n\\nApache Kafka is a distributed streaming platform...\\n\\n!! Core Concepts\\n\\nTopics organize messages...",
                       "summary": "An introduction to Apache Kafka for developers new to streaming.",
                       "internalLinks": ["EventStreaming", "MessageQueue"],
                       "categories": ["Technology", "Streaming"]
@@ -90,19 +90,19 @@ class WriterAgentTest {
 
             ArticleDraft draft = result.getDraft();
             assertNotNull(draft);
-            assertTrue(draft.markdownContent().contains("Apache Kafka"));
+            assertTrue(draft.wikiContent().contains("Apache Kafka"));
             assertEquals("An introduction to Apache Kafka for developers new to streaming.", draft.summary());
             assertEquals(2, draft.internalLinks().size());
             assertEquals(2, draft.categories().size());
         }
 
         @Test
-        @DisplayName("Handles JSON wrapped in markdown code blocks")
-        void handlesMarkdownWrappedJson() {
+        @DisplayName("Handles JSON wrapped in code blocks")
+        void handlesCodeBlockWrappedJson() {
             String jsonResponse = """
                     ```json
                     {
-                      "markdownContent": "## Test Article\\n\\nContent here.",
+                      "wikiContent": "!!! Test Article\\n\\nContent here.",
                       "summary": "Test summary",
                       "internalLinks": [],
                       "categories": []
@@ -115,7 +115,7 @@ class WriterAgentTest {
             PublishingDocument result = agent.process(document);
 
             assertNotNull(result.getDraft());
-            assertTrue(result.getDraft().markdownContent().contains("Test Article"));
+            assertTrue(result.getDraft().wikiContent().contains("Test Article"));
         }
 
         @Test
@@ -123,7 +123,7 @@ class WriterAgentTest {
         void handlesMinimalResponse() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Minimal Article\\n\\nThis is minimal content for testing.",
+                      "wikiContent": "!!! Minimal Article\\n\\nThis is minimal content for testing.",
                       "summary": "A minimal article."
                     }
                     """;
@@ -139,11 +139,11 @@ class WriterAgentTest {
         }
 
         @Test
-        @DisplayName("Throws on missing markdown content")
-        void throwsOnMissingMarkdownContent() {
+        @DisplayName("Throws on missing wiki content")
+        void throwsOnMissingWikiContent() {
             String jsonResponse = """
                     {
-                      "markdownContent": "",
+                      "wikiContent": "",
                       "summary": "Summary without content"
                     }
                     """;
@@ -158,7 +158,7 @@ class WriterAgentTest {
         void throwsOnMissingSummary() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nContent...",
+                      "wikiContent": "!!! Article\\n\\nContent...",
                       "summary": ""
                     }
                     """;
@@ -185,10 +185,10 @@ class WriterAgentTest {
         @DisplayName("Validates document with sufficient content")
         void validatesWithSufficientContent() {
             // Create a draft with enough words (at least 50% of target 1500 = 750)
-            String longContent = "## Apache Kafka\n\n" + "word ".repeat(800);
+            String longContent = "!!! Apache Kafka\n\n" + "word ".repeat(800);
             String jsonResponse = """
                     {
-                      "markdownContent": "%s",
+                      "wikiContent": "%s",
                       "summary": "Test summary"
                     }
                     """.formatted(longContent.replace("\n", "\\n"));
@@ -213,7 +213,7 @@ class WriterAgentTest {
             // Create a very short draft (less than 50% of 1500 = 750)
             String jsonResponse = """
                     {
-                      "markdownContent": "## Short\\n\\nToo short.",
+                      "wikiContent": "!!! Short\\n\\nToo short.",
                       "summary": "Test summary"
                     }
                     """;
@@ -232,10 +232,10 @@ class WriterAgentTest {
         @Test
         @DisplayName("Includes topic in prompt")
         void includesTopicInPrompt() {
-            String longContent = "## Test\n\n" + "word ".repeat(800);
+            String longContent = "!!! Test\n\n" + "word ".repeat(800);
             String jsonResponse = """
                     {
-                      "markdownContent": "%s",
+                      "wikiContent": "%s",
                       "summary": "Test"
                     }
                     """.formatted(longContent.replace("\n", "\\n"));
@@ -252,10 +252,10 @@ class WriterAgentTest {
         @Test
         @DisplayName("Includes key facts in prompt")
         void includesKeyFactsInPrompt() {
-            String longContent = "## Test\n\n" + "word ".repeat(800);
+            String longContent = "!!! Test\n\n" + "word ".repeat(800);
             String jsonResponse = """
                     {
-                      "markdownContent": "%s",
+                      "wikiContent": "%s",
                       "summary": "Test"
                     }
                     """.formatted(longContent.replace("\n", "\\n"));
@@ -272,10 +272,10 @@ class WriterAgentTest {
         @Test
         @DisplayName("Includes suggested outline in prompt")
         void includesSuggestedOutlineInPrompt() {
-            String longContent = "## Test\n\n" + "word ".repeat(800);
+            String longContent = "!!! Test\n\n" + "word ".repeat(800);
             String jsonResponse = """
                     {
-                      "markdownContent": "%s",
+                      "wikiContent": "%s",
                       "summary": "Test"
                     }
                     """.formatted(longContent.replace("\n", "\\n"));
@@ -293,10 +293,10 @@ class WriterAgentTest {
         @Test
         @DisplayName("Includes related pages for linking")
         void includesRelatedPagesInPrompt() {
-            String longContent = "## Test\n\n" + "word ".repeat(800);
+            String longContent = "!!! Test\n\n" + "word ".repeat(800);
             String jsonResponse = """
                     {
-                      "markdownContent": "%s",
+                      "wikiContent": "%s",
                       "summary": "Test"
                     }
                     """.formatted(longContent.replace("\n", "\\n"));
@@ -319,10 +319,10 @@ class WriterAgentTest {
         @Test
         @DisplayName("Records contribution after successful processing")
         void recordsContribution() {
-            String longContent = "## Test\n\n" + "word ".repeat(800);
+            String longContent = "!!! Test\n\n" + "word ".repeat(800);
             String jsonResponse = """
                     {
-                      "markdownContent": "%s",
+                      "wikiContent": "%s",
                       "summary": "Test"
                     }
                     """.formatted(longContent.replace("\n", "\\n"));

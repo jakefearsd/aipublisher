@@ -54,7 +54,7 @@ public class CriticAgent extends BaseAgent {
 
         // Article content
         prompt.append("--- ARTICLE CONTENT ---\n\n");
-        prompt.append(article.markdownContent());
+        prompt.append(article.wikiContent());
         prompt.append("\n\n");
 
         // Article metadata

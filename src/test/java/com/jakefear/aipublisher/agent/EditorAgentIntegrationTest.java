@@ -74,16 +74,16 @@ class EditorAgentIntegrationTest {
 
         // Set up article draft (with some rough edges for editor to polish)
         String draftContent = """
-                ## Git Basics
+                !!! Git Basics
 
                 Git is a distributed version control system. It was created by Linus Torvalds in 2005.
                 Git tracks changes to files over time.
 
-                ### Basic Commands
+                !! Basic Commands
 
-                Use `git init` to create a new repository.
-                Use `git add` to stage changes.
-                Use `git commit` to save changes.
+                Use {{git init}} to create a new repository.
+                Use {{git add}} to stage changes.
+                Use {{git commit}} to save changes.
 
                 Git is really important for software development and helps teams collaborate.
                 """;
@@ -125,7 +125,7 @@ class EditorAgentIntegrationTest {
         assertNotNull(article, "Final article should not be null");
 
         // Verify content exists
-        assertFalse(article.markdownContent().isBlank(), "Should have markdown content");
+        assertFalse(article.wikiContent().isBlank(), "Should have wiki content");
 
         // Verify metadata
         assertNotNull(article.metadata());
@@ -149,7 +149,7 @@ class EditorAgentIntegrationTest {
         System.out.println("Quality score: " + article.qualityScore());
         System.out.println("Edit summary: " + article.editSummary());
         System.out.println("Added links: " + article.addedLinks());
-        System.out.println("\nContent:\n" + article.markdownContent());
+        System.out.println("\nContent:\n" + article.wikiContent());
     }
 
     @Test
@@ -166,13 +166,14 @@ class EditorAgentIntegrationTest {
         System.out.println("Existing pages available: " + agent.getExistingPages());
         System.out.println("Added links: " + article.addedLinks());
 
-        // Check if content contains any wiki-style links
-        String content = article.markdownContent();
-        boolean hasWikiLinks = content.contains("]()")
+        // Check if content contains any JSPWiki-style links
+        String content = article.wikiContent();
+        boolean hasWikiLinks = content.contains("[VersionControl]")
+                || content.contains("[SoftwareDevelopment]")
                 || content.contains("VersionControl")
                 || content.contains("SoftwareDevelopment");
 
-        System.out.println("Content contains wiki-style links or page references: " + hasWikiLinks);
+        System.out.println("Content contains JSPWiki-style links or page references: " + hasWikiLinks);
         System.out.println("\nContent preview:\n" + content);
     }
 

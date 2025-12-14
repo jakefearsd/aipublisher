@@ -138,7 +138,7 @@ public class EditorAgent extends BaseAgent {
 
         // Article draft
         prompt.append("--- ARTICLE DRAFT ---\n\n");
-        prompt.append(draft.markdownContent());
+        prompt.append(draft.wikiContent());
         prompt.append("\n\n");
 
         // Fact-check feedback
@@ -166,7 +166,7 @@ public class EditorAgent extends BaseAgent {
         }
 
         // Intelligent link suggestions from LinkEvaluator
-        List<LinkCandidate> suggestedLinks = getSuggestedLinks(draft.markdownContent());
+        List<LinkCandidate> suggestedLinks = getSuggestedLinks(draft.wikiContent());
         if (!suggestedLinks.isEmpty()) {
             prompt.append("\n--- SUGGESTED LINKS (prioritized) ---\n");
             prompt.append("These links have been automatically identified as high-value. Consider adding them:\n");
@@ -211,7 +211,7 @@ public class EditorAgent extends BaseAgent {
         prompt.append("Target Audience: ").append(topicBrief.targetAudience()).append("\n");
         prompt.append("Page Name: ").append(document.getPageName()).append("\n");
 
-        prompt.append("\nProduce the final polished article as JSON with markdownContent, metadata, " +
+        prompt.append("\nProduce the final polished article as JSON with wikiContent, metadata, " +
                 "editSummary, qualityScore, and addedLinks.");
 
         return prompt.toString();
@@ -223,10 +223,10 @@ public class EditorAgent extends BaseAgent {
 
         JsonNode root = parseJson(response);
 
-        // Parse markdown content (required)
-        String markdownContent = getStringOrDefault(root, "markdownContent", "");
-        if (markdownContent.isBlank()) {
-            throw new JsonProcessingException("No markdownContent found in response") {};
+        // Parse wiki content (required)
+        String wikiContent = getStringOrDefault(root, "wikiContent", "");
+        if (wikiContent.isBlank()) {
+            throw new JsonProcessingException("No wikiContent found in response") {};
         }
 
         // Parse metadata
@@ -245,7 +245,7 @@ public class EditorAgent extends BaseAgent {
 
         // Create and set the final article
         FinalArticle finalArticle = new FinalArticle(
-                markdownContent,
+                wikiContent,
                 metadata,
                 editSummary,
                 qualityScore,
@@ -273,7 +273,7 @@ public class EditorAgent extends BaseAgent {
         }
 
         // Check content exists
-        if (finalArticle.markdownContent().isBlank()) {
+        if (finalArticle.wikiContent().isBlank()) {
             log.warn("Validation failed: final article content is empty");
             return false;
         }

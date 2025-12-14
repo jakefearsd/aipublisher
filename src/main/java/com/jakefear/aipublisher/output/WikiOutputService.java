@@ -148,10 +148,10 @@ public class WikiOutputService {
         sb.append("-->\n\n");
 
         // Main content
-        sb.append(article.markdownContent());
+        sb.append(article.wikiContent());
 
         // Ensure file ends with newline
-        if (!article.markdownContent().endsWith("\n")) {
+        if (!article.wikiContent().endsWith("\n")) {
             sb.append("\n");
         }
 
@@ -267,7 +267,7 @@ public class WikiOutputService {
         if (draft != null) {
             sb.append("---\n\n");
             sb.append("# Draft Content\n\n");
-            sb.append(draft.markdownContent());
+            sb.append(draft.wikiContent());
             sb.append("\n");
         }
 

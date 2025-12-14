@@ -261,7 +261,7 @@ class ConsoleApprovalCallbackTest {
         ));
         doc.transitionTo(DocumentState.DRAFTING);
         doc.setDraft(new ArticleDraft(
-                "## Test Article\n\nThis is test content that is long enough to show truncation in the preview. " +
+                "!!! Test Article\n\nThis is test content that is long enough to show truncation in the preview. " +
                         "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
                 "Test summary",
                 List.of("category1"),
@@ -285,7 +285,7 @@ class ConsoleApprovalCallbackTest {
         ));
         doc.transitionTo(DocumentState.DRAFTING);
         doc.setDraft(new ArticleDraft(
-                "## Test Article\n\nContent.",
+                "!!! Test Article\n\nContent.",
                 "Test summary",
                 List.of(),
                 List.of(),
@@ -293,7 +293,7 @@ class ConsoleApprovalCallbackTest {
         ));
         doc.transitionTo(DocumentState.FACT_CHECKING);
         doc.setFactCheckReport(new FactCheckReport(
-                doc.getDraft().markdownContent(),
+                doc.getDraft().wikiContent(),
                 List.of(VerifiedClaim.verified("Claim 1", 0)),
                 List.of(QuestionableClaim.withoutSuggestion("Claim 2", "Needs verification")),
                 List.of(),
@@ -317,7 +317,7 @@ class ConsoleApprovalCallbackTest {
         ));
         doc.transitionTo(DocumentState.DRAFTING);
         doc.setDraft(new ArticleDraft(
-                "## Test Article\n\nContent.",
+                "!!! Test Article\n\nContent.",
                 "Test summary",
                 List.of(),
                 List.of(),
@@ -325,7 +325,7 @@ class ConsoleApprovalCallbackTest {
         ));
         doc.transitionTo(DocumentState.FACT_CHECKING);
         doc.setFactCheckReport(new FactCheckReport(
-                doc.getDraft().markdownContent(),
+                doc.getDraft().wikiContent(),
                 List.of(VerifiedClaim.verified("Claim 1", 0)),
                 List.of(),
                 List.of(),
@@ -334,7 +334,7 @@ class ConsoleApprovalCallbackTest {
         ));
         doc.transitionTo(DocumentState.EDITING);
         doc.setFinalArticle(new FinalArticle(
-                "## Final Article\n\nPolished content.",
+                "!!! Final Article\n\nPolished content.",
                 DocumentMetadata.create("Test Topic", "Test summary"),
                 "Edited for style",
                 0.85,

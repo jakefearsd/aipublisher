@@ -1,5 +1,6 @@
 package com.jakefear.aipublisher.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jakefear.aipublisher.content.ContentType;
 
 import java.time.Instant;
@@ -106,6 +107,7 @@ public record Topic(
     /**
      * Get the wiki page name for this topic.
      */
+    @JsonIgnore
     public String getWikiPageName() {
         return generateId(name);
     }
@@ -113,6 +115,7 @@ public record Topic(
     /**
      * Check if this topic is ready for generation.
      */
+    @JsonIgnore
     public boolean isReadyForGeneration() {
         return status == TopicStatus.ACCEPTED && priority.shouldGenerate();
     }
@@ -120,6 +123,7 @@ public record Topic(
     /**
      * Check if user has provided custom guidance.
      */
+    @JsonIgnore
     public boolean hasUserGuidance() {
         return !emphasize.isEmpty() || !skip.isEmpty() || !userNotes.isBlank();
     }

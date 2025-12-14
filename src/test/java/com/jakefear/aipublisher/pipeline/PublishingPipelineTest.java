@@ -322,7 +322,7 @@ class PublishingPipelineTest {
             when(editorAgent.process(any())).thenAnswer(invocation -> {
                 PublishingDocument doc = invocation.getArgument(0);
                 doc.setFinalArticle(new FinalArticle(
-                        "## Content",
+                        "!!! Content",
                         DocumentMetadata.create("Title", "Summary"),
                         "Edit summary",
                         0.75, // Below 0.9 threshold
@@ -393,7 +393,7 @@ class PublishingPipelineTest {
         when(writerAgent.process(any())).thenAnswer(invocation -> {
             PublishingDocument doc = invocation.getArgument(0);
             doc.setDraft(new ArticleDraft(
-                    "## Test Article\n\nContent here.",
+                    "!!! Test Article\n\nContent here.",
                     "Test summary",
                     List.of(),
                     List.of(),
@@ -417,7 +417,7 @@ class PublishingPipelineTest {
         when(editorAgent.process(any())).thenAnswer(invocation -> {
             PublishingDocument doc = invocation.getArgument(0);
             doc.setFinalArticle(new FinalArticle(
-                    "## Final Article\n\nPolished content.",
+                    "!!! Final Article\n\nPolished content.",
                     DocumentMetadata.create("Final Title", "Final summary"),
                     "Edited for publication",
                     0.85,
@@ -443,7 +443,7 @@ class PublishingPipelineTest {
 
     private void setFactCheckReport(PublishingDocument doc, RecommendedAction action) {
         doc.setFactCheckReport(new FactCheckReport(
-                doc.getDraft().markdownContent(),
+                doc.getDraft().wikiContent(),
                 List.of(VerifiedClaim.verified("Test claim", 0)),
                 action == RecommendedAction.APPROVE ? List.of() :
                         List.of(QuestionableClaim.withoutSuggestion("Issue claim", "Some issue")),

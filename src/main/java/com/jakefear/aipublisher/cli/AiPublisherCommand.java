@@ -69,6 +69,10 @@ import java.util.concurrent.Callable;
                 "  aipublisher --discover -c minimal              # Quick prototype mode",
                 "  aipublisher --discover --cost-profile balanced # Standard coverage",
                 "",
+                "Universe Mode (generate from saved universe):",
+                "  aipublisher --universe investing-basics        # Generate from universe ID",
+                "  aipublisher -u investing-basics                # Short form",
+                "",
                 "Cost Profiles (for --discover):",
                 "  MINIMAL       Quick prototype, 2-4 topics, ~$0.50-2",
                 "  BALANCED      Good coverage, 9-31 topics, ~$2-5 (default)",
@@ -146,6 +150,10 @@ public class AiPublisherCommand implements Callable<Integer> {
     @Option(names = {"--cost-profile", "-c"},
             description = "Cost profile for discovery: MINIMAL (quick prototype), BALANCED (most projects), COMPREHENSIVE (enterprise docs)")
     private String costProfileStr;
+
+    @Option(names = {"--universe", "-u"},
+            description = "Generate articles from a saved topic universe (by ID or file path)")
+    private String universeId;
 
     @Option(names = {"-v", "--verbose"},
             description = "Enable verbose output")
@@ -261,6 +269,11 @@ public class AiPublisherCommand implements Callable<Integer> {
             // Handle discovery mode
             if (discoverMode) {
                 return runDiscoveryMode(in, out);
+            }
+
+            // Handle universe mode - generate articles from saved universe
+            if (universeId != null && !universeId.isBlank()) {
+                return runUniverseMode(in, out);
             }
 
             TopicBrief topicBrief;
@@ -548,5 +561,130 @@ public class AiPublisherCommand implements Callable<Integer> {
             }
             return 1;
         }
+    }
+
+    /**
+     * Run article generation from a saved topic universe.
+     */
+    private Integer runUniverseMode(BufferedReader in, PrintWriter out) {
+        try {
+            TopicUniverseRepository repository = universeRepositorySupplier.get();
+
+            // Load the universe
+            var universeOpt = repository.load(universeId);
+            if (universeOpt.isEmpty()) {
+                // Try loading as a file path
+                Path path = Path.of(universeId);
+                if (Files.exists(path)) {
+                    universeOpt = repository.loadFromPath(path);
+                }
+            }
+
+            if (universeOpt.isEmpty()) {
+                out.println("ERROR: Universe not found: " + universeId);
+                out.println();
+                out.println("Available universes:");
+                var available = repository.listAll();
+                if (available.isEmpty()) {
+                    out.println("  (none)");
+                } else {
+                    for (String id : available) {
+                        out.println("  - " + id);
+                    }
+                }
+                out.println();
+                out.println("Create a new universe with: aipublisher --discover");
+                return 1;
+            }
+
+            TopicUniverse universe = universeOpt.get();
+
+            out.println();
+            out.println("╔═══════════════════════════════════════════════════════════════════╗");
+            out.println("║              AI PUBLISHER - UNIVERSE GENERATION MODE              ║");
+            out.println("╚═══════════════════════════════════════════════════════════════════╝");
+            out.println();
+            out.printf("Universe: %s%n", universe.name());
+            out.printf("Topics:   %d to generate%n", universe.getAcceptedCount());
+            out.println();
+
+            // Get topics in generation order
+            var topics = universe.getGenerationOrder();
+
+            out.println("Topics in generation order:");
+            for (int i = 0; i < topics.size(); i++) {
+                var topic = topics.get(i);
+                out.printf("  %2d. %s [%s]%n", i + 1, topic.name(), topic.priority().getDisplayName());
+            }
+            out.println();
+
+            // Confirm before starting
+            out.print("Generate articles for all topics? [Y/n]: ");
+            out.flush();
+            String response = in.readLine();
+            if (response != null && response.toLowerCase().startsWith("n")) {
+                out.println("Cancelled.");
+                return 0;
+            }
+
+            // Configure auto-approval
+            approvalServiceSupplier.get().setCallback(createAutoApproveCallback());
+
+            int successCount = 0;
+            int failCount = 0;
+
+            for (int i = 0; i < topics.size(); i++) {
+                var topic = topics.get(i);
+                out.println();
+                out.println("─".repeat(67));
+                out.printf("Generating %d/%d: %s%n", i + 1, topics.size(), topic.name());
+                out.println("─".repeat(67));
+
+                // Build TopicBrief from universe topic
+                TopicBrief brief = TopicBrief.builder(topic.name())
+                        .targetAudience(audience)
+                        .targetWordCount(topic.estimatedWords() > 0 ? topic.estimatedWords() : wordCount)
+                        .contentType(topic.contentType())
+                        .domainContext(universe.name())
+                        .build();
+
+                try {
+                    PipelineResult result = pipelineSupplier.get().execute(brief);
+
+                    if (result.success()) {
+                        successCount++;
+                        out.printf("✓ Success: %s%n", result.outputPath());
+                    } else {
+                        failCount++;
+                        out.printf("✗ Failed: %s%n", result.errorMessage());
+                    }
+                } catch (Exception e) {
+                    failCount++;
+                    out.printf("✗ Error: %s%n", e.getMessage());
+                    if (verbose) {
+                        e.printStackTrace(out);
+                    }
+                }
+            }
+
+            out.println();
+            out.println("═".repeat(67));
+            out.printf("Generation complete: %d succeeded, %d failed%n", successCount, failCount);
+            out.println("═".repeat(67));
+
+            return failCount > 0 ? 1 : 0;
+
+        } catch (Exception e) {
+            out.println();
+            out.println("ERROR in universe mode: " + e.getMessage());
+            if (verbose) {
+                e.printStackTrace(out);
+            }
+            return 1;
+        }
+    }
+
+    public String getUniverseId() {
+        return universeId;
     }
 }

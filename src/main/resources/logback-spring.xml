@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Prevent classloader issues during shutdown by delaying logback shutdown -->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
+        <delay>100</delay>
+    </shutdownHook>
+
+    <!-- Console appender for CLI output -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File appender for session logging -->
+    <appender name="SESSION_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>session.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Root logger - only warnings and errors to console -->
+    <root level="WARN">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+    <!-- Application loggers at INFO level -->
+    <logger name="com.jakefear.aipublisher" level="INFO" additivity="true">
+        <appender-ref ref="SESSION_FILE" />
+    </logger>
+
+    <!-- Reduce noise from libraries -->
+    <logger name="org.springframework" level="WARN" />
+    <logger name="dev.langchain4j" level="WARN" />
+    <logger name="org.apache.http" level="WARN" />
+</configuration>

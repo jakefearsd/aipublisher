@@ -74,7 +74,7 @@ public class FactCheckerAgent extends BaseAgent {
 
         // Article draft
         prompt.append("--- ARTICLE DRAFT ---\n\n");
-        prompt.append(draft.markdownContent());
+        prompt.append(draft.wikiContent());
         prompt.append("\n\n");
 
         // Research brief for verification
@@ -175,7 +175,7 @@ public class FactCheckerAgent extends BaseAgent {
         // Create and set the fact-check report
         // Use the original draft content as annotatedContent since we don't modify it
         FactCheckReport report = new FactCheckReport(
-                document.getDraft().markdownContent(),
+                document.getDraft().wikiContent(),
                 verifiedClaims,
                 questionableClaims,
                 consistencyIssues,

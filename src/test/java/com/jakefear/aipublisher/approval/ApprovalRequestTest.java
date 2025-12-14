@@ -126,7 +126,7 @@ class ApprovalRequestTest {
         PublishingDocument doc = createDocumentWithResearch();
         doc.transitionTo(DocumentState.DRAFTING);
         doc.setDraft(new ArticleDraft(
-                "## Test Article\n\nThis is some test content for the article.",
+                "!!! Test Article\n\nThis is some test content for the article.",
                 "Test summary",
                 List.of(),
                 List.of(),
@@ -139,7 +139,7 @@ class ApprovalRequestTest {
         PublishingDocument doc = createDocumentWithDraft();
         doc.transitionTo(DocumentState.FACT_CHECKING);
         doc.setFactCheckReport(new FactCheckReport(
-                doc.getDraft().markdownContent(),
+                doc.getDraft().wikiContent(),
                 List.of(VerifiedClaim.verified("Test claim", 0)),
                 List.of(),
                 List.of(),
@@ -153,7 +153,7 @@ class ApprovalRequestTest {
         PublishingDocument doc = createDocumentWithFactCheck();
         doc.transitionTo(DocumentState.EDITING);
         doc.setFinalArticle(new FinalArticle(
-                "## Final Article\n\nPolished content.",
+                "!!! Final Article\n\nPolished content.",
                 DocumentMetadata.create("Test Topic", "Test summary"),
                 "Edit summary",
                 0.85,

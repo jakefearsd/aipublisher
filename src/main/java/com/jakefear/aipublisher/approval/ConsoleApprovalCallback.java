@@ -91,7 +91,7 @@ public class ConsoleApprovalCallback implements ApprovalCallback {
                     System.out.println("Categories: " + doc.getDraft().categories());
                     System.out.println();
                     System.out.println("Content Preview (first 500 chars):");
-                    String content = doc.getDraft().markdownContent();
+                    String content = doc.getDraft().wikiContent();
                     System.out.println(content.substring(0, Math.min(500, content.length())));
                     if (content.length() > 500) System.out.println("...");
                 }

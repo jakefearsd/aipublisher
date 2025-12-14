@@ -9,9 +9,9 @@ import java.util.Objects;
  */
 public record ArticleDraft(
         /**
-         * The article content in JSPWiki Markdown format.
+         * The article content in JSPWiki format.
          */
-        String markdownContent,
+        String wikiContent,
 
         /**
          * One-paragraph summary for page metadata.
@@ -34,9 +34,9 @@ public record ArticleDraft(
         Map<String, String> metadata
 ) {
     public ArticleDraft {
-        Objects.requireNonNull(markdownContent, "markdownContent must not be null");
-        if (markdownContent.isBlank()) {
-            throw new IllegalArgumentException("markdownContent must not be blank");
+        Objects.requireNonNull(wikiContent, "wikiContent must not be null");
+        if (wikiContent.isBlank()) {
+            throw new IllegalArgumentException("wikiContent must not be blank");
         }
 
         // Ensure immutable collections
@@ -49,17 +49,17 @@ public record ArticleDraft(
      * Check if the draft has valid content to proceed.
      */
     public boolean isValid() {
-        return !markdownContent.isBlank() && summary != null && !summary.isBlank();
+        return !wikiContent.isBlank() && summary != null && !summary.isBlank();
     }
 
     /**
-     * Estimate word count of the markdown content.
+     * Estimate word count of the wiki content.
      */
     public int estimateWordCount() {
-        if (markdownContent == null || markdownContent.isBlank()) {
+        if (wikiContent == null || wikiContent.isBlank()) {
             return 0;
         }
         // Simple word count: split on whitespace
-        return markdownContent.trim().split("\\s+").length;
+        return wikiContent.trim().split("\\s+").length;
     }
 }

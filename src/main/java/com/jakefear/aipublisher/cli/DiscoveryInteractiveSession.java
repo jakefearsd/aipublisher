@@ -44,6 +44,7 @@ public class DiscoveryInteractiveSession {
 
     private DiscoverySession session;
     private CostProfile costProfile;
+    private SessionLogger sessionLog;
 
     /**
      * Constructor with optional cost profile.
@@ -91,65 +92,110 @@ public class DiscoveryInteractiveSession {
      * @return The completed topic universe, or null if cancelled
      */
     public TopicUniverse run() {
+        // Initialize session logger with a unique ID
+        String tempSessionId = UUID.randomUUID().toString().substring(0, 8);
+        sessionLog = new SessionLogger(tempSessionId);
+        sessionLog.info("Discovery session starting");
+
         try {
             // Prompt for cost profile if not set via CLI
+            sessionLog.debug("Checking cost profile...");
             if (costProfile == null) {
+                sessionLog.debug("No cost profile set, prompting user");
                 if (!promptForCostProfile()) {
+                    sessionLog.sessionEnd(false, "User cancelled at cost profile selection");
                     return null;
                 }
             } else {
                 out.println();
                 out.printf("Using cost profile: %s%n", costProfile.toDisplayString());
             }
+            sessionLog.info("Cost profile selected: %s", costProfile.name());
 
             printWelcome();
 
             // Phase 1: Domain name and seed topics
+            sessionLog.phase("SEED_INPUT", 1, 8);
             if (!runSeedInputPhase()) {
+                sessionLog.sessionEnd(false, "User cancelled at seed input phase");
                 return null;
             }
+            sessionLog.state("Seed input complete, session domain: " + session.getDomainName());
 
             // Phase 2: Scope configuration (optional)
+            sessionLog.phase("SCOPE_SETUP", 2, 8);
             if (!runScopeSetupPhase()) {
+                sessionLog.sessionEnd(false, "User cancelled at scope setup phase");
                 return null;
             }
+            sessionLog.state("Scope setup complete");
 
             // Phase 3: Topic expansion
+            sessionLog.phase("TOPIC_EXPANSION", 3, 8);
             if (!runTopicExpansionPhase()) {
+                sessionLog.sessionEnd(false, "User cancelled at topic expansion phase");
                 return null;
             }
+            sessionLog.state("Topic expansion complete, total topics: " + session.getAcceptedTopicCount());
 
             // Phase 4: Relationship mapping
+            sessionLog.phase("RELATIONSHIP_MAPPING", 4, 8);
             if (!runRelationshipMappingPhase()) {
+                sessionLog.sessionEnd(false, "User cancelled at relationship mapping phase");
                 return null;
             }
+            sessionLog.state("Relationship mapping complete");
 
             // Phase 5: Gap analysis
+            sessionLog.phase("GAP_ANALYSIS", 5, 8);
             if (!runGapAnalysisPhase()) {
+                sessionLog.sessionEnd(false, "User cancelled at gap analysis phase");
                 return null;
             }
+            sessionLog.state("Gap analysis complete");
 
             // Phase 6: Depth calibration (optional)
+            sessionLog.phase("DEPTH_CALIBRATION", 6, 8);
             if (!runDepthCalibrationPhase()) {
+                sessionLog.sessionEnd(false, "User cancelled at depth calibration phase");
                 return null;
             }
+            sessionLog.state("Depth calibration complete");
 
             // Phase 7: Prioritization
+            sessionLog.phase("PRIORITIZATION", 7, 8);
             if (!runPrioritizationPhase()) {
+                sessionLog.sessionEnd(false, "User cancelled at prioritization phase");
                 return null;
             }
+            sessionLog.state("Prioritization complete");
 
             // Phase 8: Review and confirm
+            sessionLog.phase("REVIEW", 8, 8);
             if (!runReviewPhase()) {
+                sessionLog.sessionEnd(false, "User cancelled at review phase");
                 return null;
             }
+            sessionLog.state("Review phase complete");
 
             session.goToPhase(DiscoveryPhase.COMPLETE);
-            return session.buildUniverse();
+            TopicUniverse universe = session.buildUniverse();
+            sessionLog.info("Built topic universe: %s with %d topics, %d relationships",
+                    universe.name(), universe.getAcceptedCount(), universe.relationships().size());
+            sessionLog.sessionEnd(true, "Discovery completed successfully");
+            return universe;
 
         } catch (Exception e) {
-            out.println("\n⚠ Session interrupted: " + e.getMessage());
+            String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            out.println("\n⚠ Session interrupted: " + errorMsg);
+            e.printStackTrace(out);
+            sessionLog.error("Session interrupted by exception", e);
+            sessionLog.sessionEnd(false, "Exception: " + errorMsg);
             return null;
+        } finally {
+            if (sessionLog != null) {
+                sessionLog.close();
+            }
         }
     }
 
@@ -343,11 +389,13 @@ public class DiscoveryInteractiveSession {
 
     private boolean runTopicExpansionPhase() throws Exception {
         printPhaseHeader("TOPIC EXPANSION", 3, 8, "Discover and curate related topics");
+        sessionLog.info("Starting topic expansion phase");
 
         TopicUniverse current = session.buildUniverse();
         Set<String> existingNames = current.topics().stream()
                 .map(Topic::name)
                 .collect(Collectors.toSet());
+        sessionLog.debug("Existing topics: %d", existingNames.size());
 
         out.println("Generating topic suggestions based on your seed topics...");
         out.printf("(Profile: %s - max %d rounds, %d topics/round)%n",
@@ -361,19 +409,25 @@ public class DiscoveryInteractiveSession {
         int topicsPerRound = costProfile.topicsPerRound();
 
         while (expansionRounds < maxRounds) {
+            sessionLog.debug("Expansion round %d/%d starting", expansionRounds + 1, maxRounds);
             List<Topic> toExpand = session.buildUniverse().getAcceptedTopics().stream()
                     .limit(topicsPerRound) // Expand up to N topics per round based on profile
                     .toList();
 
-            if (toExpand.isEmpty()) break;
+            if (toExpand.isEmpty()) {
+                sessionLog.debug("No topics to expand, ending expansion");
+                break;
+            }
 
             for (Topic topic : toExpand) {
                 session.setExpansionSource(topic.name());
+                sessionLog.info("Expanding from topic: %s", topic.name());
 
                 out.println("━".repeat(60));
                 out.printf("Expanding from: %s%n", topic.name());
                 out.println("━".repeat(60));
 
+                sessionLog.apiCall("TopicExpander", "expandTopic");
                 List<TopicSuggestion> suggestions = topicExpander.expandTopic(
                         topic.name(),
                         session.getDomainName(),
@@ -381,17 +435,21 @@ public class DiscoveryInteractiveSession {
                         session.getScope(),
                         costProfile
                 );
+                sessionLog.apiResponse("TopicExpander", "Generated " + suggestions.size() + " suggestions");
 
                 if (suggestions.isEmpty()) {
                     out.println("No new suggestions generated.");
+                    sessionLog.debug("No suggestions generated for topic: %s", topic.name());
                     continue;
                 }
 
                 session.addTopicSuggestions(suggestions);
+                sessionLog.debug("Added %d suggestions to pending list", suggestions.size());
 
                 // Present suggestions for curation
                 if (!curateTopicSuggestions()) {
                     if (readLine() != null && readLine().equalsIgnoreCase("quit")) {
+                        sessionLog.info("User quit during topic curation");
                         return cancelSession();
                     }
                 }
@@ -410,13 +468,16 @@ public class DiscoveryInteractiveSession {
                     expansionRounds, session.getAcceptedTopicCount());
 
             InputResponse continueResponse = input.promptYesNo("Continue expanding?", true);
+            sessionLog.userInput("Continue expanding?", continueResponse.value());
             if (continueResponse.isQuit() || "no".equals(continueResponse.value())) {
+                sessionLog.info("User chose to stop expansion");
                 break;
             }
         }
 
         out.println();
         out.printf("✓ Topic expansion complete. Total topics: %d%n", session.getAcceptedTopicCount());
+        sessionLog.info("Topic expansion complete, total topics: %d", session.getAcceptedTopicCount());
         session.advancePhase();
         return true;
     }
@@ -502,10 +563,14 @@ public class DiscoveryInteractiveSession {
 
     private boolean runRelationshipMappingPhase() throws Exception {
         printPhaseHeader("RELATIONSHIP MAPPING", 4, 8, "Define how topics relate to each other");
+        sessionLog.info("Starting relationship mapping phase");
 
         List<Topic> allTopics = session.buildUniverse().getAcceptedTopics();
+        sessionLog.debug("Total accepted topics: %d", allTopics.size());
+
         if (allTopics.size() < 2) {
             out.println("Need at least 2 topics for relationship mapping.");
+            sessionLog.info("Skipping relationship mapping - less than 2 topics");
             session.advancePhase();
             return true;
         }
@@ -513,15 +578,19 @@ public class DiscoveryInteractiveSession {
         // Filter topics based on relationship depth from cost profile
         RelationshipDepth depth = costProfile.relationshipDepth();
         List<Topic> topics = filterTopicsForRelationshipAnalysis(allTopics, depth);
+        sessionLog.debug("Filtered to %d topics for analysis (depth: %s)", topics.size(), depth.name());
 
         out.printf("Analyzing relationships (%s depth - %d of %d topics)...%n",
                 depth.getDisplayName(), topics.size(), allTopics.size());
         out.println();
 
+        sessionLog.apiCall("RelationshipSuggester", "analyzeAllRelationships");
         List<RelationshipSuggestion> suggestions = relationshipSuggester.analyzeAllRelationships(topics);
+        sessionLog.apiResponse("RelationshipSuggester", "Generated " + suggestions.size() + " suggestions");
 
         if (suggestions.isEmpty()) {
             out.println("No relationship suggestions generated.");
+            sessionLog.info("No relationship suggestions generated");
             session.advancePhase();
             return true;
         }
@@ -531,18 +600,25 @@ public class DiscoveryInteractiveSession {
         out.println();
 
         // Show and curate relationship suggestions
-        List<RelationshipSuggestion> pending = session.getPendingRelationshipSuggestions();
+        // Create a copy to avoid ConcurrentModificationException when items are removed during iteration
+        List<RelationshipSuggestion> pending = new ArrayList<>(session.getPendingRelationshipSuggestions());
+        sessionLog.debug("Starting relationship curation with %d pending suggestions", pending.size());
         int shown = 0;
         int maxToShow = 15;
 
         for (RelationshipSuggestion rel : pending) {
+            sessionLog.debug("Processing relationship %d/%d: %s -> %s",
+                    shown + 1, pending.size(), rel.sourceTopicName(), rel.targetTopicName());
+
             if (shown >= maxToShow) {
                 out.println();
                 out.printf("Showing %d of %d relationships.%n", shown, pending.size());
                 InputResponse moreResponse = input.promptYesNo("Show more?", false);
+                sessionLog.userInput("Show more?", moreResponse.value());
                 if (moreResponse.isQuit() || "no".equals(moreResponse.value())) {
                     // Auto-confirm remaining high-confidence
-                    autoProcessRemainingRelationships(pending);
+                    sessionLog.info("Auto-processing remaining %d relationships", pending.size() - shown);
+                    autoProcessRemainingRelationships(pending.subList(shown, pending.size()));
                     break;
                 }
                 maxToShow += 10;
@@ -553,21 +629,29 @@ public class DiscoveryInteractiveSession {
             out.flush();
 
             String decision = readLine();
+            sessionLog.userInput("Relationship decision", decision);
             CurationAction action = CurationAction.parse(decision);
+            sessionLog.debug("Parsed action: %s", action);
 
             if (action == CurationAction.QUIT) {
+                sessionLog.info("User quit during relationship curation");
                 return cancelSession();
             }
 
             CurationCommand<RelationshipSuggestion> command = relationshipCurationFactory.getCommand(action);
             if (command != null) {
+                sessionLog.debug("Executing command: %s", command.getClass().getSimpleName());
                 CurationResult result = command.execute(rel, session, input);
+                sessionLog.action("Relationship curation", result.outcome() + ": " + result.message());
                 if (result.shouldQuit()) {
+                    sessionLog.info("Command requested quit");
                     return cancelSession();
                 }
                 if (result.message() != null) {
                     out.println("  " + getResultIcon(result) + " " + result.message());
                 }
+            } else {
+                sessionLog.warn("No command found for action: %s", action);
             }
             shown++;
         }

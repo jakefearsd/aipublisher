@@ -638,7 +638,7 @@ class AiPublisherCommandTest {
         // Transition to DRAFTING and set draft
         document.transitionTo(DocumentState.DRAFTING);
         ArticleDraft draft = new ArticleDraft(
-                "# Test Article\n\nThis is test content.",
+                "!!! Test Article\n\nThis is test content.",
                 "Test summary",
                 List.of(),
                 List.of(),
@@ -649,7 +649,7 @@ class AiPublisherCommandTest {
         // Transition to FACT_CHECKING and set fact check report
         document.transitionTo(DocumentState.FACT_CHECKING);
         FactCheckReport factCheckReport = new FactCheckReport(
-                draft.markdownContent(),
+                draft.wikiContent(),
                 List.of(new VerifiedClaim("Claim 1", "VERIFIED", 0)),
                 List.of(),
                 List.of(),
@@ -661,7 +661,7 @@ class AiPublisherCommandTest {
         // Transition to EDITING and set final article
         document.transitionTo(DocumentState.EDITING);
         FinalArticle finalArticle = new FinalArticle(
-                "# Test Article\n\nThis is the final polished content with approximately 500 words of content.",
+                "!!! Test Article\n\nThis is the final polished content with approximately 500 words of content.",
                 DocumentMetadata.create("Test Article", "Test summary"),
                 "Article edited for publication",
                 0.85,

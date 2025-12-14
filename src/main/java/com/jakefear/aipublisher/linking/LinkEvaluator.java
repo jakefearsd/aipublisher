@@ -18,6 +18,14 @@ public class LinkEvaluator {
     private final GlossaryService glossaryService;
     private final LinkingStrategy strategy;
 
+    /**
+     * Default constructor for Spring proxy creation.
+     */
+    public LinkEvaluator() {
+        this.glossaryService = new GlossaryService();
+        this.strategy = LinkingStrategy.defaults();
+    }
+
     public LinkEvaluator(GlossaryService glossaryService) {
         this.glossaryService = glossaryService;
         this.strategy = LinkingStrategy.defaults();

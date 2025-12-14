@@ -19,9 +19,9 @@ public class OutputProperties {
     private String directory = "./output";
 
     /**
-     * File extension for generated files (.md for JSPWiki Markdown).
+     * File extension for generated files (.txt for JSPWiki).
      */
-    private String fileExtension = ".md";
+    private String fileExtension = ".txt";
 
     public String getDirectory() {
         return directory;

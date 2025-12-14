@@ -77,9 +77,9 @@ class WriterAgentIntegrationTest {
         assertNotNull(draft, "Draft should not be null");
 
         // Verify content was generated
-        assertFalse(draft.markdownContent().isBlank(), "Should have markdown content");
+        assertFalse(draft.wikiContent().isBlank(), "Should have wiki content");
         // JSPWiki uses ! for headings (!, !!, !!!)
-        assertTrue(draft.markdownContent().contains("!"), "Should have JSPWiki headings");
+        assertTrue(draft.wikiContent().contains("!"), "Should have JSPWiki headings");
 
         // Verify summary was generated
         assertFalse(draft.summary().isBlank(), "Should have summary");
@@ -97,7 +97,7 @@ class WriterAgentIntegrationTest {
         System.out.println("Categories: " + draft.categories());
         System.out.println("\nSummary: " + draft.summary());
         System.out.println("\nContent preview (first 500 chars):");
-        System.out.println(draft.markdownContent().substring(0, Math.min(500, draft.markdownContent().length())));
+        System.out.println(draft.wikiContent().substring(0, Math.min(500, draft.wikiContent().length())));
     }
 
     @Test

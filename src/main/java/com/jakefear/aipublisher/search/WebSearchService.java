@@ -26,12 +26,26 @@ import java.util.regex.Pattern;
 public class WebSearchService {
 
     private static final Logger log = LoggerFactory.getLogger(WebSearchService.class);
-    private static final String DUCKDUCKGO_URL = "https://html.duckduckgo.com/html/";
+    private static final String DUCKDUCKGO_URL = "https://lite.duckduckgo.com/lite/";
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
+    private static final int MAX_RETRIES = 3;
+    private static final long INITIAL_BACKOFF_MS = 1000; // 1 second
 
     private final HttpClient httpClient;
     private final int maxResults;
     private final boolean enabled;
+
+    /**
+     * Default constructor for Spring.
+     */
+    public WebSearchService() {
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(DEFAULT_TIMEOUT)
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
+        this.maxResults = 5;
+        this.enabled = true;
+    }
 
     public WebSearchService(
             @Value("${search.max-results:5}") int maxResults,
@@ -74,25 +88,72 @@ public class WebSearchService {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .timeout(DEFAULT_TIMEOUT)
-                    .header("User-Agent", "Mozilla/5.0 (compatible; AIPublisher/1.0)")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                     .GET()
                     .build();
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                return parseSearchResults(response.body());
-            } else {
-                log.warn("Search request failed with status {}", response.statusCode());
-                return List.of();
-            }
-        } catch (IOException | InterruptedException e) {
-            log.error("Error performing web search: {}", e.getMessage());
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
+            return executeWithRetry(request);
+        } catch (InterruptedException e) {
+            log.error("Search interrupted: {}", e.getMessage());
+            Thread.currentThread().interrupt();
             return List.of();
         }
+    }
+
+    /**
+     * Execute HTTP request with exponential backoff retry for transient failures.
+     */
+    private List<SearchResult> executeWithRetry(HttpRequest request) throws InterruptedException {
+        int attempt = 0;
+        long backoffMs = INITIAL_BACKOFF_MS;
+
+        while (attempt < MAX_RETRIES) {
+            try {
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                int statusCode = response.statusCode();
+
+                if (statusCode == 200) {
+                    return parseSearchResults(response.body());
+                } else if (isRetryableStatus(statusCode)) {
+                    attempt++;
+                    if (attempt < MAX_RETRIES) {
+                        log.info("Search request returned status {}, retrying in {}ms (attempt {}/{})",
+                                statusCode, backoffMs, attempt, MAX_RETRIES);
+                        Thread.sleep(backoffMs);
+                        backoffMs *= 2; // Exponential backoff
+                    } else {
+                        log.warn("Search request failed with status {} after {} attempts", statusCode, MAX_RETRIES);
+                        return List.of();
+                    }
+                } else {
+                    log.warn("Search request failed with non-retryable status {}", statusCode);
+                    return List.of();
+                }
+            } catch (IOException e) {
+                attempt++;
+                if (attempt < MAX_RETRIES) {
+                    log.info("Search request failed with {}, retrying in {}ms (attempt {}/{})",
+                            e.getMessage(), backoffMs, attempt, MAX_RETRIES);
+                    Thread.sleep(backoffMs);
+                    backoffMs *= 2;
+                } else {
+                    log.error("Search request failed after {} attempts: {}", MAX_RETRIES, e.getMessage());
+                    return List.of();
+                }
+            }
+        }
+
+        return List.of();
+    }
+
+    /**
+     * Check if a status code indicates a transient failure that should be retried.
+     */
+    private boolean isRetryableStatus(int statusCode) {
+        return statusCode == 202  // Accepted (processing)
+                || statusCode == 429  // Too Many Requests
+                || statusCode == 503  // Service Unavailable
+                || statusCode == 504; // Gateway Timeout
     }
 
     /**

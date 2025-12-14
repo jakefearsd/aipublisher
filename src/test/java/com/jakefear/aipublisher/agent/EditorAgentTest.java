@@ -51,7 +51,7 @@ class EditorAgentTest {
 
         // Set up article draft
         ArticleDraft draft = new ArticleDraft(
-                "## Apache Kafka\n\nApache Kafka is a distributed streaming platform.",
+                "!!! Apache Kafka\n\nApache Kafka is a distributed streaming platform.",
                 "An introduction to Apache Kafka",
                 List.of(),
                 List.of("Technology"),
@@ -62,7 +62,7 @@ class EditorAgentTest {
 
         // Set up fact-check report (prerequisite for editor)
         FactCheckReport factCheckReport = new FactCheckReport(
-                draft.markdownContent(),
+                draft.wikiContent(),
                 List.of(VerifiedClaim.verified("Kafka is a distributed streaming platform", 0)),
                 List.of(),
                 List.of(),
@@ -136,7 +136,7 @@ class EditorAgentTest {
         void parsesValidJsonResponse() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Apache Kafka\\n\\nApache Kafka is a distributed event streaming platform...",
+                      "wikiContent": "!!! Apache Kafka\\n\\nApache Kafka is a distributed event streaming platform...",
                       "metadata": {
                         "title": "Apache Kafka",
                         "summary": "An introduction to Apache Kafka for developers",
@@ -154,7 +154,7 @@ class EditorAgentTest {
 
             FinalArticle article = result.getFinalArticle();
             assertNotNull(article);
-            assertTrue(article.markdownContent().contains("Apache Kafka"));
+            assertTrue(article.wikiContent().contains("Apache Kafka"));
             assertEquals("Apache Kafka", article.getTitle());
             assertEquals(0.92, article.qualityScore(), 0.001);
             assertEquals(2, article.addedLinks().size());
@@ -162,12 +162,12 @@ class EditorAgentTest {
         }
 
         @Test
-        @DisplayName("Handles JSON wrapped in markdown code blocks")
-        void handlesMarkdownWrappedJson() {
+        @DisplayName("Handles JSON wrapped in code blocks")
+        void handlesCodeBlockWrappedJson() {
             String jsonResponse = """
                     ```json
                     {
-                      "markdownContent": "## Test Article\\n\\nPolished content.",
+                      "wikiContent": "!!! Test Article\\n\\nPolished content.",
                       "metadata": {"title": "Test", "summary": "Test summary"},
                       "editSummary": "Minor edits",
                       "qualityScore": 0.85,
@@ -181,7 +181,7 @@ class EditorAgentTest {
             PublishingDocument result = agent.process(document);
 
             assertNotNull(result.getFinalArticle());
-            assertTrue(result.getFinalArticle().markdownContent().contains("Test Article"));
+            assertTrue(result.getFinalArticle().wikiContent().contains("Test Article"));
         }
 
         @Test
@@ -189,7 +189,7 @@ class EditorAgentTest {
         void handlesMinimalResponse() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Minimal\\n\\nContent.",
+                      "wikiContent": "!!! Minimal\\n\\nContent.",
                       "qualityScore": 0.8
                     }
                     """;
@@ -209,7 +209,7 @@ class EditorAgentTest {
         void clampsQualityScoreToValidRange() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nContent.",
+                      "wikiContent": "!!! Article\\n\\nContent.",
                       "qualityScore": 1.5
                     }
                     """;
@@ -222,11 +222,11 @@ class EditorAgentTest {
         }
 
         @Test
-        @DisplayName("Throws on missing markdown content")
-        void throwsOnMissingMarkdownContent() {
+        @DisplayName("Throws on missing wiki content")
+        void throwsOnMissingWikiContent() {
             String jsonResponse = """
                     {
-                      "markdownContent": "",
+                      "wikiContent": "",
                       "qualityScore": 0.85
                     }
                     """;
@@ -254,7 +254,7 @@ class EditorAgentTest {
         void parsesHighQualityScore() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nExcellent content.",
+                      "wikiContent": "!!! Article\\n\\nExcellent content.",
                       "qualityScore": 0.95
                     }
                     """;
@@ -271,7 +271,7 @@ class EditorAgentTest {
         void parsesLowQualityScore() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nBasic content.",
+                      "wikiContent": "!!! Article\\n\\nBasic content.",
                       "qualityScore": 0.65
                     }
                     """;
@@ -288,7 +288,7 @@ class EditorAgentTest {
         void defaultsTo0point8WhenNotProvided() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nContent."
+                      "wikiContent": "!!! Article\\n\\nContent."
                     }
                     """;
 
@@ -308,7 +308,7 @@ class EditorAgentTest {
         void validatesWithGoodQualityScore() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nGood content.",
+                      "wikiContent": "!!! Article\\n\\nGood content.",
                       "qualityScore": 0.85
                     }
                     """;
@@ -331,7 +331,7 @@ class EditorAgentTest {
         void failsWithLowQualityScore() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nPoor content.",
+                      "wikiContent": "!!! Article\\n\\nPoor content.",
                       "qualityScore": 0.5
                     }
                     """;
@@ -348,7 +348,7 @@ class EditorAgentTest {
         void passesAtQualityThresholdBoundary() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nAcceptable content.",
+                      "wikiContent": "!!! Article\\n\\nAcceptable content.",
                       "qualityScore": 0.7
                     }
                     """;
@@ -370,7 +370,7 @@ class EditorAgentTest {
         void includesArticleDraftInPrompt() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nContent.",
+                      "wikiContent": "!!! Article\\n\\nContent.",
                       "qualityScore": 0.85
                     }
                     """;
@@ -389,7 +389,7 @@ class EditorAgentTest {
         void includesFactCheckFeedbackInPrompt() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nContent.",
+                      "wikiContent": "!!! Article\\n\\nContent.",
                       "qualityScore": 0.85
                     }
                     """;
@@ -424,7 +424,7 @@ class EditorAgentTest {
             docWithIssues.transitionTo(DocumentState.DRAFTING);
 
             ArticleDraft draft = new ArticleDraft(
-                    "## Kafka\n\nKafka is the fastest messaging system.",
+                    "!!! Kafka\n\nKafka is the fastest messaging system.",
                     "Summary",
                     List.of(),
                     List.of(),
@@ -434,7 +434,7 @@ class EditorAgentTest {
             docWithIssues.transitionTo(DocumentState.FACT_CHECKING);
 
             FactCheckReport reportWithIssues = new FactCheckReport(
-                    draft.markdownContent(),
+                    draft.wikiContent(),
                     List.of(),
                     List.of(QuestionableClaim.withSuggestion(
                             "Kafka is the fastest",
@@ -450,7 +450,7 @@ class EditorAgentTest {
 
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nFixed content.",
+                      "wikiContent": "!!! Article\\n\\nFixed content.",
                       "qualityScore": 0.85
                     }
                     """;
@@ -473,7 +473,7 @@ class EditorAgentTest {
 
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nContent with links.",
+                      "wikiContent": "!!! Article\\n\\nContent with links.",
                       "qualityScore": 0.85,
                       "addedLinks": ["EventStreaming"]
                     }
@@ -497,7 +497,7 @@ class EditorAgentTest {
 
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nContent.",
+                      "wikiContent": "!!! Article\\n\\nContent.",
                       "qualityScore": 0.85
                     }
                     """;
@@ -521,7 +521,7 @@ class EditorAgentTest {
         void parsesFullMetadata() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Test\\n\\nContent.",
+                      "wikiContent": "!!! Test\\n\\nContent.",
                       "metadata": {
                         "title": "Custom Title",
                         "summary": "Custom summary",
@@ -544,7 +544,7 @@ class EditorAgentTest {
         void fallsBackToTopicForMissingTitle() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Test\\n\\nContent.",
+                      "wikiContent": "!!! Test\\n\\nContent.",
                       "qualityScore": 0.85
                     }
                     """;
@@ -566,7 +566,7 @@ class EditorAgentTest {
         void parsesAddedLinks() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nSee [EventStreaming]() for more.",
+                      "wikiContent": "!!! Article\\n\\nSee [EventStreaming] for more.",
                       "qualityScore": 0.85,
                       "addedLinks": ["EventStreaming", "MessageQueue", "ApacheZookeeper"]
                     }
@@ -587,7 +587,7 @@ class EditorAgentTest {
         void handlesEmptyAddedLinks() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nNo new links.",
+                      "wikiContent": "!!! Article\\n\\nNo new links.",
                       "qualityScore": 0.85,
                       "addedLinks": []
                     }
@@ -610,7 +610,7 @@ class EditorAgentTest {
         void recordsContribution() {
             String jsonResponse = """
                     {
-                      "markdownContent": "## Article\\n\\nContent.",
+                      "wikiContent": "!!! Article\\n\\nContent.",
                       "qualityScore": 0.85
                     }
                     """;

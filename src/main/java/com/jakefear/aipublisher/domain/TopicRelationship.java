@@ -1,5 +1,7 @@
 package com.jakefear.aipublisher.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.time.Instant;
 import java.util.Objects;
 
@@ -168,6 +170,7 @@ public record TopicRelationship(
     /**
      * Check if this relationship is active (should be used).
      */
+    @JsonIgnore
     public boolean isActive() {
         return status.isActive();
     }
@@ -175,6 +178,7 @@ public record TopicRelationship(
     /**
      * Check if this relationship implies source should be generated before target.
      */
+    @JsonIgnore
     public boolean impliesOrdering() {
         return type.impliesOrdering() && isActive();
     }
@@ -182,6 +186,7 @@ public record TopicRelationship(
     /**
      * Get a human-readable description.
      */
+    @JsonIgnore
     public String describe() {
         return sourceTopicId + " " + type.getDisplayName().toLowerCase() + " " + targetTopicId;
     }

@@ -57,7 +57,7 @@ public final class AgentPrompts {
             You MUST respond with ONLY a valid JSON object (no markdown, no explanation, no text before or after).
             The JSON must have this exact structure:
             {
-              "markdownContent": "!!! Title\\n\\nContent...",
+              "wikiContent": "!!! Title\\n\\nContent...",
               "summary": "One paragraph summary for metadata",
               "internalLinks": ["PageName1", "PageName2"],
               "categories": ["Category1", "Category2"]
@@ -118,7 +118,7 @@ public final class AgentPrompts {
             - Use active voice when possible
 
             IMPORTANT: Your response must be ONLY valid JSON. Do not include any text before or after the JSON object.
-            Escape newlines as \\n in the markdownContent field.
+            Escape newlines as \\n in the wikiContent field.
             """;
 
     /**
@@ -189,7 +189,7 @@ public final class AgentPrompts {
             You MUST respond with ONLY a valid JSON object (no markdown, no explanation, no text before or after).
             The JSON must have this exact structure:
             {
-              "markdownContent": "!!! Title\\n\\nPolished content...",
+              "wikiContent": "!!! Title\\n\\nPolished content...",
               "metadata": {
                 "title": "Article Title",
                 "summary": "Metadata summary",
@@ -265,7 +265,7 @@ public final class AgentPrompts {
             - Remove any fact-checker annotations from output
 
             IMPORTANT: Your response must be ONLY valid JSON. Do not include any text before or after the JSON object.
-            Escape newlines as \\n in the markdownContent field.
+            Escape newlines as \\n in the wikiContent field.
             """;
 
     /**
