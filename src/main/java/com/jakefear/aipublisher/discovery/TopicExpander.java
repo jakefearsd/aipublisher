@@ -73,10 +73,30 @@ public class TopicExpander {
             String domainName,
             Set<String> existingTopics,
             ScopeConfiguration scope) {
+        return expandTopic(seedTopic, domainName, existingTopics, scope, null);
+    }
+
+    /**
+     * Expand a seed topic into related topic suggestions with cost profile control.
+     *
+     * @param seedTopic The topic to expand from
+     * @param domainName The overall domain context
+     * @param existingTopics Topics already in the universe (to avoid duplicates)
+     * @param scope Optional scope configuration for guidance
+     * @param costProfile Optional cost profile for controlling suggestion count
+     * @return List of topic suggestions
+     */
+    public List<TopicSuggestion> expandTopic(
+            String seedTopic,
+            String domainName,
+            Set<String> existingTopics,
+            ScopeConfiguration scope,
+            CostProfile costProfile) {
 
         log.info("Expanding topic: {} in domain: {}", seedTopic, domainName);
 
-        String prompt = buildPrompt(seedTopic, domainName, existingTopics, scope);
+        String suggestionsRange = costProfile != null ? costProfile.getSuggestionsRange() : "5-10";
+        String prompt = buildPrompt(seedTopic, domainName, existingTopics, scope, suggestionsRange);
         String response = model.generate(SYSTEM_PROMPT + "\n\n---\n\n" + prompt);
 
         try {
@@ -117,7 +137,8 @@ public class TopicExpander {
             String seedTopic,
             String domainName,
             Set<String> existingTopics,
-            ScopeConfiguration scope) {
+            ScopeConfiguration scope,
+            String suggestionsRange) {
 
         StringBuilder prompt = new StringBuilder();
 
@@ -139,9 +160,9 @@ public class TopicExpander {
             appendScopeGuidance(prompt, scope);
         }
 
-        prompt.append("""
+        prompt.append(String.format("""
             ## Task
-            Analyze the seed topic and suggest 5-10 related topics that would help create a comprehensive wiki.
+            Analyze the seed topic and suggest %s related topics that would help create a comprehensive wiki.
             Focus on topics that directly support understanding or applying the seed topic.
 
             Respond with JSON in this format:
@@ -160,7 +181,7 @@ public class TopicExpander {
               ]
             }
             ```
-            """);
+            """, suggestionsRange));
 
         return prompt.toString();
     }

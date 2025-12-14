@@ -100,6 +100,177 @@ java -jar target/aipublisher.jar \
 java -jar target/aipublisher.jar
 ```
 
+## Running Without Maven
+
+Once built, AI Publisher runs as a standalone JAR with no Maven required. This section covers all the ways to run the application.
+
+### Executable JAR
+
+The build creates a fat JAR (Spring Boot uber-jar) that includes all dependencies:
+
+```bash
+# Build once (requires Maven)
+mvn clean package -DskipTests
+
+# The JAR is now at: target/aipublisher.jar
+# Copy it anywhere and run with just Java:
+java -jar target/aipublisher.jar --help
+```
+
+### Setting Up a Shell Alias
+
+For convenience, create an alias or script:
+
+```bash
+# Option 1: Shell alias (add to ~/.bashrc or ~/.zshrc)
+alias aipublisher='java -jar /path/to/aipublisher.jar'
+
+# Then use:
+aipublisher --topic "My Topic"
+aipublisher --discover -c minimal
+
+# Option 2: Executable script
+cat > /usr/local/bin/aipublisher << 'EOF'
+#!/bin/bash
+java -jar /path/to/aipublisher.jar "$@"
+EOF
+chmod +x /usr/local/bin/aipublisher
+```
+
+### API Key Configuration
+
+Configure your API key using one of these methods (in priority order):
+
+```bash
+# Method 1: Environment variable (recommended for security)
+export ANTHROPIC_API_KEY='sk-ant-api03-...'
+java -jar aipublisher.jar --topic "Kubernetes"
+
+# Method 2: Command line flag (visible in process list - use with caution)
+java -jar aipublisher.jar --topic "Kubernetes" -k "sk-ant-api03-..."
+
+# Method 3: Key file (good for shared systems)
+echo "sk-ant-api03-..." > ~/.anthropic-key
+chmod 600 ~/.anthropic-key
+java -jar aipublisher.jar --topic "Kubernetes" --key-file ~/.anthropic-key
+
+# Method 4: One-liner with inline env var
+ANTHROPIC_API_KEY='sk-ant-api03-...' java -jar aipublisher.jar --topic "Kubernetes"
+```
+
+### Common Usage Patterns
+
+**Single Article Generation:**
+```bash
+# Basic article
+java -jar aipublisher.jar -t "Apache Kafka"
+
+# Customized article
+java -jar aipublisher.jar \
+  --topic "Introduction to Docker" \
+  --audience "developers new to containers" \
+  --words 2000 \
+  --output ./wiki/pages
+
+# Scripted/CI usage (no prompts)
+java -jar aipublisher.jar -t "GraphQL APIs" --auto-approve -q
+```
+
+**Domain Discovery Mode:**
+```bash
+# Interactive discovery (prompts for cost profile)
+java -jar aipublisher.jar --discover
+
+# Quick prototype (~5 minutes, ~$1 API cost)
+java -jar aipublisher.jar --discover -c minimal
+
+# Standard project (~15 minutes, ~$5 API cost)
+java -jar aipublisher.jar --discover --cost-profile balanced
+
+# Enterprise documentation (~30 minutes, ~$15 API cost)
+java -jar aipublisher.jar --discover -c comprehensive
+```
+
+**Working with Output:**
+```bash
+# Custom output directory
+java -jar aipublisher.jar -t "My Topic" -o ./docs/wiki
+
+# Output structure
+./output/
+├── MyTopic.md           # Generated JSPWiki article
+└── debug/               # Debug artifacts (if pipeline fails)
+    └── MyTopic_draft.json
+```
+
+### JVM Options
+
+For large wikis or extended sessions, you may want to adjust JVM memory:
+
+```bash
+# Increase heap for large discovery sessions
+java -Xmx2g -jar aipublisher.jar --discover -c comprehensive
+
+# Enable garbage collection logging for debugging
+java -Xlog:gc -jar aipublisher.jar --discover
+
+# Quiet mode for scripts
+java -jar aipublisher.jar -t "Topic" --auto-approve -q 2>/dev/null
+```
+
+### Integration with Shell Scripts
+
+```bash
+#!/bin/bash
+# generate-wiki.sh - Generate articles for multiple topics
+
+TOPICS=("Apache Kafka" "Kubernetes" "Docker" "GraphQL")
+OUTPUT_DIR="./wiki/pages"
+
+for topic in "${TOPICS[@]}"; do
+  echo "Generating: $topic"
+  java -jar aipublisher.jar \
+    --topic "$topic" \
+    --output "$OUTPUT_DIR" \
+    --auto-approve \
+    --quiet
+done
+
+echo "Generated ${#TOPICS[@]} articles in $OUTPUT_DIR"
+```
+
+### Troubleshooting
+
+**Java Version Issues:**
+```bash
+# Check Java version (requires 21+)
+java -version
+
+# Use specific Java version
+/path/to/java21/bin/java -jar aipublisher.jar --help
+
+# On macOS with multiple Java versions
+/usr/libexec/java_home -v 21 --exec java -jar aipublisher.jar --help
+```
+
+**API Key Issues:**
+```bash
+# Verify API key is set
+echo $ANTHROPIC_API_KEY
+
+# Test with verbose mode
+java -jar aipublisher.jar -t "Test" -v
+```
+
+**Permission Issues:**
+```bash
+# Make JAR executable
+chmod +x aipublisher.jar
+
+# Fix key file permissions
+chmod 600 ~/.anthropic-key
+```
+
 ## Domain Discovery Mode
 
 Domain Discovery is an interactive session that helps you build a comprehensive **Topic Universe** - a structured plan for your entire wiki. Instead of generating articles one at a time, you work with AI to map out your entire domain, curate topics, define relationships, and identify gaps before generating any content.
@@ -118,6 +289,42 @@ Domain Discovery is an interactive session that helps you build a comprehensive 
 ```bash
 java -jar target/aipublisher.jar --discover
 ```
+
+### Cost Profiles
+
+Cost profiles control how thoroughly the AI explores your domain. Higher profiles generate more topics but consume more API credits.
+
+| Profile | Topics | Rounds | Est. Discovery Cost | Est. Content Cost | Best For |
+|---------|--------|--------|---------------------|-------------------|----------|
+| **MINIMAL** | 2-4 | 1 | $0.50-2 | $5-15 | Prototyping, testing ideas, small personal wikis |
+| **BALANCED** | 9-31 | 3 | $2-5 | $30-75 | Most wikis, documentation projects, team knowledge bases |
+| **COMPREHENSIVE** | 25-150 | 5 | $5-15 | $100-250 | Enterprise documentation, complete technical references |
+
+**Specify via CLI:**
+```bash
+# Quick prototype mode
+java -jar target/aipublisher.jar --discover -c minimal
+
+# Standard coverage (default if prompted)
+java -jar target/aipublisher.jar --discover --cost-profile balanced
+
+# Full enterprise coverage
+java -jar target/aipublisher.jar --discover -c comprehensive
+```
+
+If you don't specify a cost profile on the command line, the session will prompt you to choose one before starting.
+
+**Profile Settings Breakdown:**
+
+| Setting | MINIMAL | BALANCED | COMPREHENSIVE |
+|---------|---------|----------|---------------|
+| Max expansion rounds | 1 | 3 | 5 |
+| Topics per round | 2 | 3 | 5 |
+| Suggestions per topic | 2-6 | 5-9 | 10-14 |
+| Max complexity | Intermediate | Advanced | Expert |
+| Word count multiplier | 0.6× | 1.0× | 1.5× |
+| Gap analysis | Skipped | Enabled | Enabled |
+| Relationship depth | Core only | Important | All |
 
 ### The 8 Discovery Phases
 
@@ -473,10 +680,10 @@ You can:
 ## Command Line Reference
 
 ```
-Usage: aipublisher [-hiqvV] [--auto-approve] [--discover] [-a=<audience>]
-                   [-k=<apiKey>] [--key-file=<keyFile>] [-o=<outputDirectory>]
-                   [-t=<topic>] [-w=<wordCount>] [--related=<relatedPages>]...
-                   [--sections=<requiredSections>]...
+Usage: aipublisher [-hiqvV] [--auto-approve] [--discover] [-c=<costProfile>]
+                   [-a=<audience>] [-k=<apiKey>] [--key-file=<keyFile>]
+                   [-o=<outputDirectory>] [-t=<topic>] [-w=<wordCount>]
+                   [--related=<relatedPages>]... [--sections=<requiredSections>]...
 
 Generate well-researched, fact-checked articles using AI agents.
 
@@ -484,6 +691,9 @@ Options:
   -t, --topic=<topic>        Topic to write about (prompts interactively if not
                                specified)
       --discover             Launch interactive domain discovery session
+  -c, --cost-profile=<profile>
+                             Cost profile for discovery: MINIMAL, BALANCED, or
+                               COMPREHENSIVE (prompts if not specified)
   -i, --interactive          Force interactive mode even with topic specified
   -a, --audience=<audience>  Target audience for the article
                                (default: general readers)
@@ -505,9 +715,16 @@ API Key Options:
       --key-file=<keyFile>   Path to file containing Anthropic API key
       ANTHROPIC_API_KEY      Environment variable (default)
 
+Cost Profiles (for --discover):
+  MINIMAL                    Quick prototype, 2-4 topics, ~$0.50-2
+  BALANCED                   Good coverage, 9-31 topics, ~$2-5 (default)
+  COMPREHENSIVE              Full coverage, 25-150 topics, ~$5-15
+
 Examples:
   aipublisher                                    # Interactive mode
-  aipublisher --discover                         # Domain discovery mode
+  aipublisher --discover                         # Domain discovery (prompts for profile)
+  aipublisher --discover -c minimal              # Quick prototype mode
+  aipublisher --discover --cost-profile balanced # Standard coverage
   aipublisher -t "Apache Kafka"                  # Simple topic
   aipublisher --topic "Machine Learning" --audience "beginners" --words 1500
   aipublisher -t "Docker" -a "DevOps engineers" -w 1000 --auto-approve
@@ -876,10 +1093,23 @@ ANTHROPIC_API_KEY='your-key' mvn clean package
 
 ### Running from Source
 
+If you prefer to run directly from source code (useful during development):
+
 ```bash
-# Using Maven
-ANTHROPIC_API_KEY='your-key' mvn spring-boot:run -Dspring-boot.run.arguments="--topic='Your Topic'"
+# Using Maven Spring Boot plugin
+ANTHROPIC_API_KEY='your-key' mvn spring-boot:run \
+  -Dspring-boot.run.arguments="--topic='Your Topic'"
+
+# Discovery mode from source
+ANTHROPIC_API_KEY='your-key' mvn spring-boot:run \
+  -Dspring-boot.run.arguments="--discover -c minimal"
+
+# With multiple arguments
+ANTHROPIC_API_KEY='your-key' mvn spring-boot:run \
+  -Dspring-boot.run.arguments="--topic='Docker',--audience='beginners',--words=1500"
 ```
+
+Note: Running via Maven is slower due to compilation overhead. For regular use, build the JAR once and use `java -jar` as described in the "Running Without Maven" section.
 
 ## Technology Stack
 

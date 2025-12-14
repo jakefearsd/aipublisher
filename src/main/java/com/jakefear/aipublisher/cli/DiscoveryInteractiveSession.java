@@ -7,8 +7,20 @@ import com.jakefear.aipublisher.cli.curation.relationship.RelationshipCurationCo
 import com.jakefear.aipublisher.cli.curation.topic.TopicCurationCommandFactory;
 import com.jakefear.aipublisher.cli.input.ConsoleInputHelper;
 import com.jakefear.aipublisher.cli.input.InputResponse;
-import com.jakefear.aipublisher.discovery.*;
-import com.jakefear.aipublisher.domain.*;
+import com.jakefear.aipublisher.discovery.CostProfile;
+import com.jakefear.aipublisher.discovery.DiscoveryPhase;
+import com.jakefear.aipublisher.discovery.DiscoverySession;
+import com.jakefear.aipublisher.discovery.GapAnalyzer;
+import com.jakefear.aipublisher.discovery.RelationshipDepth;
+import com.jakefear.aipublisher.discovery.RelationshipSuggester;
+import com.jakefear.aipublisher.discovery.RelationshipSuggestion;
+import com.jakefear.aipublisher.discovery.TopicExpander;
+import com.jakefear.aipublisher.discovery.TopicSuggestion;
+import com.jakefear.aipublisher.domain.Priority;
+import com.jakefear.aipublisher.domain.ScopeConfiguration;
+import com.jakefear.aipublisher.domain.Topic;
+import com.jakefear.aipublisher.domain.TopicStatus;
+import com.jakefear.aipublisher.domain.TopicUniverse;
 
 import java.io.BufferedReader;
 import java.io.PrintWriter;
@@ -31,13 +43,25 @@ public class DiscoveryInteractiveSession {
     private final RelationshipCurationCommandFactory relationshipCurationFactory;
 
     private DiscoverySession session;
+    private CostProfile costProfile;
 
+    /**
+     * Constructor with optional cost profile.
+     *
+     * @param in                   Input reader
+     * @param out                  Output writer
+     * @param topicExpander        Topic expansion service
+     * @param relationshipSuggester Relationship suggestion service
+     * @param gapAnalyzer          Gap analysis service
+     * @param costProfile          Optional cost profile (null to prompt user)
+     */
     public DiscoveryInteractiveSession(
             BufferedReader in,
             PrintWriter out,
             TopicExpander topicExpander,
             RelationshipSuggester relationshipSuggester,
-            GapAnalyzer gapAnalyzer) {
+            GapAnalyzer gapAnalyzer,
+            CostProfile costProfile) {
         this.in = in;
         this.out = out;
         this.input = new ConsoleInputHelper(in, out);
@@ -46,6 +70,19 @@ public class DiscoveryInteractiveSession {
         this.gapAnalyzer = gapAnalyzer;
         this.topicCurationFactory = new TopicCurationCommandFactory();
         this.relationshipCurationFactory = new RelationshipCurationCommandFactory();
+        this.costProfile = costProfile;
+    }
+
+    /**
+     * Constructor without cost profile (will prompt user).
+     */
+    public DiscoveryInteractiveSession(
+            BufferedReader in,
+            PrintWriter out,
+            TopicExpander topicExpander,
+            RelationshipSuggester relationshipSuggester,
+            GapAnalyzer gapAnalyzer) {
+        this(in, out, topicExpander, relationshipSuggester, gapAnalyzer, null);
     }
 
     /**
@@ -55,6 +92,16 @@ public class DiscoveryInteractiveSession {
      */
     public TopicUniverse run() {
         try {
+            // Prompt for cost profile if not set via CLI
+            if (costProfile == null) {
+                if (!promptForCostProfile()) {
+                    return null;
+                }
+            } else {
+                out.println();
+                out.printf("Using cost profile: %s%n", costProfile.toDisplayString());
+            }
+
             printWelcome();
 
             // Phase 1: Domain name and seed topics
@@ -303,15 +350,19 @@ public class DiscoveryInteractiveSession {
                 .collect(Collectors.toSet());
 
         out.println("Generating topic suggestions based on your seed topics...");
+        out.printf("(Profile: %s - max %d rounds, %d topics/round)%n",
+                costProfile.name(), costProfile.maxExpansionRounds(), costProfile.topicsPerRound());
         out.println();
 
         // Generate suggestions for each accepted topic
+        // Use cost profile settings for expansion limits
         int expansionRounds = 0;
-        int maxRounds = 3;
+        int maxRounds = costProfile.maxExpansionRounds();
+        int topicsPerRound = costProfile.topicsPerRound();
 
         while (expansionRounds < maxRounds) {
             List<Topic> toExpand = session.buildUniverse().getAcceptedTopics().stream()
-                    .limit(3) // Expand up to 3 topics per round
+                    .limit(topicsPerRound) // Expand up to N topics per round based on profile
                     .toList();
 
             if (toExpand.isEmpty()) break;
@@ -327,7 +378,8 @@ public class DiscoveryInteractiveSession {
                         topic.name(),
                         session.getDomainName(),
                         existingNames,
-                        session.getScope()
+                        session.getScope(),
+                        costProfile
                 );
 
                 if (suggestions.isEmpty()) {
@@ -451,14 +503,19 @@ public class DiscoveryInteractiveSession {
     private boolean runRelationshipMappingPhase() throws Exception {
         printPhaseHeader("RELATIONSHIP MAPPING", 4, 8, "Define how topics relate to each other");
 
-        List<Topic> topics = session.buildUniverse().getAcceptedTopics();
-        if (topics.size() < 2) {
+        List<Topic> allTopics = session.buildUniverse().getAcceptedTopics();
+        if (allTopics.size() < 2) {
             out.println("Need at least 2 topics for relationship mapping.");
             session.advancePhase();
             return true;
         }
 
-        out.println("Analyzing relationships between your " + topics.size() + " topics...");
+        // Filter topics based on relationship depth from cost profile
+        RelationshipDepth depth = costProfile.relationshipDepth();
+        List<Topic> topics = filterTopicsForRelationshipAnalysis(allTopics, depth);
+
+        out.printf("Analyzing relationships (%s depth - %d of %d topics)...%n",
+                depth.getDisplayName(), topics.size(), allTopics.size());
         out.println();
 
         List<RelationshipSuggestion> suggestions = relationshipSuggester.analyzeAllRelationships(topics);
@@ -544,6 +601,13 @@ public class DiscoveryInteractiveSession {
 
     private boolean runGapAnalysisPhase() throws Exception {
         printPhaseHeader("GAP ANALYSIS", 5, 8, "Identify missing topics and connections");
+
+        // Skip gap analysis if cost profile says so
+        if (costProfile.skipGapAnalysis()) {
+            out.println("→ Skipping gap analysis (cost profile: " + costProfile.name() + ")");
+            session.advancePhase();
+            return true;
+        }
 
         TopicUniverse universe = session.buildUniverse();
         out.println("Analyzing topic coverage for gaps...");
@@ -865,9 +929,83 @@ public class DiscoveryInteractiveSession {
     }
 
     /**
+     * Filter topics for relationship analysis based on the depth setting.
+     * Uses topic priority as a proxy for importance/relevance.
+     */
+    private List<Topic> filterTopicsForRelationshipAnalysis(List<Topic> topics, RelationshipDepth depth) {
+        return switch (depth) {
+            case CORE_ONLY -> topics.stream()
+                    .filter(t -> t.priority() == Priority.MUST_HAVE)
+                    .toList();
+            case IMPORTANT -> topics.stream()
+                    .filter(t -> t.priority() == Priority.MUST_HAVE || t.priority() == Priority.SHOULD_HAVE)
+                    .toList();
+            case ALL -> topics;
+        };
+    }
+
+    /**
      * Get the discovery session for testing/access.
      */
     public DiscoverySession getSession() {
         return session;
+    }
+
+    /**
+     * Get the cost profile being used for this session.
+     */
+    public CostProfile getCostProfile() {
+        return costProfile;
+    }
+
+    /**
+     * Prompt the user to select a cost profile at the start of the session.
+     */
+    private boolean promptForCostProfile() throws Exception {
+        out.println();
+        out.println("╔═══════════════════════════════════════════════════════════════════╗");
+        out.println("║                    SELECT COST PROFILE                            ║");
+        out.println("║                                                                   ║");
+        out.println("║   Choose how thoroughly to explore topics. Higher profiles        ║");
+        out.println("║   generate more content but cost more in API usage.               ║");
+        out.println("╚═══════════════════════════════════════════════════════════════════╝");
+        out.println();
+
+        CostProfile[] profiles = CostProfile.values();
+        List<String> displayOptions = new ArrayList<>();
+
+        for (int i = 0; i < profiles.length; i++) {
+            CostProfile profile = profiles[i];
+            out.printf("  %d. %s%n", i + 1, profile.name().toUpperCase());
+            out.printf("     %s%n", profile.description());
+            out.printf("     ~%s topics, %s%n", profile.getEstimatedTopicRange(), profile.getCostEstimate());
+            out.println();
+            displayOptions.add(profile.name());
+        }
+
+        out.println("─".repeat(67));
+        out.println();
+
+        // Default to BALANCED (index 1)
+        InputResponse response = input.promptSelection("Select profile", displayOptions, 1);
+        if (response.isQuit()) {
+            return cancelSession();
+        }
+
+        int selectedIndex = Integer.parseInt(response.value());
+        if (selectedIndex >= 0 && selectedIndex < profiles.length) {
+            this.costProfile = profiles[selectedIndex];
+            out.println();
+            out.printf("✓ Selected: %s%n", costProfile.name().toUpperCase());
+            out.printf("  Max rounds: %d, Topics/round: %d, Suggestions: %s%n",
+                    costProfile.maxExpansionRounds(),
+                    costProfile.topicsPerRound(),
+                    costProfile.getSuggestionsRange());
+            return true;
+        }
+
+        // Fallback to BALANCED if something went wrong
+        this.costProfile = CostProfile.BALANCED;
+        return true;
     }
 }

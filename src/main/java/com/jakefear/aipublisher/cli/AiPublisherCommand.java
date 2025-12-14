@@ -5,7 +5,10 @@ import com.jakefear.aipublisher.approval.ApprovalDecision;
 import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.content.ContentType;
 import com.jakefear.aipublisher.content.ContentTypeSelector;
-import com.jakefear.aipublisher.discovery.*;
+import com.jakefear.aipublisher.discovery.CostProfile;
+import com.jakefear.aipublisher.discovery.GapAnalyzer;
+import com.jakefear.aipublisher.discovery.RelationshipSuggester;
+import com.jakefear.aipublisher.discovery.TopicExpander;
 import com.jakefear.aipublisher.domain.TopicUniverse;
 import com.jakefear.aipublisher.domain.TopicUniverseRepository;
 import com.jakefear.aipublisher.document.TopicBrief;
@@ -62,7 +65,14 @@ import java.util.concurrent.Callable;
                 "  overview        High-level introduction",
                 "",
                 "Discovery Mode:",
-                "  aipublisher --discover              # Interactive domain discovery",
+                "  aipublisher --discover                         # Interactive domain discovery",
+                "  aipublisher --discover -c minimal              # Quick prototype mode",
+                "  aipublisher --discover --cost-profile balanced # Standard coverage",
+                "",
+                "Cost Profiles (for --discover):",
+                "  MINIMAL       Quick prototype, 2-4 topics, ~$0.50-2",
+                "  BALANCED      Good coverage, 9-31 topics, ~$2-5 (default)",
+                "  COMPREHENSIVE Full coverage, 25-150 topics, ~$5-15",
                 "",
                 "API Key (one of these is required):",
                 "  -k, --key         Pass API key directly on command line",
@@ -132,6 +142,10 @@ public class AiPublisherCommand implements Callable<Integer> {
     @Option(names = {"--discover"},
             description = "Launch interactive domain discovery session")
     private boolean discoverMode;
+
+    @Option(names = {"--cost-profile", "-c"},
+            description = "Cost profile for discovery: MINIMAL (quick prototype), BALANCED (most projects), COMPREHENSIVE (enterprise docs)")
+    private String costProfileStr;
 
     @Option(names = {"-v", "--verbose"},
             description = "Enable verbose output")
@@ -473,17 +487,31 @@ public class AiPublisherCommand implements Callable<Integer> {
         return discoverMode;
     }
 
+    public String getCostProfileStr() {
+        return costProfileStr;
+    }
+
     /**
      * Run the interactive domain discovery session.
      */
     private Integer runDiscoveryMode(BufferedReader in, PrintWriter out) {
         try {
+            // Parse cost profile from CLI if provided
+            CostProfile costProfile = null;
+            if (costProfileStr != null && !costProfileStr.isBlank()) {
+                costProfile = CostProfile.fromName(costProfileStr);
+                if (costProfile == null) {
+                    out.println("WARNING: Unrecognized cost profile '" + costProfileStr + "'. Will prompt for selection.");
+                }
+            }
+
             DiscoveryInteractiveSession discoverySession = new DiscoveryInteractiveSession(
                     in,
                     out,
                     topicExpanderSupplier.get(),
                     relationshipSuggesterSupplier.get(),
-                    gapAnalyzerSupplier.get()
+                    gapAnalyzerSupplier.get(),
+                    costProfile
             );
 
             TopicUniverse universe = discoverySession.run();
