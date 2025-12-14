@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
+import static com.jakefear.aipublisher.util.JsonParsingUtils.*;
 
 /**
  * Critic Agent: Reviews article quality, structure, and JSPWiki syntax before publication.

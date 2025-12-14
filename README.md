@@ -37,6 +37,8 @@ Documents progress through six phases:
 ## Features
 
 - **Multi-Agent Architecture** - Five specialized AI agents with role-appropriate temperature settings
+- **Domain Discovery Mode** - Interactive AI-assisted session to build comprehensive topic universes
+- **Human-in-the-Loop Curation** - AI suggests topics and relationships, you curate and refine
 - **JSPWiki Syntax Output** - Native JSPWiki markup format (not Markdown) for wiki compatibility
 - **Automatic Revision Loop** - Fact checker and critic can trigger re-drafting for quality issues
 - **Syntax Validation** - Critic agent catches any Markdown syntax that should be JSPWiki
@@ -98,12 +100,382 @@ java -jar target/aipublisher.jar \
 java -jar target/aipublisher.jar
 ```
 
+## Domain Discovery Mode
+
+Domain Discovery is an interactive session that helps you build a comprehensive **Topic Universe** - a structured plan for your entire wiki. Instead of generating articles one at a time, you work with AI to map out your entire domain, curate topics, define relationships, and identify gaps before generating any content.
+
+### Why Use Discovery Mode?
+
+- **Strategic Planning** - Map your entire knowledge domain before writing
+- **Human-in-the-Loop** - AI suggests, you curate and refine
+- **Relationship Mapping** - Define how topics connect (prerequisites, related concepts)
+- **Gap Analysis** - AI identifies missing topics and coverage gaps
+- **Generation Ordering** - Topological sort ensures prerequisites are written first
+- **Scope Control** - Define what's in/out of scope, assumed knowledge
+
+### Starting a Discovery Session
+
+```bash
+java -jar target/aipublisher.jar --discover
+```
+
+### The 8 Discovery Phases
+
+Discovery mode guides you through 8 phases to build a complete topic universe:
+
+#### Phase 1: Seed Input
+Provide your domain name and initial seed topics - the core subjects you definitely want to cover.
+
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║              AI PUBLISHER - DOMAIN DISCOVERY MODE                 ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+What domain or subject area is this wiki about?
+
+Examples:
+  • Apache Kafka
+  • Cloud Native Development
+  • Machine Learning Operations
+
+Domain name: Apache Kafka
+
+Enter your initial seed topics (one per line, empty line to finish):
+Seed topic 1: Kafka Producers
+  Brief description: How to send messages to Kafka
+Seed topic 2: Kafka Consumers
+  Brief description: How to read messages from Kafka
+Seed topic 3:
+
+Which topic should be the main landing page?
+  1. Kafka Producers
+  2. Kafka Consumers
+Selection [1]: 1
+
+✓ Created domain 'Apache Kafka' with 2 seed topics
+```
+
+#### Phase 2: Scope Setup (Optional)
+Define boundaries to help AI generate more relevant suggestions.
+
+```
+Configure scope? [Y/n/skip]: y
+
+What knowledge should readers already have? (comma-separated)
+Examples: Java programming, basic SQL, command line familiarity
+Assumed knowledge: Java programming, basic distributed systems
+
+What topics should be explicitly excluded? (comma-separated)
+Out of scope: Kafka Streams (separate wiki), Kafka Connect
+
+Any specific areas to prioritize? (comma-separated)
+Focus areas: Production deployment, Performance tuning
+
+Target audience description: Backend developers new to event streaming
+```
+
+#### Phase 3: Topic Expansion
+AI analyzes your seed topics and suggests related topics. You curate each suggestion.
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Expanding from: Kafka Producers
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────────────────────────────────────────────────┐
+│ 1/7: Producer Configuration                              │
+├──────────────────────────────────────────────────────────┤
+│ Essential settings for Kafka producers including acks,   │
+│ retries, batch size, and compression options.            │
+│ Category: component           Relevance: ████████░░ 80%  │
+│ Type: Reference               Complexity: Intermediate   │
+│ Why: Critical for production deployments                 │
+└──────────────────────────────────────────────────────────┘
+
+  [A]ccept  [R]eject  [D]efer  [M]odify  [S]kip rest  [Q]uit
+  Decision: a
+  ✓ Accepted
+
+┌──────────────────────────────────────────────────────────┐
+│ 2/7: Message Serialization                               │
+├──────────────────────────────────────────────────────────┤
+│ How to serialize messages using Avro, JSON, or Protobuf  │
+│ Category: prerequisite        Relevance: ███████░░░ 70%  │
+│ Type: Concept                 Complexity: Intermediate   │
+│ Why: Understanding serialization is essential            │
+└──────────────────────────────────────────────────────────┘
+
+  [A]ccept  [R]eject  [D]efer  [M]odify  [S]kip rest  [Q]uit
+  Decision: m
+
+  Current name: Message Serialization
+  New name [keep current]: Kafka Serialization Formats
+  Current description: How to serialize messages using Avro...
+  New description [keep current]:
+  ✓ Modified and accepted
+```
+
+**Curation Options:**
+- **Accept** - Add topic to universe as-is
+- **Reject** - Skip this topic entirely
+- **Defer** - Save to backlog for later consideration
+- **Modify** - Change name/description before accepting
+- **Skip rest** - Auto-accept high-relevance, defer low-relevance
+
+#### Phase 4: Relationship Mapping
+AI suggests how topics relate to each other. You confirm or modify relationships.
+
+```
+Analyzing relationships between your 12 topics...
+
+Found 15 potential relationships. Review the important ones:
+
+● Kafka Basics ──[PREREQUISITE_OF]──> Kafka Producers
+  └─ Understanding core concepts is essential before producing
+  [C]onfirm  [R]eject  [T]ype change: c
+  ✓ Confirmed
+
+◐ Producer Configuration ──[PART_OF]──> Kafka Producers
+  └─ Configuration is a component of producer setup
+  [C]onfirm  [R]eject  [T]ype change: t
+
+  Select relationship type:
+    1. Prerequisite Of
+    2. Part Of ← current
+    3. Example Of
+    4. Related To
+    5. Contrasts With
+    6. Implements
+    7. Supersedes
+    8. Pairs With
+  Selection: 4
+  ✓ Confirmed as RELATED_TO
+```
+
+**Relationship Types:**
+| Type | Meaning | Example |
+|------|---------|---------|
+| `PREREQUISITE_OF` | Must understand A before B | Java → Spring Boot |
+| `PART_OF` | A is a component of B | Partitions → Topics |
+| `EXAMPLE_OF` | A is an instance of B | Avro → Serialization |
+| `RELATED_TO` | Related but neither prerequisite | Producers ↔ Consumers |
+| `CONTRASTS_WITH` | Alternatives or opposites | Kafka vs RabbitMQ |
+| `IMPLEMENTS` | A implements concept B | KafkaProducer → Producer API |
+| `SUPERSEDES` | A replaces B | New API → Legacy API |
+| `PAIRS_WITH` | Commonly used together | Producers + Schema Registry |
+
+#### Phase 5: Gap Analysis
+AI analyzes your topic coverage and identifies potential gaps.
+
+```
+Analyzing topic coverage for gaps...
+
+Coverage Assessment:
+  Coverage:      ████████░░ 80%
+  Balance:       ███████░░░ 70%
+  Connectedness: █████████░ 90%
+
+Summary: Good coverage of producer topics but consumer side needs more depth.
+
+Found 3 gaps to review:
+
+🔴 [MISSING_PREREQUISITE] Consumer Group Coordination
+   Resolution: Add topic explaining how consumer groups coordinate
+
+   Add suggested topic 'Consumer Group Coordination'? [Y/n]: y
+   ✓ Topic added
+
+🟡 [COVERAGE_GAP] Error handling patterns not covered
+   Resolution: Add troubleshooting guide for common producer errors
+
+   Add suggested topic 'Producer Error Handling'? [Y/n]: y
+   ✓ Topic added
+
+🟢 [DEPTH_IMBALANCE] Security topics are shallow
+   Resolution: Consider expanding authentication/authorization coverage
+
+   Add suggested topic 'Kafka Security'? [Y/n]: n
+   → Skipped
+```
+
+**Gap Severity Levels:**
+- 🔴 **Critical** - Missing essential prerequisite or core concept
+- 🟡 **Moderate** - Notable gap that should be addressed
+- 🟢 **Minor** - Nice to have, can be addressed later
+
+#### Phase 6: Depth Calibration (Optional)
+Adjust word counts and complexity levels for each topic.
+
+```
+Would you like to adjust topic depths?
+Calibrate depths? [y/N/skip]: y
+
+Current topics and suggested word counts:
+
+   1. Kafka Producers                Intermediate (1000 words)
+   2. Producer Configuration         Intermediate (1000 words)
+   3. Kafka Serialization Formats    Intermediate (1000 words)
+   4. Consumer Group Coordination    Advanced (1500 words)
+   ...
+
+Enter topic number to adjust, or press Enter to finish:
+Topic #: 4
+  Current: Advanced (1500 words)
+  New word count: 2000
+  ✓ Updated
+
+Topic #:
+```
+
+#### Phase 7: Prioritization
+Assign generation priorities to control which topics are written first.
+
+```
+Review topic priorities:
+
+  Priority levels:
+    1. MUST_HAVE   - Essential, generate first
+    2. SHOULD_HAVE - Important, generate second
+    3. NICE_TO_HAVE - Optional, generate if time permits
+    4. BACKLOG     - Future consideration
+
+  MUST_HAVE (3 topics):
+    • Kafka Producers
+    • Kafka Consumers
+    • Kafka Basics
+
+  SHOULD_HAVE (8 topics):
+    • Producer Configuration
+    • Consumer Configuration
+    • Kafka Serialization Formats
+    ...
+
+Adjust priorities? [y/N]: y
+
+Enter topic name and new priority (e.g., 'Kafka Security 3'):
+> Kafka Security 1
+  ✓ Updated
+>
+```
+
+#### Phase 8: Review
+Final review before saving the topic universe.
+
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║                        DISCOVERY SUMMARY                          ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+  Domain:        Apache Kafka
+  Topics:        14 accepted
+  Relationships: 23 mapped
+  Backlog:       3 items
+
+  Suggested generation order:
+     1. Kafka Basics [MUST_HAVE]
+     2. Kafka Producers [MUST_HAVE]
+     3. Kafka Consumers [MUST_HAVE]
+     4. Producer Configuration [SHOULD_HAVE]
+     5. Consumer Configuration [SHOULD_HAVE]
+     6. Kafka Serialization Formats [SHOULD_HAVE]
+     7. Consumer Group Coordination [SHOULD_HAVE]
+     8. Producer Error Handling [SHOULD_HAVE]
+     9. Kafka Security [MUST_HAVE]
+    10. Message Retention [SHOULD_HAVE]
+    ... and 4 more
+
+───────────────────────────────────────────────────────────────────
+
+Finalize this topic universe? [Y/n]: y
+
+✓ Topic universe finalized!
+
+Session ID: a1b2c3d4
+
+═══════════════════════════════════════════════════════════════════
+Topic universe saved!
+
+  ID:       kafka-wiki-2024-01
+  Name:     Apache Kafka
+  Topics:   14 accepted
+  Location: ~/.aipublisher/universes/kafka-wiki-2024-01.universe.json
+
+To generate articles from this universe, use:
+  aipublisher --universe kafka-wiki-2024-01
+═══════════════════════════════════════════════════════════════════
+```
+
+### Topic Universe Data Model
+
+The discovery session creates a `TopicUniverse` - a structured representation of your wiki's content plan:
+
+```
+TopicUniverse
+├── id: "kafka-wiki-2024-01"
+├── name: "Apache Kafka"
+├── description: "Comprehensive Kafka documentation for developers"
+├── topics: [
+│   ├── Topic {
+│   │   id: "KafkaProducers"
+│   │   name: "Kafka Producers"
+│   │   status: ACCEPTED
+│   │   priority: MUST_HAVE
+│   │   contentType: TUTORIAL
+│   │   complexity: INTERMEDIATE
+│   │   estimatedWords: 1500
+│   │   emphasize: ["performance", "error handling"]
+│   │   skip: ["legacy APIs"]
+│   │   isLandingPage: true
+│   │   }
+│   └── ...
+│   ]
+├── relationships: [
+│   ├── TopicRelationship {
+│   │   source: "KafkaBasics"
+│   │   target: "KafkaProducers"
+│   │   type: PREREQUISITE_OF
+│   │   status: CONFIRMED
+│   │   }
+│   └── ...
+│   ]
+├── scope: {
+│   assumedKnowledge: ["Java programming"]
+│   outOfScope: ["Kafka Streams"]
+│   focusAreas: ["Production deployment"]
+│   audienceDescription: "Backend developers new to event streaming"
+│   }
+└── backlog: ["Kafka Connect Integration", ...]
+```
+
+### Saved Universe Location
+
+Topic universes are saved to:
+```
+~/.aipublisher/universes/<universe-id>.universe.json
+```
+
+You can:
+- View saved universes with any JSON viewer
+- Edit them manually if needed
+- Share them with team members
+- Version control them alongside your wiki
+
+### Best Practices for Discovery
+
+1. **Start with 3-5 seed topics** - Don't try to enumerate everything upfront
+2. **Be specific in descriptions** - Helps AI generate better suggestions
+3. **Define scope early** - Prevents AI from suggesting off-topic content
+4. **Use the backlog** - Defer interesting but non-essential topics
+5. **Review relationships carefully** - They determine generation order
+6. **Address critical gaps** - These are often missing prerequisites
+7. **Prioritize ruthlessly** - MUST_HAVE should be your core content
+
 ## Command Line Reference
 
 ```
-Usage: aipublisher [-hqvV] [--auto-approve] [-a=<audience>] [-k=<apiKey>]
-                   [--key-file=<keyFile>] [-o=<outputDirectory>] [-t=<topic>]
-                   [-w=<wordCount>] [--related=<relatedPages>]...
+Usage: aipublisher [-hiqvV] [--auto-approve] [--discover] [-a=<audience>]
+                   [-k=<apiKey>] [--key-file=<keyFile>] [-o=<outputDirectory>]
+                   [-t=<topic>] [-w=<wordCount>] [--related=<relatedPages>]...
                    [--sections=<requiredSections>]...
 
 Generate well-researched, fact-checked articles using AI agents.
@@ -111,6 +483,8 @@ Generate well-researched, fact-checked articles using AI agents.
 Options:
   -t, --topic=<topic>        Topic to write about (prompts interactively if not
                                specified)
+      --discover             Launch interactive domain discovery session
+  -i, --interactive          Force interactive mode even with topic specified
   -a, --audience=<audience>  Target audience for the article
                                (default: general readers)
   -w, --words=<wordCount>    Target word count (default: 800)
@@ -132,7 +506,9 @@ API Key Options:
       ANTHROPIC_API_KEY      Environment variable (default)
 
 Examples:
-  aipublisher -t "Apache Kafka"
+  aipublisher                                    # Interactive mode
+  aipublisher --discover                         # Domain discovery mode
+  aipublisher -t "Apache Kafka"                  # Simple topic
   aipublisher --topic "Machine Learning" --audience "beginners" --words 1500
   aipublisher -t "Docker" -a "DevOps engineers" -w 1000 --auto-approve
   aipublisher -t "Kubernetes" -k sk-ant-api03-xxxxx
@@ -327,11 +703,31 @@ src/main/java/com/jakefear/aipublisher/
 │   ├── BaseAgent.java        # Common agent functionality
 │   └── AgentPrompts.java     # System prompts for all agents
 │
+├── discovery/                # Domain discovery system
+│   ├── DiscoverySession.java       # Session state management
+│   ├── DiscoveryPhase.java         # 8-phase state machine
+│   ├── TopicExpander.java          # AI topic suggestion service
+│   ├── RelationshipSuggester.java  # AI relationship mapping
+│   ├── GapAnalyzer.java            # Coverage gap analysis
+│   ├── TopicSuggestion.java        # Suggested topic record
+│   └── RelationshipSuggestion.java # Suggested relationship record
+│
+├── domain/                   # Topic universe data model
+│   ├── Topic.java               # Wiki topic with status/priority
+│   ├── TopicUniverse.java       # Complete domain container
+│   ├── TopicRelationship.java   # Topic connections
+│   ├── TopicStatus.java         # PROPOSED/ACCEPTED/REJECTED/etc.
+│   ├── Priority.java            # MUST_HAVE/SHOULD_HAVE/etc.
+│   ├── RelationshipType.java    # PREREQUISITE_OF/PART_OF/etc.
+│   ├── ComplexityLevel.java     # BEGINNER/INTERMEDIATE/ADVANCED
+│   ├── ScopeConfiguration.java  # Scope boundaries
+│   └── TopicUniverseRepository.java # JSON persistence
+│
 ├── pipeline/                 # Pipeline orchestration
 │   ├── PublishingPipeline.java  # Main orchestrator
 │   └── PipelineResult.java      # Result with metrics
 │
-├── document/                 # Domain models
+├── document/                 # Document models
 │   ├── PublishingDocument.java  # Main entity with state
 │   ├── TopicBrief.java          # Input specification
 │   ├── ResearchBrief.java       # Research output
@@ -360,7 +756,9 @@ src/main/java/com/jakefear/aipublisher/
 │   └── PipelineProperties.java  # Pipeline settings
 │
 └── cli/                      # Command-line interface
-    └── AiPublisherCommand.java  # Picocli CLI
+    ├── AiPublisherCommand.java         # Main CLI
+    ├── InteractiveSession.java         # Single-article interactive mode
+    └── DiscoveryInteractiveSession.java # Domain discovery CLI
 ```
 
 ## Example Session

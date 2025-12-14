@@ -5,6 +5,9 @@ import com.jakefear.aipublisher.approval.ApprovalDecision;
 import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.content.ContentType;
 import com.jakefear.aipublisher.content.ContentTypeSelector;
+import com.jakefear.aipublisher.discovery.*;
+import com.jakefear.aipublisher.domain.TopicUniverse;
+import com.jakefear.aipublisher.domain.TopicUniverseRepository;
 import com.jakefear.aipublisher.document.TopicBrief;
 import com.jakefear.aipublisher.pipeline.PipelineResult;
 import com.jakefear.aipublisher.pipeline.PublishingPipeline;
@@ -58,6 +61,9 @@ import java.util.concurrent.Callable;
                 "  troubleshooting Problem diagnosis and solutions",
                 "  overview        High-level introduction",
                 "",
+                "Discovery Mode:",
+                "  aipublisher --discover              # Interactive domain discovery",
+                "",
                 "API Key (one of these is required):",
                 "  -k, --key         Pass API key directly on command line",
                 "  --key-file        Read API key from a file",
@@ -69,6 +75,10 @@ public class AiPublisherCommand implements Callable<Integer> {
     private Supplier<PublishingPipeline> pipelineSupplier;
     private Supplier<ApprovalService> approvalServiceSupplier;
     private Supplier<ContentTypeSelector> contentTypeSelectorSupplier;
+    private Supplier<TopicExpander> topicExpanderSupplier;
+    private Supplier<RelationshipSuggester> relationshipSuggesterSupplier;
+    private Supplier<GapAnalyzer> gapAnalyzerSupplier;
+    private Supplier<TopicUniverseRepository> universeRepositorySupplier;
 
     @Option(names = {"-t", "--topic"},
             description = "Topic to write about (launches interactive mode if not specified)")
@@ -118,6 +128,10 @@ public class AiPublisherCommand implements Callable<Integer> {
     @Option(names = {"-i", "--interactive"},
             description = "Force interactive mode even with topic specified")
     private boolean forceInteractive;
+
+    @Option(names = {"--discover"},
+            description = "Launch interactive domain discovery session")
+    private boolean discoverMode;
 
     @Option(names = {"-v", "--verbose"},
             description = "Enable verbose output")
@@ -171,6 +185,38 @@ public class AiPublisherCommand implements Callable<Integer> {
     }
 
     /**
+     * Set the topic expander supplier (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setTopicExpanderProvider(ObjectProvider<TopicExpander> topicExpanderProvider) {
+        this.topicExpanderSupplier = topicExpanderProvider::getObject;
+    }
+
+    /**
+     * Set the relationship suggester supplier (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setRelationshipSuggesterProvider(ObjectProvider<RelationshipSuggester> relationshipSuggesterProvider) {
+        this.relationshipSuggesterSupplier = relationshipSuggesterProvider::getObject;
+    }
+
+    /**
+     * Set the gap analyzer supplier (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setGapAnalyzerProvider(ObjectProvider<GapAnalyzer> gapAnalyzerProvider) {
+        this.gapAnalyzerSupplier = gapAnalyzerProvider::getObject;
+    }
+
+    /**
+     * Set the universe repository supplier (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setUniverseRepositoryProvider(ObjectProvider<TopicUniverseRepository> universeRepositoryProvider) {
+        this.universeRepositorySupplier = universeRepositoryProvider::getObject;
+    }
+
+    /**
      * Constructor for testing - uses direct instances.
      */
     public AiPublisherCommand(PublishingPipeline pipeline, ApprovalService approvalService, ContentTypeSelector contentTypeSelector) {
@@ -196,6 +242,11 @@ public class AiPublisherCommand implements Callable<Integer> {
             // Configure API key if provided via CLI
             if (!configureApiKey(out)) {
                 return 1;
+            }
+
+            // Handle discovery mode
+            if (discoverMode) {
+                return runDiscoveryMode(in, out);
             }
 
             TopicBrief topicBrief;
@@ -416,5 +467,58 @@ public class AiPublisherCommand implements Callable<Integer> {
 
     public boolean isForceInteractive() {
         return forceInteractive;
+    }
+
+    public boolean isDiscoverMode() {
+        return discoverMode;
+    }
+
+    /**
+     * Run the interactive domain discovery session.
+     */
+    private Integer runDiscoveryMode(BufferedReader in, PrintWriter out) {
+        try {
+            DiscoveryInteractiveSession discoverySession = new DiscoveryInteractiveSession(
+                    in,
+                    out,
+                    topicExpanderSupplier.get(),
+                    relationshipSuggesterSupplier.get(),
+                    gapAnalyzerSupplier.get()
+            );
+
+            TopicUniverse universe = discoverySession.run();
+
+            if (universe == null) {
+                // User cancelled
+                return 0;
+            }
+
+            // Save the universe
+            TopicUniverseRepository repository = universeRepositorySupplier.get();
+            Path savedPath = repository.save(universe);
+
+            out.println();
+            out.println("═".repeat(67));
+            out.println("Topic universe saved!");
+            out.println();
+            out.printf("  ID:       %s%n", universe.id());
+            out.printf("  Name:     %s%n", universe.name());
+            out.printf("  Topics:   %d accepted%n", universe.getAcceptedCount());
+            out.printf("  Location: %s%n", savedPath);
+            out.println();
+            out.println("To generate articles from this universe, use:");
+            out.printf("  aipublisher --universe %s%n", universe.id());
+            out.println("═".repeat(67));
+
+            return 0;
+
+        } catch (Exception e) {
+            out.println();
+            out.println("ERROR in discovery mode: " + e.getMessage());
+            if (verbose) {
+                e.printStackTrace(out);
+            }
+            return 1;
+        }
     }
 }

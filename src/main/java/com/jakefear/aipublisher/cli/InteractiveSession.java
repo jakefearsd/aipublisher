@@ -1,8 +1,8 @@
 package com.jakefear.aipublisher.cli;
 
+import com.jakefear.aipublisher.cli.strategy.*;
 import com.jakefear.aipublisher.content.ContentType;
 import com.jakefear.aipublisher.content.ContentTypeSelector;
-import com.jakefear.aipublisher.content.ContentTypeTemplate;
 
 import java.io.BufferedReader;
 import java.io.PrintWriter;
@@ -11,12 +11,14 @@ import java.util.List;
 
 /**
  * Interactive CLI session that guides users through content configuration.
+ * Uses the Strategy Pattern for content-type-specific questions.
  */
 public class InteractiveSession {
 
     private final BufferedReader in;
     private final PrintWriter out;
     private final ContentTypeSelector contentTypeSelector;
+    private final ContentTypeQuestionStrategyRegistry strategyRegistry;
 
     // Session state
     private String topic;
@@ -29,9 +31,16 @@ public class InteractiveSession {
     private String specificGoal;
 
     public InteractiveSession(BufferedReader in, PrintWriter out, ContentTypeSelector contentTypeSelector) {
+        this(in, out, contentTypeSelector, new ContentTypeQuestionStrategyRegistry());
+    }
+
+    public InteractiveSession(BufferedReader in, PrintWriter out,
+                              ContentTypeSelector contentTypeSelector,
+                              ContentTypeQuestionStrategyRegistry strategyRegistry) {
         this.in = in;
         this.out = out;
         this.contentTypeSelector = contentTypeSelector;
+        this.strategyRegistry = strategyRegistry;
     }
 
     /**
@@ -220,145 +229,61 @@ public class InteractiveSession {
         out.println("└─────────────────────────────────────────────────────────────────┘");
         out.println();
 
-        switch (contentType) {
-            case TUTORIAL -> {
-                return promptTutorialQuestions();
-            }
-            case COMPARISON -> {
-                return promptComparisonQuestions();
-            }
-            case TROUBLESHOOTING -> {
-                return promptTroubleshootingQuestions();
-            }
-            case GUIDE -> {
-                return promptGuideQuestions();
-            }
-            case CONCEPT, OVERVIEW, REFERENCE -> {
-                return promptConceptQuestions();
-            }
+        ContentTypeQuestionStrategy strategy = strategyRegistry.getStrategy(contentType);
+        if (strategy == null) {
+            // No questions for this content type
+            return true;
         }
+
+        // Print intro text
+        out.println(strategy.getIntroText(contentType));
+        out.println();
+
+        // Ask each question using the strategy
+        for (ContentTypeQuestion question : strategy.getQuestions()) {
+            if (!askStrategyQuestion(question)) {
+                return false;
+            }
+            out.println();
+        }
+
         return true;
     }
 
-    private boolean promptTutorialQuestions() throws Exception {
-        out.println("For this tutorial, let's define the scope:");
-        out.println();
-
-        out.print("What will readers accomplish? (specific goal): ");
+    /**
+     * Ask a single question defined by a strategy.
+     *
+     * @param question The question to ask
+     * @return true if answered (or skipped), false if user quit
+     */
+    private boolean askStrategyQuestion(ContentTypeQuestion question) throws Exception {
+        // Build prompt with optional default
+        String displayDefault = question.getDisplayDefault();
+        if (displayDefault != null) {
+            out.print(question.prompt() + " [" + displayDefault + "]: ");
+        } else {
+            out.print(question.prompt() + ": ");
+        }
         out.flush();
+
         String input = in.readLine();
-        if (input == null || input.equalsIgnoreCase("quit")) return false;
-        specificGoal = input.isBlank() ? null : input.trim();
-
-        out.println();
-        out.print("What tools/technologies should readers have? (prerequisites): ");
-        out.flush();
-        input = in.readLine();
-        if (input == null || input.equalsIgnoreCase("quit")) return false;
-        if (!input.isBlank()) {
-            requiredSections.add("Prerequisites: " + input.trim());
+        if (input == null || input.equalsIgnoreCase("quit")) {
+            return false;
         }
 
-        out.println();
-        out.print("Any specific domain context (e.g., 'e-commerce', 'microservices')? [none]: ");
-        out.flush();
-        input = in.readLine();
-        if (input == null || input.equalsIgnoreCase("quit")) return false;
-        domainContext = input.isBlank() ? null : input.trim();
+        // Store the answer based on target
+        String answer = input.isBlank() ? null : input.trim();
 
-        out.println();
-        return true;
-    }
-
-    private boolean promptComparisonQuestions() throws Exception {
-        out.println("For this comparison:");
-        out.println();
-
-        out.print("What criteria matter most to your audience? (e.g., performance, cost, ease of use): ");
-        out.flush();
-        String input = in.readLine();
-        if (input == null || input.equalsIgnoreCase("quit")) return false;
-        if (!input.isBlank()) {
-            requiredSections.add("Comparison criteria: " + input.trim());
+        switch (question.target()) {
+            case SPECIFIC_GOAL -> specificGoal = answer;
+            case DOMAIN_CONTEXT -> domainContext = answer;
+            case REQUIRED_SECTION -> {
+                if (answer != null) {
+                    requiredSections.add(question.getSectionPrefix() + answer);
+                }
+            }
         }
 
-        out.println();
-        out.print("Any specific use case to focus on? [general comparison]: ");
-        out.flush();
-        input = in.readLine();
-        if (input == null || input.equalsIgnoreCase("quit")) return false;
-        domainContext = input.isBlank() ? null : input.trim();
-
-        out.println();
-        return true;
-    }
-
-    private boolean promptTroubleshootingQuestions() throws Exception {
-        out.println("For this troubleshooting guide:");
-        out.println();
-
-        out.print("What are the main symptoms readers will see? ");
-        out.flush();
-        String input = in.readLine();
-        if (input == null || input.equalsIgnoreCase("quit")) return false;
-        if (!input.isBlank()) {
-            requiredSections.add("Symptoms: " + input.trim());
-        }
-
-        out.println();
-        out.print("What environment or context? (e.g., 'production Kubernetes', 'local Docker'): ");
-        out.flush();
-        input = in.readLine();
-        if (input == null || input.equalsIgnoreCase("quit")) return false;
-        domainContext = input.isBlank() ? null : input.trim();
-
-        out.println();
-        return true;
-    }
-
-    private boolean promptGuideQuestions() throws Exception {
-        out.println("For this decision guide:");
-        out.println();
-
-        out.print("What decision or choice is the reader facing? ");
-        out.flush();
-        String input = in.readLine();
-        if (input == null || input.equalsIgnoreCase("quit")) return false;
-        specificGoal = input.isBlank() ? null : input.trim();
-
-        out.println();
-        out.print("What constraints or considerations matter? (e.g., 'limited budget', 'high scale'): ");
-        out.flush();
-        input = in.readLine();
-        if (input == null || input.equalsIgnoreCase("quit")) return false;
-        if (!input.isBlank()) {
-            requiredSections.add("Constraints: " + input.trim());
-        }
-
-        out.println();
-        return true;
-    }
-
-    private boolean promptConceptQuestions() throws Exception {
-        out.println("For this " + contentType.getDisplayName().toLowerCase() + ":");
-        out.println();
-
-        out.print("What's the broader context or system this fits into? [none]: ");
-        out.flush();
-        String input = in.readLine();
-        if (input == null || input.equalsIgnoreCase("quit")) return false;
-        domainContext = input.isBlank() ? null : input.trim();
-
-        out.println();
-        out.print("Any specific aspects to emphasize? [comprehensive coverage]: ");
-        out.flush();
-        input = in.readLine();
-        if (input == null || input.equalsIgnoreCase("quit")) return false;
-        if (!input.isBlank()) {
-            requiredSections.add("Focus: " + input.trim());
-        }
-
-        out.println();
         return true;
     }
 

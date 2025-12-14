@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
+import static com.jakefear.aipublisher.util.JsonParsingUtils.*;
 
 /**
  * Fact Checker Agent: Verifies claims and checks consistency of article content.

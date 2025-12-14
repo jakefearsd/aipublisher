@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
+import static com.jakefear.aipublisher.util.JsonParsingUtils.*;
 
 /**
  * Research Agent: Gathers and synthesizes source material for article creation.

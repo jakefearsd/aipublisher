@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jakefear.aipublisher.document.AgentContribution;
 import com.jakefear.aipublisher.document.PublishingDocument;
+import com.jakefear.aipublisher.util.JsonParsingUtils;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,33 +143,16 @@ public abstract class BaseAgent implements Agent {
      * Parse a JSON response string into a JsonNode.
      */
     protected JsonNode parseJson(String response) throws JsonProcessingException {
-        // Clean up the response - sometimes models wrap JSON in markdown code blocks
-        String cleaned = cleanJsonResponse(response);
-        return objectMapper.readTree(cleaned);
+        return JsonParsingUtils.parseJson(response, objectMapper);
     }
 
     /**
      * Clean up a JSON response that might be wrapped in markdown code blocks.
+     * @deprecated Use {@link JsonParsingUtils#cleanJsonResponse(String)} directly
      */
+    @Deprecated
     protected String cleanJsonResponse(String response) {
-        if (response == null) {
-            return "{}";
-        }
-
-        String cleaned = response.trim();
-
-        // Remove markdown code block wrapper if present
-        if (cleaned.startsWith("```json")) {
-            cleaned = cleaned.substring(7);
-        } else if (cleaned.startsWith("```")) {
-            cleaned = cleaned.substring(3);
-        }
-
-        if (cleaned.endsWith("```")) {
-            cleaned = cleaned.substring(0, cleaned.length() - 3);
-        }
-
-        return cleaned.trim();
+        return JsonParsingUtils.cleanJsonResponse(response);
     }
 
     /**
@@ -208,32 +192,20 @@ public abstract class BaseAgent implements Agent {
      * Get a string from a JSON node, with a default if missing or null.
      */
     protected String getStringOrDefault(JsonNode node, String field, String defaultValue) {
-        JsonNode fieldNode = node.get(field);
-        if (fieldNode == null || fieldNode.isNull()) {
-            return defaultValue;
-        }
-        return fieldNode.asText(defaultValue);
+        return JsonParsingUtils.getStringOrDefault(node, field, defaultValue);
     }
 
     /**
      * Get an int from a JSON node, with a default if missing or null.
      */
     protected int getIntOrDefault(JsonNode node, String field, int defaultValue) {
-        JsonNode fieldNode = node.get(field);
-        if (fieldNode == null || fieldNode.isNull()) {
-            return defaultValue;
-        }
-        return fieldNode.asInt(defaultValue);
+        return JsonParsingUtils.getIntOrDefault(node, field, defaultValue);
     }
 
     /**
      * Get a double from a JSON node, with a default if missing or null.
      */
     protected double getDoubleOrDefault(JsonNode node, String field, double defaultValue) {
-        JsonNode fieldNode = node.get(field);
-        if (fieldNode == null || fieldNode.isNull()) {
-            return defaultValue;
-        }
-        return fieldNode.asDouble(defaultValue);
+        return JsonParsingUtils.getDoubleOrDefault(node, field, defaultValue);
     }
 }

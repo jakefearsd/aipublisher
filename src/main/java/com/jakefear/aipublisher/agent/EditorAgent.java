@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.jakefear.aipublisher.agent.JsonParsingUtils.*;
+import static com.jakefear.aipublisher.util.JsonParsingUtils.*;
 
 /**
  * Editor Agent: Polishes content and prepares final publication-ready article.
