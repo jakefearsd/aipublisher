@@ -667,6 +667,186 @@ You can:
 - Share them with team members
 - Version control them alongside your wiki
 
+### Scope Configuration Reference
+
+The `scope` section of a universe file controls how content is written across all articles. This is where you define your audience, domain context, writing intent, and content boundaries.
+
+```json
+"scope": {
+  "audienceDescription": "Backend developers new to event streaming who have 1-2 years of programming experience",
+  "domainDescription": "Apache Kafka ecosystem for building real-time data pipelines and streaming applications",
+  "intent": "Educational tutorials that build understanding progressively. Use clear explanations, practical examples, and a friendly but professional tone. Focus on why concepts matter, not just how they work.",
+  "assumedKnowledge": ["Java programming basics", "Command line familiarity", "Basic networking concepts"],
+  "outOfScope": ["Kafka Streams (covered in separate wiki)", "Kafka Connect connectors", "Cloud-specific deployments"],
+  "focusAreas": ["Production deployment", "Performance tuning", "Error handling patterns"],
+  "preferredLanguage": "Java"
+}
+```
+
+#### Scope Fields
+
+| Field | Purpose | How It Influences Content |
+|-------|---------|---------------------------|
+| `audienceDescription` | **Who** the readers are | Adjusts vocabulary, depth of explanation, and assumed context. A "beginner" audience gets more foundational context; "senior engineers" get more advanced details. |
+| `domainDescription` | **What** domain/context | Provides context for the AI to understand the subject area and generate relevant examples and terminology. |
+| `intent` | **Why/How** to write | Controls tone, style, and purpose. This is your primary lever for shaping how content reads - whether educational, reference-style, conversational, formal, etc. |
+| `assumedKnowledge` | What readers already know | Listed concepts won't be explained in detail. The AI assumes readers understand these and focuses on new material. |
+| `outOfScope` | What to exclude | Topics listed here are explicitly avoided. Useful for preventing overlap with other documentation or focusing the wiki. |
+| `focusAreas` | What to emphasize | These aspects receive extra attention and depth. Good for highlighting what matters most to your readers. |
+| `preferredLanguage` | Programming language | Code examples use this language. Leave empty for non-programming topics. |
+
+#### Intent Examples
+
+The `intent` field is your most powerful tool for controlling content tone and style:
+
+**Educational/Tutorial Style:**
+```json
+"intent": "Educational tutorials for complete beginners. Build concepts step-by-step with simple language, relatable analogies, and hands-on examples. Explain the 'why' before the 'how'. Use a friendly, encouraging tone."
+```
+
+**Technical Reference Style:**
+```json
+"intent": "Comprehensive technical reference for experienced practitioners. Be precise and thorough. Include edge cases, performance considerations, and implementation details. Maintain formal, authoritative tone."
+```
+
+**Quick Reference/Cheatsheet Style:**
+```json
+"intent": "Quick reference guides for daily use. Be concise and scannable. Use bullet points, tables, and code snippets. Minimize prose - readers want answers fast."
+```
+
+**Conceptual/Architectural Style:**
+```json
+"intent": "High-level architectural guidance for system designers. Focus on trade-offs, patterns, and decision frameworks. Use diagrams conceptually. Less code, more reasoning."
+```
+
+### Manually Editing Universe Files
+
+Universe files are standard JSON and can be edited with any text editor. This section covers the complete file structure and how each field affects content generation.
+
+#### Complete Universe File Structure
+
+```json
+{
+  "id": "my-wiki-id",
+  "name": "My Wiki Name",
+  "description": "Brief description of the wiki's purpose",
+  "topics": [
+    {
+      "id": "TopicId",
+      "name": "Human Readable Topic Name",
+      "description": "What this topic covers",
+      "status": "ACCEPTED",
+      "contentType": "TUTORIAL",
+      "complexity": "INTERMEDIATE",
+      "priority": "MUST_HAVE",
+      "estimatedWords": 1500,
+      "emphasize": ["specific aspect to highlight"],
+      "skip": ["aspect to minimize"],
+      "userNotes": "Personal notes for reference",
+      "isLandingPage": false,
+      "category": "CategoryName"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-uuid",
+      "sourceTopicId": "TopicA",
+      "targetTopicId": "TopicB",
+      "type": "PREREQUISITE_OF",
+      "status": "CONFIRMED"
+    }
+  ],
+  "scope": {
+    "audienceDescription": "",
+    "domainDescription": "",
+    "intent": "",
+    "assumedKnowledge": [],
+    "outOfScope": [],
+    "focusAreas": [],
+    "preferredLanguage": ""
+  },
+  "backlog": ["Future topic idea 1", "Future topic idea 2"],
+  "createdAt": "2024-01-15T10:30:00Z",
+  "modifiedAt": "2024-01-15T10:30:00Z"
+}
+```
+
+#### Topic Fields Reference
+
+| Field | Type | Description | Effect on Generation |
+|-------|------|-------------|---------------------|
+| `id` | string | Unique identifier (CamelCase) | Used for file naming and relationships |
+| `name` | string | Display name | Article title |
+| `description` | string | What the topic covers | Guides research and content focus |
+| `status` | enum | PROPOSED, ACCEPTED, REJECTED, GENERATED, DEFERRED | Only ACCEPTED topics are generated |
+| `contentType` | enum | CONCEPT, TUTORIAL, REFERENCE, HOW_TO, TROUBLESHOOTING, COMPARISON | Controls article structure and style |
+| `complexity` | enum | BEGINNER, INTERMEDIATE, ADVANCED, EXPERT | Adjusts depth and prerequisite assumptions |
+| `priority` | enum | MUST_HAVE, SHOULD_HAVE, NICE_TO_HAVE, BACKLOG | Generation order (MUST_HAVE first) |
+| `estimatedWords` | int | Target word count | Article length |
+| `emphasize` | array | Aspects to highlight | Extra focus on these areas |
+| `skip` | array | Aspects to minimize | These won't be covered in depth |
+| `userNotes` | string | Personal notes | Not used in generation, for your reference |
+| `isLandingPage` | bool | Main entry point | Gets summary/overview treatment |
+| `category` | string | Wiki category | Used in article metadata |
+
+#### Content Types
+
+| Type | Best For | Typical Structure |
+|------|----------|-------------------|
+| `CONCEPT` | Explaining ideas, theories | Definition → Explanation → Examples → See Also |
+| `TUTORIAL` | Step-by-step learning | Overview → Prerequisites → Steps → Verification |
+| `REFERENCE` | API docs, specifications | Synopsis → Parameters → Returns → Examples |
+| `HOW_TO` | Task completion guides | Goal → Prerequisites → Steps → Troubleshooting |
+| `TROUBLESHOOTING` | Problem solving | Symptom → Cause → Solution → Prevention |
+| `COMPARISON` | Evaluating options | Overview → Criteria → Comparison Table → Recommendations |
+
+#### Relationship Types
+
+| Type | Meaning | Generation Effect |
+|------|---------|-------------------|
+| `PREREQUISITE_OF` | A must be understood before B | A generates before B; B links back to A |
+| `PART_OF` | A is a component of B | A may be more detailed; B provides overview |
+| `RELATED_TO` | Loosely connected | Cross-linking between articles |
+| `EXAMPLE_OF` | A is an instance of B | A inherits context from B |
+| `CONTRASTS_WITH` | Alternatives | Comparison content generated |
+| `IMPLEMENTS` | A implements pattern B | A references B's concepts |
+| `SUPERSEDES` | A replaces B | B marked as legacy if present |
+| `PAIRS_WITH` | Commonly used together | Both mention each other |
+
+#### Common Editing Tasks
+
+**Adding a new topic:**
+```json
+{
+  "id": "NewTopicName",
+  "name": "New Topic Name",
+  "description": "What this new topic will cover",
+  "status": "ACCEPTED",
+  "contentType": "CONCEPT",
+  "complexity": "INTERMEDIATE",
+  "priority": "SHOULD_HAVE",
+  "estimatedWords": 1000,
+  "emphasize": [],
+  "skip": [],
+  "userNotes": "",
+  "isLandingPage": false,
+  "category": ""
+}
+```
+
+**Changing generation order:**
+- Set `priority` to `MUST_HAVE` for topics to generate first
+- Add `PREREQUISITE_OF` relationships to enforce ordering
+
+**Adjusting content style for all articles:**
+- Edit the `scope.intent` field (see Intent Examples above)
+
+**Excluding topics from generation:**
+- Change `status` from `ACCEPTED` to `DEFERRED` or `REJECTED`
+
+**Adding topics flagged from gap analysis:**
+- Add new topic entries to the `topics` array with `status: "ACCEPTED"`
+
 ### Best Practices for Discovery
 
 1. **Start with 3-5 seed topics** - Don't try to enumerate everything upfront

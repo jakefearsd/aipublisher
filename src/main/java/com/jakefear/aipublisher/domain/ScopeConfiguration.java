@@ -12,7 +12,8 @@ public record ScopeConfiguration(
         Set<String> focusAreas,
         String preferredLanguage,
         String audienceDescription,
-        String domainDescription
+        String domainDescription,
+        String intent
 ) {
     /**
      * Compact constructor with normalization.
@@ -24,6 +25,7 @@ public record ScopeConfiguration(
         if (preferredLanguage == null) preferredLanguage = "";
         if (audienceDescription == null) audienceDescription = "";
         if (domainDescription == null) domainDescription = "";
+        if (intent == null) intent = "";
     }
 
     /**
@@ -31,7 +33,7 @@ public record ScopeConfiguration(
      */
     public static ScopeConfiguration empty() {
         return new ScopeConfiguration(
-                Set.of(), Set.of(), Set.of(), "", "", ""
+                Set.of(), Set.of(), Set.of(), "", "", "", ""
         );
     }
 
@@ -99,6 +101,10 @@ public record ScopeConfiguration(
             sb.append("Domain Context: ").append(domainDescription).append("\n\n");
         }
 
+        if (!intent.isBlank()) {
+            sb.append("Writing Intent: ").append(intent).append("\n\n");
+        }
+
         if (!assumedKnowledge.isEmpty()) {
             sb.append("Assumed Knowledge (do not explain):\n");
             for (String knowledge : assumedKnowledge) {
@@ -140,6 +146,7 @@ public record ScopeConfiguration(
         private String preferredLanguage = "";
         private String audienceDescription = "";
         private String domainDescription = "";
+        private String intent = "";
 
         public Builder() {}
 
@@ -150,6 +157,7 @@ public record ScopeConfiguration(
             this.preferredLanguage = config.preferredLanguage;
             this.audienceDescription = config.audienceDescription;
             this.domainDescription = config.domainDescription;
+            this.intent = config.intent;
         }
 
         public Builder addAssumedKnowledge(String knowledge) {
@@ -197,10 +205,15 @@ public record ScopeConfiguration(
             return this;
         }
 
+        public Builder intent(String intent) {
+            this.intent = intent;
+            return this;
+        }
+
         public ScopeConfiguration build() {
             return new ScopeConfiguration(
                     assumedKnowledge, outOfScope, focusAreas,
-                    preferredLanguage, audienceDescription, domainDescription
+                    preferredLanguage, audienceDescription, domainDescription, intent
             );
         }
     }

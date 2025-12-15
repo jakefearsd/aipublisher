@@ -2,6 +2,20 @@ package com.jakefear.aipublisher.content;
 
 /**
  * Types of content that can be generated, each with distinct structure and purpose.
+ *
+ * <h2>Adding a New ContentType</h2>
+ * <p>When adding a new value to this enum, you <b>MUST</b> also update:</p>
+ * <ol>
+ *   <li>{@link ContentTypeTemplate} - Add a template entry to {@code TEMPLATES}</li>
+ *   <li>{@link com.jakefear.aipublisher.cli.strategy.ContentTypeQuestionStrategy} - Add the type
+ *       to an existing strategy's {@code getApplicableTypes()} or create a new strategy</li>
+ * </ol>
+ *
+ * <p>Both locations have fail-fast validation that will cause startup failures if a
+ * ContentType is missing, ensuring you cannot forget to update them.</p>
+ *
+ * @see ContentTypeTemplate
+ * @see com.jakefear.aipublisher.cli.strategy.ContentTypeQuestionStrategyRegistry
  */
 public enum ContentType {
 

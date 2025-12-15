@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Question strategy for Concept, Overview, and Reference content types.
+ * Question strategy for Concept, Overview, Reference, and Definition content types.
  * These types share similar question patterns about context and focus areas.
  */
 public class ConceptQuestionStrategy implements ContentTypeQuestionStrategy {
@@ -22,7 +22,7 @@ public class ConceptQuestionStrategy implements ContentTypeQuestionStrategy {
 
     @Override
     public Set<ContentType> getApplicableTypes() {
-        return Set.of(ContentType.CONCEPT, ContentType.OVERVIEW, ContentType.REFERENCE);
+        return Set.of(ContentType.CONCEPT, ContentType.OVERVIEW, ContentType.REFERENCE, ContentType.DEFINITION);
     }
 
     @Override

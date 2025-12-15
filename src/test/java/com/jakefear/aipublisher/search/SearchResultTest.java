@@ -67,8 +67,8 @@ class SearchResultTest {
     class ToCitation {
 
         @Test
-        @DisplayName("Formats as markdown link with reliability")
-        void formatsAsMarkdownLink() {
+        @DisplayName("Formats citation with link and reliability indicator")
+        void formatsCitationWithLinkAndReliability() {
             SearchResult result = new SearchResult(
                     "Apache Kafka Docs",
                     "https://kafka.apache.org/documentation",

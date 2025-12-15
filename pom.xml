@@ -13,7 +13,7 @@
 
     <groupId>com.jakefear</groupId>
     <artifactId>aipublisher</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1-SNAPSHOT</version>
     <name>AI Publisher</name>
     <description>Multi-agent writing workflow for producing and editing articles</description>
 

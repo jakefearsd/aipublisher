@@ -225,7 +225,7 @@ class ScopeConfigurationTest {
         @DisplayName("Handles null values gracefully")
         void handlesNullValuesGracefully() {
             ScopeConfiguration config = new ScopeConfiguration(
-                    null, null, null, null, null, null
+                    null, null, null, null, null, null, null
             );
 
             assertNotNull(config.assumedKnowledge());
@@ -234,6 +234,7 @@ class ScopeConfigurationTest {
             assertEquals("", config.preferredLanguage());
             assertEquals("", config.audienceDescription());
             assertEquals("", config.domainDescription());
+            assertEquals("", config.intent());
         }
     }
 }

@@ -9,6 +9,14 @@ import java.util.Map;
 /**
  * Registry for content type question strategies.
  * Maps each ContentType to its corresponding question strategy.
+ *
+ * <p><b>IMPORTANT:</b> When adding a new {@link ContentType}, you MUST ensure
+ * one of the registered strategies handles it (via {@code getApplicableTypes()}).
+ * The constructor validates this and throws {@link IllegalStateException} if
+ * any ContentType is unhandled.</p>
+ *
+ * @see ContentType
+ * @see ContentTypeQuestionStrategy#getApplicableTypes()
  */
 public class ContentTypeQuestionStrategyRegistry {
 
@@ -16,9 +24,12 @@ public class ContentTypeQuestionStrategyRegistry {
 
     /**
      * Create a registry with default strategies for all content types.
+     *
+     * @throws IllegalStateException if any ContentType is not handled by a strategy
      */
     public ContentTypeQuestionStrategyRegistry() {
         registerDefaults();
+        validateAllTypesHandled();
     }
 
     /**
@@ -35,6 +46,21 @@ public class ContentTypeQuestionStrategyRegistry {
 
         for (ContentTypeQuestionStrategy strategy : defaultStrategies) {
             register(strategy);
+        }
+    }
+
+    /**
+     * Validate that all ContentType values have a registered strategy.
+     * This catches missing strategies at startup rather than runtime.
+     */
+    private void validateAllTypesHandled() {
+        for (ContentType type : ContentType.values()) {
+            if (!strategies.containsKey(type)) {
+                throw new IllegalStateException(
+                    "ContentTypeQuestionStrategyRegistry has no strategy for " + type +
+                    ". When adding a new ContentType, you must update an existing strategy's " +
+                    "getApplicableTypes() or create a new strategy.");
+            }
         }
     }
 

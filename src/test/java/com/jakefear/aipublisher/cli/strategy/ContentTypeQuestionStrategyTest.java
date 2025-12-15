@@ -152,12 +152,13 @@ class ContentTypeQuestionStrategyTest {
         private final ConceptQuestionStrategy strategy = new ConceptQuestionStrategy();
 
         @Test
-        @DisplayName("Applies to CONCEPT, OVERVIEW, and REFERENCE")
+        @DisplayName("Applies to CONCEPT, OVERVIEW, REFERENCE, and DEFINITION")
         void appliesToMultipleTypes() {
             assertTrue(strategy.getApplicableTypes().contains(ContentType.CONCEPT));
             assertTrue(strategy.getApplicableTypes().contains(ContentType.OVERVIEW));
             assertTrue(strategy.getApplicableTypes().contains(ContentType.REFERENCE));
-            assertEquals(3, strategy.getApplicableTypes().size());
+            assertTrue(strategy.getApplicableTypes().contains(ContentType.DEFINITION));
+            assertEquals(4, strategy.getApplicableTypes().size());
         }
 
         @Test

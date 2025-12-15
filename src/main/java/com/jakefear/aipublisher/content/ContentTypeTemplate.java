@@ -5,6 +5,12 @@ import java.util.Map;
 
 /**
  * Template definitions for each content type, specifying required structure.
+ *
+ * <p><b>IMPORTANT:</b> When adding a new {@link ContentType}, you MUST also add
+ * a corresponding template to {@link #TEMPLATES}. Failure to do so will cause
+ * an {@link ExceptionInInitializerError} at application startup.</p>
+ *
+ * @see ContentType
  */
 public record ContentTypeTemplate(
         ContentType contentType,
@@ -246,6 +252,39 @@ public record ContentTypeTemplate(
                             Enthusiastic but not hype-driven.
                             Helpful for both newcomers and those seeking specific topics.""",
                     1
+            ),
+
+            ContentType.DEFINITION, new ContentTypeTemplate(
+                    ContentType.DEFINITION,
+                    List.of(
+                            new SectionDefinition("Definition", "Clear, concise definition of the term", true, 1),
+                            new SectionDefinition("Context", "Brief context on where this term is used", true, 2),
+                            new SectionDefinition("See Also", "Links to related concepts", true, 3)
+                    ),
+                    List.of(),
+                    """
+                            Keep it brief - this is a stub/definition page, not a full article.
+                            Start with a one-sentence definition.
+                            Add 1-2 sentences of context explaining why this matters.
+                            End with links to related pages where readers can learn more.
+                            Target 100-250 words total.""",
+                    """
+                            Concise and direct.
+                            Encyclopedic tone.
+                            No unnecessary elaboration.
+                            Focus on clarity over completeness.""",
+                    0
             )
     );
+
+    // Static validation: fail fast if any ContentType is missing a template
+    static {
+        for (ContentType type : ContentType.values()) {
+            if (!TEMPLATES.containsKey(type)) {
+                throw new ExceptionInInitializerError(
+                    "ContentTypeTemplate.TEMPLATES is missing template for " + type +
+                    ". When adding a new ContentType, you must also add a corresponding template.");
+            }
+        }
+    }
 }

@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 
 /**
  * Service for writing wiki articles to the filesystem.
- * Handles file generation, existing page discovery, and JSPWiki Markdown formatting.
+ * Handles file generation, existing page discovery, and JSPWiki formatting.
  */
 @Service
 public class WikiOutputService {
