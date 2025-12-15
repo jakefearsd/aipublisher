@@ -52,7 +52,15 @@ public enum ContentType {
      * Structure: Big Picture → Components → Where to Go Next
      */
     OVERVIEW("Overview", "High-level introduction to a topic area",
-            600, 1000, true);
+            600, 1000, true),
+
+    /**
+     * Definition: Brief explanation of a term or concept.
+     * Structure: Term → Definition → Context → See Also
+     * Used for stub pages to fill gaps in wiki coverage.
+     */
+    DEFINITION("Definition", "Brief definition of a term or concept",
+            100, 250, false);
 
     private final String displayName;
     private final String description;

@@ -151,6 +151,34 @@ public class PublishingDocument {
     }
 
     /**
+     * Update the draft content with annotations (for internal pipeline use).
+     * This bypasses state validation to allow adding fact-check markers
+     * after the fact-checking phase has completed.
+     */
+    public void updateDraftWithAnnotations(ArticleDraft annotatedDraft) {
+        Objects.requireNonNull(annotatedDraft);
+        if (this.draft == null) {
+            throw new IllegalStateException("Cannot annotate draft - no draft exists");
+        }
+        this.draft = annotatedDraft;
+        this.updatedAt = Instant.now();
+    }
+
+    /**
+     * Update the final article content with annotations (for internal pipeline use).
+     * This bypasses state validation to allow adding critique markers
+     * after the critiquing phase has completed.
+     */
+    public void updateFinalArticleWithAnnotations(FinalArticle annotatedArticle) {
+        Objects.requireNonNull(annotatedArticle);
+        if (this.finalArticle == null) {
+            throw new IllegalStateException("Cannot annotate final article - no final article exists");
+        }
+        this.finalArticle = annotatedArticle;
+        this.updatedAt = Instant.now();
+    }
+
+    /**
      * Set the fact check report (from Fact Checker Agent).
      */
     public void setFactCheckReport(FactCheckReport factCheckReport) {

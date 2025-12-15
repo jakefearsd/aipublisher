@@ -29,6 +29,7 @@ public class ExamplePlanner {
             case COMPARISON -> planComparison(topic, language);
             case TROUBLESHOOTING -> planTroubleshooting(topic, language);
             case OVERVIEW -> planOverview(topic, language);
+            case DEFINITION -> ExamplePlan.empty(topic, contentType); // Definition stubs don't need examples
         };
     }
 

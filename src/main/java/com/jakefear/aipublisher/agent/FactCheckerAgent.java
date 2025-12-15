@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.search.SearchResult;
-import com.jakefear.aipublisher.search.WebSearchService;
+import com.jakefear.aipublisher.search.WikipediaSearchService;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -23,7 +23,7 @@ import static com.jakefear.aipublisher.util.JsonParsingUtils.*;
 @Component
 public class FactCheckerAgent extends BaseAgent {
 
-    private WebSearchService webSearchService;
+    private WikipediaSearchService wikipediaSearchService;
 
     /**
      * Default constructor for Spring - uses setter injection.
@@ -41,11 +41,11 @@ public class FactCheckerAgent extends BaseAgent {
     }
 
     /**
-     * Set the web search service (called by Spring via @Autowired).
+     * Set the Wikipedia search service (called by Spring via @Autowired).
      */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
-    public void setWebSearchService(WebSearchService webSearchService) {
-        this.webSearchService = webSearchService;
+    public void setWikipediaSearchService(WikipediaSearchService wikipediaSearchService) {
+        this.wikipediaSearchService = wikipediaSearchService;
     }
 
     // Constructor for testing
@@ -53,10 +53,10 @@ public class FactCheckerAgent extends BaseAgent {
         super(model, systemPrompt);
     }
 
-    // Constructor for testing with web search
-    public FactCheckerAgent(ChatLanguageModel model, String systemPrompt, WebSearchService webSearchService) {
+    // Constructor for testing with Wikipedia search
+    public FactCheckerAgent(ChatLanguageModel model, String systemPrompt, WikipediaSearchService wikipediaSearchService) {
         super(model, systemPrompt);
-        this.webSearchService = webSearchService;
+        this.wikipediaSearchService = wikipediaSearchService;
     }
 
     @Override
@@ -112,14 +112,13 @@ public class FactCheckerAgent extends BaseAgent {
             }
         }
 
-        // Add web search verification results
+        // Add Wikipedia verification results
         String topic = document.getTopicBrief().topic();
-        List<SearchResult> verificationResults = performVerificationSearch(topic);
+        List<SearchResult> verificationResults = performWikipediaVerificationSearch(topic);
         if (!verificationResults.isEmpty()) {
-            prompt.append("\n--- WEB VERIFICATION RESULTS ---\n");
-            prompt.append("The following are current web search results about this topic.\n");
-            prompt.append("Use these to verify claims in the article with current information.\n");
-            prompt.append("Note the reliability rating of each source when weighing evidence.\n\n");
+            prompt.append("\n--- WIKIPEDIA VERIFICATION RESULTS ---\n");
+            prompt.append("The following are Wikipedia articles about this topic.\n");
+            prompt.append("Use these to verify claims in the article with authoritative information.\n\n");
             for (SearchResult result : verificationResults) {
                 prompt.append(result.toPromptFormat());
             }
@@ -133,18 +132,18 @@ public class FactCheckerAgent extends BaseAgent {
     }
 
     /**
-     * Perform web search to help verify claims about the topic.
+     * Perform Wikipedia search to help verify claims about the topic.
      */
-    private List<SearchResult> performVerificationSearch(String topic) {
-        if (webSearchService == null || !webSearchService.isEnabled()) {
+    private List<SearchResult> performWikipediaVerificationSearch(String topic) {
+        if (wikipediaSearchService == null || !wikipediaSearchService.isEnabled()) {
             return List.of();
         }
         try {
-            List<SearchResult> results = webSearchService.searchForVerification(topic);
-            log.debug("Verification search for '{}' returned {} results", topic, results.size());
+            List<SearchResult> results = wikipediaSearchService.searchForVerification(topic);
+            log.debug("Wikipedia verification search for '{}' returned {} results", topic, results.size());
             return results;
         } catch (Exception e) {
-            log.warn("Verification search failed for topic '{}': {}", topic, e.getMessage());
+            log.warn("Wikipedia verification search failed for topic '{}': {}", topic, e.getMessage());
             return List.of();
         }
     }

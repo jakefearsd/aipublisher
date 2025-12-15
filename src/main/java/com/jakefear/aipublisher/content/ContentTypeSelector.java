@@ -160,7 +160,7 @@ public class ContentTypeSelector {
             case REFERENCE -> REFERENCE_PATTERNS;
             case GUIDE -> GUIDE_PATTERNS;
             case OVERVIEW -> OVERVIEW_PATTERNS;
-            case CONCEPT -> List.of();
+            case CONCEPT, DEFINITION -> List.of();
         };
     }
 
@@ -173,6 +173,7 @@ public class ContentTypeSelector {
             case GUIDE -> "Topic involves decision-making or best practices";
             case OVERVIEW -> "Topic is a high-level introduction to a subject area";
             case CONCEPT -> "Topic is best explained as a concept with definition and examples";
+            case DEFINITION -> "Brief definition page for a term or concept";
         };
     }
 }

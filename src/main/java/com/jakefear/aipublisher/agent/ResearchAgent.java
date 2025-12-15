@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.search.SearchResult;
-import com.jakefear.aipublisher.search.WebSearchService;
+import com.jakefear.aipublisher.search.WikipediaSearchService;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,7 @@ import static com.jakefear.aipublisher.util.JsonParsingUtils.*;
 @Component
 public class ResearchAgent extends BaseAgent {
 
-    private WebSearchService webSearchService;
+    private WikipediaSearchService wikipediaSearchService;
 
     /**
      * Default constructor for Spring - uses setter injection.
@@ -43,11 +43,11 @@ public class ResearchAgent extends BaseAgent {
     }
 
     /**
-     * Set the web search service (called by Spring via @Autowired).
+     * Set the Wikipedia search service (called by Spring via @Autowired).
      */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
-    public void setWebSearchService(WebSearchService webSearchService) {
-        this.webSearchService = webSearchService;
+    public void setWikipediaSearchService(WikipediaSearchService wikipediaSearchService) {
+        this.wikipediaSearchService = wikipediaSearchService;
     }
 
     // Constructor for testing
@@ -55,10 +55,10 @@ public class ResearchAgent extends BaseAgent {
         super(model, systemPrompt);
     }
 
-    // Constructor for testing with web search
-    public ResearchAgent(ChatLanguageModel model, String systemPrompt, WebSearchService webSearchService) {
+    // Constructor for testing with Wikipedia search
+    public ResearchAgent(ChatLanguageModel model, String systemPrompt, WikipediaSearchService wikipediaSearchService) {
         super(model, systemPrompt);
-        this.webSearchService = webSearchService;
+        this.wikipediaSearchService = wikipediaSearchService;
     }
 
     @Override
@@ -97,24 +97,14 @@ public class ResearchAgent extends BaseAgent {
             }
         }
 
-        // Add web search results if available
-        List<SearchResult> searchResults = performWebSearch(brief.topic());
+        // Add Wikipedia search results if available
+        List<SearchResult> searchResults = performWikipediaSearch(brief.topic());
         if (!searchResults.isEmpty()) {
-            prompt.append("\n--- WEB SEARCH RESULTS ---\n");
-            prompt.append("The following are current web search results about this topic.\n");
-            prompt.append("Use these to supplement your knowledge with current information.\n");
-            prompt.append("Cite URLs when using information from these sources.\n\n");
+            prompt.append("\n--- WIKIPEDIA SEARCH RESULTS ---\n");
+            prompt.append("The following are Wikipedia articles about this topic.\n");
+            prompt.append("Use these as authoritative sources for encyclopedic information.\n");
+            prompt.append("Cite Wikipedia URLs when using information from these sources.\n\n");
             for (SearchResult result : searchResults) {
-                prompt.append(result.toPromptFormat());
-            }
-            prompt.append("\n");
-        }
-
-        // Add official docs search results
-        List<SearchResult> docsResults = performOfficialDocsSearch(brief.topic());
-        if (!docsResults.isEmpty()) {
-            prompt.append("\n--- OFFICIAL DOCUMENTATION RESULTS ---\n");
-            for (SearchResult result : docsResults) {
                 prompt.append(result.toPromptFormat());
             }
             prompt.append("\n");
@@ -127,35 +117,18 @@ public class ResearchAgent extends BaseAgent {
     }
 
     /**
-     * Perform web search for the topic.
+     * Perform Wikipedia search for the topic.
      */
-    private List<SearchResult> performWebSearch(String topic) {
-        if (webSearchService == null || !webSearchService.isEnabled()) {
+    private List<SearchResult> performWikipediaSearch(String topic) {
+        if (wikipediaSearchService == null || !wikipediaSearchService.isEnabled()) {
             return List.of();
         }
         try {
-            List<SearchResult> results = webSearchService.search(topic);
-            log.debug("Web search for '{}' returned {} results", topic, results.size());
+            List<SearchResult> results = wikipediaSearchService.search(topic);
+            log.debug("Wikipedia search for '{}' returned {} results", topic, results.size());
             return results;
         } catch (Exception e) {
-            log.warn("Web search failed for topic '{}': {}", topic, e.getMessage());
-            return List.of();
-        }
-    }
-
-    /**
-     * Search for official documentation about the topic.
-     */
-    private List<SearchResult> performOfficialDocsSearch(String topic) {
-        if (webSearchService == null || !webSearchService.isEnabled()) {
-            return List.of();
-        }
-        try {
-            List<SearchResult> results = webSearchService.searchOfficialDocs(topic);
-            log.debug("Official docs search for '{}' returned {} results", topic, results.size());
-            return results;
-        } catch (Exception e) {
-            log.warn("Official docs search failed for topic '{}': {}", topic, e.getMessage());
+            log.warn("Wikipedia search failed for topic '{}': {}", topic, e.getMessage());
             return List.of();
         }
     }

@@ -279,8 +279,8 @@ class PublishingPipelineTest {
         }
 
         @Test
-        @DisplayName("Fails after max revision cycles")
-        void failsAfterMaxRevisionCycles() {
+        @DisplayName("Continues with markers after max revision cycles")
+        void continuesWithMarkersAfterMaxRevisionCycles() throws IOException {
             // Arrange
             pipelineProperties.setMaxRevisionCycles(2);
             TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
@@ -290,17 +290,88 @@ class PublishingPipelineTest {
             // Always returns REVISE
             when(factCheckerAgent.process(any())).thenAnswer(invocation -> {
                 PublishingDocument doc = invocation.getArgument(0);
-                setFactCheckReport(doc, RecommendedAction.REVISE);
+                setFactCheckReportWithQuestionableClaims(doc);
                 return doc;
             });
             when(factCheckerAgent.validate(any())).thenReturn(true);
+            setupEditorSuccess();
+            setupCriticSuccess();
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert - pipeline continues instead of failing
+            assertTrue(result.success(), "Pipeline should succeed with fact-check markers: " +
+                    (result.errorMessage() != null ? result.errorMessage() : "no error"));
+            // Draft should now contain fact-check failure markers
+            String draftContent = result.document().getDraft().wikiContent();
+            assertTrue(draftContent.contains("FACT CHECK FAIL BEGIN"));
+            assertTrue(draftContent.contains("FACT CHECK FAIL END"));
+        }
+
+        @Test
+        @DisplayName("Markers include questionable claims")
+        void markersIncludeQuestionableClaims() throws IOException {
+            // Arrange
+            pipelineProperties.setMaxRevisionCycles(1);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+
+            when(factCheckerAgent.process(any())).thenAnswer(invocation -> {
+                PublishingDocument doc = invocation.getArgument(0);
+                setFactCheckReportWithQuestionableClaims(doc);
+                return doc;
+            });
+            when(factCheckerAgent.validate(any())).thenReturn(true);
+            setupEditorSuccess();
+            setupCriticSuccess();
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
 
             // Act
             PipelineResult result = pipeline.execute(topicBrief);
 
             // Assert
-            assertFalse(result.success());
-            assertTrue(result.errorMessage().contains("Maximum revision cycles"));
+            assertTrue(result.success(), "Pipeline should succeed with fact-check markers: " +
+                    (result.errorMessage() != null ? result.errorMessage() : "no error"));
+            String draftContent = result.document().getDraft().wikiContent();
+            assertTrue(draftContent.contains("Questionable Claim"));
+            assertTrue(draftContent.contains("The stock market always goes up"));
+            assertTrue(draftContent.contains("Historical data shows"));
+        }
+
+        @Test
+        @DisplayName("Markers include consistency issues")
+        void markersIncludeConsistencyIssues() throws IOException {
+            // Arrange
+            pipelineProperties.setMaxRevisionCycles(1);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+
+            when(factCheckerAgent.process(any())).thenAnswer(invocation -> {
+                PublishingDocument doc = invocation.getArgument(0);
+                setFactCheckReportWithConsistencyIssues(doc);
+                return doc;
+            });
+            when(factCheckerAgent.validate(any())).thenReturn(true);
+            setupEditorSuccess();
+            setupCriticSuccess();
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success(), "Pipeline should succeed with fact-check markers: " +
+                    (result.errorMessage() != null ? result.errorMessage() : "no error"));
+            String draftContent = result.document().getDraft().wikiContent();
+            assertTrue(draftContent.contains("Consistency Issues"));
+            assertTrue(draftContent.contains("Date conflict between sections"));
         }
     }
 
@@ -451,6 +522,531 @@ class PublishingPipelineTest {
                 action == RecommendedAction.REJECT ? ConfidenceLevel.LOW : ConfidenceLevel.MEDIUM,
                 action
         ));
+    }
+
+    private void setFactCheckReportWithQuestionableClaims(PublishingDocument doc) {
+        doc.setFactCheckReport(new FactCheckReport(
+                doc.getDraft().wikiContent(),
+                List.of(VerifiedClaim.verified("Investing builds wealth", 0)),
+                List.of(
+                        QuestionableClaim.withSuggestion(
+                                "The stock market always goes up",
+                                "Historical data shows periods of decline",
+                                "Consider rephrasing to 'historically trends upward over long periods'"
+                        ),
+                        QuestionableClaim.withoutSuggestion(
+                                "Returns are guaranteed",
+                                "No investment returns are guaranteed"
+                        )
+                ),
+                List.of(),
+                ConfidenceLevel.MEDIUM,
+                RecommendedAction.REVISE
+        ));
+    }
+
+    private void setFactCheckReportWithConsistencyIssues(PublishingDocument doc) {
+        doc.setFactCheckReport(new FactCheckReport(
+                doc.getDraft().wikiContent(),
+                List.of(VerifiedClaim.verified("Test claim", 0)),
+                List.of(QuestionableClaim.withoutSuggestion("Some claim", "Issue with claim")),
+                List.of(
+                        "Date conflict between sections: 2020 vs 2021",
+                        "Terminology inconsistency: 'compound interest' vs 'compounding'"
+                ),
+                ConfidenceLevel.MEDIUM,
+                RecommendedAction.REVISE
+        ));
+    }
+
+    @Nested
+    @DisplayName("Fact Check Failure Markers")
+    class FactCheckFailureMarkers {
+
+        @Test
+        @DisplayName("Returns original content when report is null")
+        void returnsOriginalContentWhenReportIsNull() {
+            // Arrange
+            String content = "!!! Title\n\nOriginal content.";
+
+            // Act
+            String result = pipeline.addFactCheckFailureMarkers(content, null);
+
+            // Assert
+            assertEquals(content, result);
+        }
+
+        @Test
+        @DisplayName("Returns original content when no questionable claims")
+        void returnsOriginalContentWhenNoQuestionableClaims() {
+            // Arrange
+            String content = "!!! Title\n\nOriginal content.";
+            FactCheckReport report = new FactCheckReport(
+                    content,
+                    List.of(VerifiedClaim.verified("All good", 0)),
+                    List.of(), // No questionable claims
+                    List.of(),
+                    ConfidenceLevel.HIGH,
+                    RecommendedAction.APPROVE
+            );
+
+            // Act
+            String result = pipeline.addFactCheckFailureMarkers(content, report);
+
+            // Assert
+            assertEquals(content, result);
+        }
+
+        @Test
+        @DisplayName("Adds markers with questionable claims")
+        void addsMarkersWithQuestionableClaims() {
+            // Arrange
+            String content = "!!! Title\n\nOriginal content.";
+            FactCheckReport report = new FactCheckReport(
+                    content,
+                    List.of(),
+                    List.of(QuestionableClaim.withSuggestion(
+                            "Bad claim",
+                            "This is wrong",
+                            "Try this instead"
+                    )),
+                    List.of(),
+                    ConfidenceLevel.LOW,
+                    RecommendedAction.REVISE
+            );
+
+            // Act
+            String result = pipeline.addFactCheckFailureMarkers(content, report);
+
+            // Assert
+            assertTrue(result.contains("'''FACT CHECK FAIL BEGIN'''"));
+            assertTrue(result.contains("'''FACT CHECK FAIL END'''"));
+            assertTrue(result.contains("Bad claim"));
+            assertTrue(result.contains("This is wrong"));
+            assertTrue(result.contains("Try this instead"));
+            // Original content is preserved
+            assertTrue(result.contains("!!! Title"));
+            assertTrue(result.contains("Original content."));
+        }
+
+        @Test
+        @DisplayName("Adds markers with consistency issues")
+        void addsMarkersWithConsistencyIssues() {
+            // Arrange
+            String content = "!!! Title\n\nOriginal content.";
+            FactCheckReport report = new FactCheckReport(
+                    content,
+                    List.of(),
+                    List.of(QuestionableClaim.withoutSuggestion("Claim", "Issue")),
+                    List.of("Inconsistent dates", "Conflicting terminology"),
+                    ConfidenceLevel.LOW,
+                    RecommendedAction.REVISE
+            );
+
+            // Act
+            String result = pipeline.addFactCheckFailureMarkers(content, report);
+
+            // Assert
+            assertTrue(result.contains("'''Consistency Issues:'''"));
+            assertTrue(result.contains("Inconsistent dates"));
+            assertTrue(result.contains("Conflicting terminology"));
+        }
+
+        @Test
+        @DisplayName("Numbers multiple questionable claims")
+        void numbersMultipleQuestionableClaims() {
+            // Arrange
+            String content = "Content";
+            FactCheckReport report = new FactCheckReport(
+                    content,
+                    List.of(),
+                    List.of(
+                            QuestionableClaim.withoutSuggestion("First claim", "Issue 1"),
+                            QuestionableClaim.withoutSuggestion("Second claim", "Issue 2"),
+                            QuestionableClaim.withoutSuggestion("Third claim", "Issue 3")
+                    ),
+                    List.of(),
+                    ConfidenceLevel.LOW,
+                    RecommendedAction.REVISE
+            );
+
+            // Act
+            String result = pipeline.addFactCheckFailureMarkers(content, report);
+
+            // Assert
+            assertTrue(result.contains("'''1. Questionable Claim:'''"));
+            assertTrue(result.contains("'''2. Questionable Claim:'''"));
+            assertTrue(result.contains("'''3. Questionable Claim:'''"));
+        }
+
+        @Test
+        @DisplayName("Includes max revision count in message")
+        void includesMaxRevisionCountInMessage() {
+            // Arrange
+            pipelineProperties.setMaxRevisionCycles(5);
+            String content = "Content";
+            FactCheckReport report = new FactCheckReport(
+                    content,
+                    List.of(),
+                    List.of(QuestionableClaim.withoutSuggestion("Claim", "Issue")),
+                    List.of(),
+                    ConfidenceLevel.LOW,
+                    RecommendedAction.REVISE
+            );
+
+            // Act
+            String result = pipeline.addFactCheckFailureMarkers(content, report);
+
+            // Assert
+            assertTrue(result.contains("5 revision attempts"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Critique Phase")
+    class CritiquePhase {
+
+        @Test
+        @DisplayName("Proceeds when critic approves")
+        void proceedsWhenCriticApproves() throws IOException {
+            // Arrange
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupSuccessfulMocks();
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success());
+            verify(criticAgent, times(1)).process(any());
+        }
+
+        @Test
+        @DisplayName("Triggers revision when critic recommends revise")
+        void triggersRevisionWhenCriticRecommendsRevise() throws IOException {
+            // Arrange
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupFactCheckSuccess();
+            setupEditorSuccess();
+
+            // First critique: REVISE, second: APPROVE
+            when(criticAgent.process(any())).thenAnswer(invocation -> {
+                PublishingDocument doc = invocation.getArgument(0);
+                setCriticReport(doc, RecommendedAction.REVISE);
+                return doc;
+            }).thenAnswer(invocation -> {
+                PublishingDocument doc = invocation.getArgument(0);
+                setCriticReport(doc, RecommendedAction.APPROVE);
+                return doc;
+            });
+            when(criticAgent.validate(any())).thenReturn(true);
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success());
+            verify(criticAgent, times(2)).process(any());
+            verify(editorAgent, times(2)).process(any()); // Original + revision
+        }
+
+        @Test
+        @DisplayName("Fails when critic rejects")
+        void failsWhenCriticRejects() {
+            // Arrange
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupFactCheckSuccess();
+            setupEditorSuccess();
+
+            when(criticAgent.process(any())).thenAnswer(invocation -> {
+                PublishingDocument doc = invocation.getArgument(0);
+                setCriticReport(doc, RecommendedAction.REJECT);
+                return doc;
+            });
+            when(criticAgent.validate(any())).thenReturn(true);
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertFalse(result.success());
+            assertEquals(DocumentState.CRITIQUING, result.failedAtState());
+            assertTrue(result.errorMessage().contains("rejected"));
+        }
+
+        @Test
+        @DisplayName("Continues with markers after max revision cycles")
+        void continuesWithMarkersAfterMaxRevisionCycles() throws IOException {
+            // Arrange
+            pipelineProperties.setMaxRevisionCycles(2);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupFactCheckSuccess();
+            setupEditorSuccess();
+
+            // Always returns REVISE with issues
+            when(criticAgent.process(any())).thenAnswer(invocation -> {
+                PublishingDocument doc = invocation.getArgument(0);
+                setCriticReportWithIssues(doc);
+                return doc;
+            });
+            when(criticAgent.validate(any())).thenReturn(true);
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert - pipeline continues instead of failing
+            assertTrue(result.success(), "Pipeline should succeed with critique markers: " +
+                    (result.errorMessage() != null ? result.errorMessage() : "no error"));
+            // Final article should now contain critique markers
+            String finalContent = result.document().getFinalArticle().wikiContent();
+            assertTrue(finalContent.contains("CRITIQUE REVIEW NOTES BEGIN"));
+            assertTrue(finalContent.contains("CRITIQUE REVIEW NOTES END"));
+        }
+
+        @Test
+        @DisplayName("Markers include syntax issues")
+        void markersIncludeSyntaxIssues() throws IOException {
+            // Arrange
+            pipelineProperties.setMaxRevisionCycles(1);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupFactCheckSuccess();
+            setupEditorSuccess();
+
+            when(criticAgent.process(any())).thenAnswer(invocation -> {
+                PublishingDocument doc = invocation.getArgument(0);
+                setCriticReportWithIssues(doc);
+                return doc;
+            });
+            when(criticAgent.validate(any())).thenReturn(true);
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success(), "Pipeline should succeed with critique markers: " +
+                    (result.errorMessage() != null ? result.errorMessage() : "no error"));
+            String finalContent = result.document().getFinalArticle().wikiContent();
+            assertTrue(finalContent.contains("Syntax Issues"));
+            assertTrue(finalContent.contains("Markdown heading found"));
+        }
+
+        private void setCriticReport(PublishingDocument doc, RecommendedAction action) {
+            doc.setCriticReport(new CriticReport(
+                    action == RecommendedAction.APPROVE ? 0.9 : 0.7,
+                    0.85, 0.85, 0.85,
+                    List.of(), List.of(), List.of(), List.of(),
+                    action
+            ));
+        }
+
+        private void setCriticReportWithIssues(PublishingDocument doc) {
+            doc.setCriticReport(new CriticReport(
+                    0.65, 0.7, 0.6, 0.7,
+                    List.of("Missing introduction section"),
+                    List.of("Markdown heading found: # should be !!!"),
+                    List.of("Paragraph too long"),
+                    List.of("Add more examples"),
+                    RecommendedAction.REVISE
+            ));
+        }
+    }
+
+    @Nested
+    @DisplayName("Critique Failure Markers")
+    class CritiqueFailureMarkers {
+
+        @Test
+        @DisplayName("Returns original content when report is null")
+        void returnsOriginalContentWhenReportIsNull() {
+            // Arrange
+            String content = "!!! Title\n\nOriginal content.";
+
+            // Act
+            String result = pipeline.addCritiqueFailureMarkers(content, null);
+
+            // Assert
+            assertEquals(content, result);
+        }
+
+        @Test
+        @DisplayName("Returns original content when no issues")
+        void returnsOriginalContentWhenNoIssues() {
+            // Arrange
+            String content = "!!! Title\n\nOriginal content.";
+            CriticReport report = new CriticReport(
+                    0.9, 0.9, 0.9, 0.9,
+                    List.of(), // No structure issues
+                    List.of(), // No syntax issues
+                    List.of(), // No style issues
+                    List.of(), // No suggestions
+                    RecommendedAction.APPROVE
+            );
+
+            // Act
+            String result = pipeline.addCritiqueFailureMarkers(content, report);
+
+            // Assert
+            assertEquals(content, result);
+        }
+
+        @Test
+        @DisplayName("Adds markers with syntax issues")
+        void addsMarkersWithSyntaxIssues() {
+            // Arrange
+            String content = "!!! Title\n\nOriginal content.";
+            CriticReport report = new CriticReport(
+                    0.7, 0.8, 0.6, 0.8,
+                    List.of(),
+                    List.of("# Heading should be !!!", "`code` should be {{code}}"),
+                    List.of(),
+                    List.of(),
+                    RecommendedAction.REVISE
+            );
+
+            // Act
+            String result = pipeline.addCritiqueFailureMarkers(content, report);
+
+            // Assert
+            assertTrue(result.contains("'''CRITIQUE REVIEW NOTES BEGIN'''"));
+            assertTrue(result.contains("'''CRITIQUE REVIEW NOTES END'''"));
+            assertTrue(result.contains("'''Syntax Issues:'''"));
+            assertTrue(result.contains("# Heading should be !!!"));
+            assertTrue(result.contains("`code` should be {{code}}"));
+            // Original content is preserved
+            assertTrue(result.contains("!!! Title"));
+            assertTrue(result.contains("Original content."));
+        }
+
+        @Test
+        @DisplayName("Adds markers with structure issues")
+        void addsMarkersWithStructureIssues() {
+            // Arrange
+            String content = "!!! Title\n\nOriginal content.";
+            CriticReport report = new CriticReport(
+                    0.7, 0.6, 0.8, 0.8,
+                    List.of("Missing introduction", "No conclusion section"),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    RecommendedAction.REVISE
+            );
+
+            // Act
+            String result = pipeline.addCritiqueFailureMarkers(content, report);
+
+            // Assert
+            assertTrue(result.contains("'''Structure Issues:'''"));
+            assertTrue(result.contains("Missing introduction"));
+            assertTrue(result.contains("No conclusion section"));
+        }
+
+        @Test
+        @DisplayName("Adds markers with style issues")
+        void addsMarkersWithStyleIssues() {
+            // Arrange
+            String content = "!!! Title\n\nOriginal content.";
+            CriticReport report = new CriticReport(
+                    0.7, 0.8, 0.8, 0.6,
+                    List.of(),
+                    List.of(),
+                    List.of("Passive voice overused", "Paragraphs too long"),
+                    List.of(),
+                    RecommendedAction.REVISE
+            );
+
+            // Act
+            String result = pipeline.addCritiqueFailureMarkers(content, report);
+
+            // Assert
+            assertTrue(result.contains("'''Style Issues:'''"));
+            assertTrue(result.contains("Passive voice overused"));
+            assertTrue(result.contains("Paragraphs too long"));
+        }
+
+        @Test
+        @DisplayName("Adds markers with suggestions")
+        void addsMarkersWithSuggestions() {
+            // Arrange
+            String content = "!!! Title\n\nOriginal content.";
+            CriticReport report = new CriticReport(
+                    0.7, 0.8, 0.8, 0.8,
+                    List.of("Minor structure issue"),
+                    List.of(),
+                    List.of(),
+                    List.of("Add more examples", "Consider adding a table of contents"),
+                    RecommendedAction.REVISE
+            );
+
+            // Act
+            String result = pipeline.addCritiqueFailureMarkers(content, report);
+
+            // Assert
+            assertTrue(result.contains("'''Suggestions:'''"));
+            assertTrue(result.contains("Add more examples"));
+            assertTrue(result.contains("Consider adding a table of contents"));
+        }
+
+        @Test
+        @DisplayName("Adds markers with all issue types")
+        void addsMarkersWithAllIssueTypes() {
+            // Arrange
+            String content = "Content";
+            CriticReport report = new CriticReport(
+                    0.6, 0.6, 0.5, 0.6,
+                    List.of("Structure problem"),
+                    List.of("Syntax problem"),
+                    List.of("Style problem"),
+                    List.of("Suggestion"),
+                    RecommendedAction.REVISE
+            );
+
+            // Act
+            String result = pipeline.addCritiqueFailureMarkers(content, report);
+
+            // Assert
+            assertTrue(result.contains("'''Syntax Issues:'''"));
+            assertTrue(result.contains("'''Structure Issues:'''"));
+            assertTrue(result.contains("'''Style Issues:'''"));
+            assertTrue(result.contains("'''Suggestions:'''"));
+        }
+
+        @Test
+        @DisplayName("Includes max revision count in message")
+        void includesMaxRevisionCountInMessage() {
+            // Arrange
+            pipelineProperties.setMaxRevisionCycles(5);
+            String content = "Content";
+            CriticReport report = new CriticReport(
+                    0.7, 0.8, 0.6, 0.8,
+                    List.of(),
+                    List.of("Syntax issue"),
+                    List.of(),
+                    List.of(),
+                    RecommendedAction.REVISE
+            );
+
+            // Act
+            String result = pipeline.addCritiqueFailureMarkers(content, report);
+
+            // Assert
+            assertTrue(result.contains("5 revision attempts"));
+        }
     }
 
     @Nested

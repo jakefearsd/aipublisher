@@ -677,12 +677,219 @@ You can:
 6. **Address critical gaps** - These are often missing prerequisites
 7. **Prioritize ruthlessly** - MUST_HAVE should be your core content
 
+## Gap Detection and Stub Generation
+
+After generating articles, your wiki may have internal links that point to pages that don't yet exist (gap concepts). AI Publisher can detect these gaps and automatically generate brief stub/definition pages to fill them.
+
+### What Are Gap Concepts?
+
+Gap concepts are terms referenced in your wiki (via `[PageName]` links) that don't have corresponding articles. For example, an article about "Compound Interest" might link to `[PresentValue]` and `[DiscountRate]`, but if those pages don't exist, they become gaps.
+
+### Gap Types
+
+The system categorizes each gap into one of four types:
+
+| Type | Description | Action |
+|------|-------------|--------|
+| **DEFINITION** | Technical term needing a brief 100-200 word definition | Generate stub page |
+| **REDIRECT** | Alias or alternate spelling of an existing page | Create redirect page |
+| **FULL_ARTICLE** | Significant concept deserving comprehensive coverage | Flag for review |
+| **IGNORE** | Too generic or common (e.g., "money", "time") | Skip |
+
+### Analyzing Gaps (Report Only)
+
+To see what gaps exist without generating anything:
+
+```bash
+java -jar target/aipublisher.jar --analyze-gaps
+
+# With universe context (loads name and metadata from saved universe)
+java -jar target/aipublisher.jar --analyze-gaps --universe investing-basics
+
+# Or with manual domain context
+java -jar target/aipublisher.jar --analyze-gaps --context "Finance"
+```
+
+Output example:
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║              AI PUBLISHER - GAP ANALYSIS MODE                     ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+Analyzing wiki content for gaps...
+
+Detected 8 gap concepts:
+
+Definition (5):
+  - Present Value [Definition] (referenced by: CompoundInterest, TimeValueOfMoney)
+  - Discount Rate [Definition] (referenced by: CompoundInterest)
+  - Principal [Definition] (referenced by: CompoundInterest, SimpleInterest)
+  - Annual Percentage Rate [Definition] (referenced by: CompoundInterest)
+  - Amortization [Definition] (referenced by: LoanBasics)
+
+Redirect (1):
+  - APR [Redirect] -> AnnualPercentageRate (referenced by: LoanBasics)
+
+Full Article (1):
+  - Inflation [Full Article] (referenced by: InvestingBasics, CompoundInterest)
+
+Ignore (1):
+  - money [Ignore]
+
+═══════════════════════════════════════════════════════════════════
+Total gaps: 8
+
+To generate stubs for these gaps, use:
+  aipublisher --stubs-only
+  aipublisher --stubs-only --context "Finance"
+═══════════════════════════════════════════════════════════════════
+```
+
+### Generating Stubs Only
+
+To generate stub pages for existing wiki content without generating main articles:
+
+```bash
+# Basic usage - prompts for confirmation
+java -jar target/aipublisher.jar --stubs-only
+
+# With universe context (recommended - loads name and audience from saved universe)
+java -jar target/aipublisher.jar --stubs-only --universe investing-basics
+
+# Or with manual domain context
+java -jar target/aipublisher.jar --stubs-only --context "Investing Basics"
+
+# With specific target audience (overrides universe audience)
+java -jar target/aipublisher.jar --stubs-only --universe investing-basics --audience "financial professionals"
+```
+
+Output example:
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║              AI PUBLISHER - STUB GENERATION MODE                  ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+Loaded universe: investing-basics
+Domain context: Investing Basics
+Target audience: general readers
+
+Generate stub pages for gap concepts? [Y/n]: y
+
+Analyzing wiki content for gaps...
+Detected 8 gap concepts
+  - Definitions to generate: 5
+  - Redirects to create: 1
+  - Full articles needed: 1 (flagged for review)
+  - Ignored (too generic): 1
+
+Generating definition stubs...
+  ✓ Generated: PresentValue.txt
+  ✓ Generated: DiscountRate.txt
+  ✓ Generated: Principal.txt
+  ✓ Generated: AnnualPercentageRate.txt
+  ✓ Generated: Amortization.txt
+
+Creating redirect pages...
+  ✓ Generated: APR.txt
+
+Gaps requiring full articles (add to universe for generation):
+  - Inflation (referenced by: InvestingBasics, CompoundInterest)
+
+═══════════════════════════════════════════════════════════════════
+Stub generation complete!
+
+  Gaps detected:    8
+  Stubs generated:  5
+  Redirects:        1
+  Ignored:          1
+  Flagged review:   1
+═══════════════════════════════════════════════════════════════════
+```
+
+### Generating Stubs After Universe Generation
+
+To automatically generate stubs after generating articles from a universe:
+
+```bash
+java -jar target/aipublisher.jar --universe investing-basics --generate-stubs
+```
+
+This will:
+1. Generate all main articles from the universe
+2. Create a summary page
+3. Detect gaps in the generated content
+4. Generate stub pages for gap concepts
+5. Report any concepts that need full articles
+
+### Example Stub Page Output
+
+**Definition stub (PresentValue.txt):**
+```
+!!! Present Value
+
+__Present Value__ (PV) is the current worth of a future sum of money or stream of cash flows, given a specified rate of return. It represents how much a future payment is worth in today's dollars.
+
+The concept is fundamental to financial analysis and investment decisions. A dollar received today is worth more than a dollar received in the future because of its earning potential.
+
+!! See Also
+* [CompoundInterest]
+* [TimeValueOfMoney]
+* [DiscountRate]
+
+[{SET categories='Finance,InvestingConcepts'}]
+```
+
+**Redirect page (APR.txt):**
+```
+This page redirects to [AnnualPercentageRate].
+
+If you are not automatically redirected, click the link above.
+
+[{SET categories='Redirects'}]
+```
+
+### Stub Generation Workflow
+
+The recommended workflow for comprehensive wiki coverage:
+
+1. **Create a topic universe** (optional but recommended):
+   ```bash
+   java -jar target/aipublisher.jar --discover -c balanced
+   ```
+
+2. **Generate main articles**:
+   ```bash
+   java -jar target/aipublisher.jar --universe my-wiki
+   ```
+
+3. **Analyze gaps** (optional - to preview what stubs will be created):
+   ```bash
+   java -jar target/aipublisher.jar --analyze-gaps --universe my-wiki
+   ```
+
+4. **Generate stubs** to fill the gaps:
+   ```bash
+   java -jar target/aipublisher.jar --stubs-only --universe my-wiki
+   ```
+
+5. **Review flagged topics** - Any concepts flagged as FULL_ARTICLE should be added to your universe for comprehensive coverage.
+
+### Best Practices for Stub Generation
+
+1. **Run analysis first** - Use `--analyze-gaps` to preview before generating
+2. **Use universe context** - Use `--universe` to load domain name and audience from your saved universe
+3. **Review redirects** - Verify redirect targets are correct
+4. **Track full article flags** - Add significant gaps to your topic universe
+5. **Iterate** - After adding stub pages, run analysis again to catch new gaps
+
 ## Command Line Reference
 
 ```
-Usage: aipublisher [-hiqvV] [--auto-approve] [--discover] [-c=<costProfile>]
+Usage: aipublisher [-hiqvV] [--auto-approve] [--discover] [--analyze-gaps]
+                   [--stubs-only] [--generate-stubs] [-c=<costProfile>]
                    [-a=<audience>] [-k=<apiKey>] [--key-file=<keyFile>]
-                   [-o=<outputDirectory>] [-t=<topic>] [-w=<wordCount>]
+                   [-o=<outputDirectory>] [-t=<topic>] [-u=<universe>]
+                   [-w=<wordCount>] [--context=<context>]
                    [--related=<relatedPages>]... [--sections=<requiredSections>]...
 
 Generate well-researched, fact-checked articles using AI agents.
@@ -691,6 +898,7 @@ Options:
   -t, --topic=<topic>        Topic to write about (prompts interactively if not
                                specified)
       --discover             Launch interactive domain discovery session
+  -u, --universe=<id>        Generate articles from a saved topic universe
   -c, --cost-profile=<profile>
                              Cost profile for discovery: MINIMAL, BALANCED, or
                                COMPREHENSIVE (prompts if not specified)
@@ -701,6 +909,7 @@ Options:
   -o, --output=<outputDirectory>
                              Output directory for generated articles
                                (default: ./output)
+      --context=<context>    Domain context for stub generation
       --sections=<sec1,sec2> Required sections (comma-separated)
       --related=<page1,page2>
                              Related pages for internal linking (comma-separated)
@@ -709,6 +918,13 @@ Options:
   -v, --verbose              Enable verbose output
   -h, --help                 Show this help message and exit.
   -V, --version              Print version information and exit.
+
+Stub Generation Options:
+      --analyze-gaps         Analyze wiki for gaps (report only, no generation)
+      --stubs-only           Generate stub pages for existing wiki content
+      --generate-stubs       Generate stubs after universe article generation
+                             Note: Use -u/--universe with --analyze-gaps or --stubs-only
+                             to load domain context from a saved universe
 
 API Key Options:
   -k, --key=<apiKey>         Anthropic API key (overrides environment variable)
@@ -730,6 +946,9 @@ Examples:
   aipublisher -t "Docker" -a "DevOps engineers" -w 1000 --auto-approve
   aipublisher -t "Kubernetes" -k sk-ant-api03-xxxxx
   aipublisher -t "Kubernetes" --key-file ~/.anthropic-key
+  aipublisher -u my-wiki --generate-stubs        # Generate articles and stubs
+  aipublisher --analyze-gaps -u my-wiki          # Report gaps with universe context
+  aipublisher --stubs-only -u my-wiki            # Generate stubs with universe context
 ```
 
 ## Configuration
