@@ -8,6 +8,7 @@ import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.glossary.GlossaryService;
 import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
+import com.jakefear.aipublisher.util.WikiSyntaxValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -360,6 +361,11 @@ public class PublishingPipeline {
             }
 
             FinalArticle article = document.getFinalArticle();
+
+            // Validate and auto-fix any Markdown syntax in the output
+            article = validateAndFixWikiSyntax(article, document.getPageName());
+            document.setFinalArticle(article);
+
             String summary = String.format("quality score %.2f, %d links added",
                     article.qualityScore(), article.addedLinks().size());
             log.info("Editing complete: {}", summary);
@@ -641,5 +647,48 @@ public class PublishingPipeline {
 
     public GlossaryService getGlossaryService() {
         return glossaryService;
+    }
+
+    /**
+     * Validate wiki content for Markdown syntax and auto-fix if found.
+     * This provides a safety net to catch any Markdown that slips through from the LLM.
+     *
+     * @param article The article to validate
+     * @param pageName The page name for logging context
+     * @return The article with any Markdown converted to JSPWiki
+     */
+    FinalArticle validateAndFixWikiSyntax(FinalArticle article, String pageName) {
+        if (article == null || article.wikiContent() == null) {
+            return article;
+        }
+
+        String content = article.wikiContent();
+        WikiSyntaxValidator.ValidationResult validation = WikiSyntaxValidator.validate(content);
+
+        if (validation.valid()) {
+            return article;
+        }
+
+        // Log the issues found
+        log.warn("Markdown syntax detected in {} - auto-fixing: {}", pageName, validation.getSummary());
+
+        // Auto-fix the content
+        String fixedContent = WikiSyntaxValidator.autoFix(content);
+
+        // Verify the fix worked
+        WikiSyntaxValidator.ValidationResult afterFix = WikiSyntaxValidator.validate(fixedContent);
+        if (!afterFix.valid()) {
+            log.warn("Some Markdown patterns could not be auto-fixed in {}: {}",
+                    pageName, afterFix.getSummary());
+        }
+
+        // Return a new FinalArticle with the fixed content
+        return new FinalArticle(
+                fixedContent,
+                article.metadata(),
+                article.editSummary() + " (auto-fixed Markdown syntax)",
+                article.qualityScore(),
+                article.addedLinks()
+        );
     }
 }

@@ -926,6 +926,76 @@ class PublishingPipelineTest {
     }
 
     @Nested
+    @DisplayName("Wiki Syntax Validation")
+    class WikiSyntaxValidation {
+
+        @Test
+        @DisplayName("Auto-fixes Markdown in final article")
+        void autoFixesMarkdownInFinalArticle() {
+            // Create an article with Markdown syntax
+            FinalArticle badArticle = new FinalArticle(
+                    "# Title\n\nThis is **bold** and [link](url).",
+                    DocumentMetadata.create("Title", "Summary"),
+                    "Edit summary",
+                    0.85,
+                    List.of()
+            );
+
+            // Act
+            FinalArticle fixed = pipeline.validateAndFixWikiSyntax(badArticle, "TestPage");
+
+            // Assert
+            assertNotNull(fixed);
+            assertFalse(fixed.wikiContent().contains("# "), "Markdown heading should be converted");
+            assertFalse(fixed.wikiContent().contains("**"), "Markdown bold should be converted");
+            assertTrue(fixed.wikiContent().contains("!!!"), "Should have JSPWiki heading");
+            assertTrue(fixed.wikiContent().contains("__"), "Should have JSPWiki bold");
+            assertTrue(fixed.editSummary().contains("auto-fixed"), "Edit summary should note fix");
+        }
+
+        @Test
+        @DisplayName("Preserves valid JSPWiki content")
+        void preservesValidJSPWikiContent() {
+            FinalArticle goodArticle = new FinalArticle(
+                    "!!! Title\n\nThis is __bold__ and [link|url].",
+                    DocumentMetadata.create("Title", "Summary"),
+                    "Edit summary",
+                    0.85,
+                    List.of()
+            );
+
+            // Act
+            FinalArticle result = pipeline.validateAndFixWikiSyntax(goodArticle, "TestPage");
+
+            // Assert
+            assertEquals(goodArticle.wikiContent(), result.wikiContent(), "Content should be unchanged");
+            assertEquals(goodArticle.editSummary(), result.editSummary(), "Edit summary should be unchanged");
+        }
+
+        @Test
+        @DisplayName("Handles null article gracefully")
+        void handlesNullArticleGracefully() {
+            FinalArticle result = pipeline.validateAndFixWikiSyntax(null, "TestPage");
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("Handles article with empty content gracefully")
+        void handlesEmptyContentGracefully() {
+            FinalArticle articleWithEmptyContent = new FinalArticle(
+                    "",
+                    DocumentMetadata.create("Title", "Summary"),
+                    "Edit summary",
+                    0.85,
+                    List.of()
+            );
+
+            FinalArticle result = pipeline.validateAndFixWikiSyntax(articleWithEmptyContent, "TestPage");
+            assertEquals(articleWithEmptyContent.wikiContent(), result.wikiContent());
+        }
+    }
+
+    @Nested
     @DisplayName("Skip Phase Flags")
     class SkipPhaseFlags {
 

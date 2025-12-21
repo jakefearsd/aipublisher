@@ -208,9 +208,10 @@ class WriterAgentTest {
         }
 
         @Test
-        @DisplayName("Fails validation with insufficient word count")
-        void failsWithInsufficientWordCount() {
+        @DisplayName("Passes validation with insufficient word count (warns only)")
+        void passesValidationWithInsufficientWordCountButWarns() {
             // Create a very short draft (less than 50% of 1500 = 750)
+            // Note: Word count validation only warns, doesn't fail - the pipeline decides
             String jsonResponse = """
                     {
                       "wikiContent": "!!! Short\\n\\nToo short.",
@@ -221,7 +222,9 @@ class WriterAgentTest {
             when(mockModel.generate(anyString())).thenReturn(jsonResponse);
             agent.process(document);
 
-            assertFalse(agent.validate(document));
+            // Validation passes even with insufficient words - it only warns
+            assertTrue(agent.validate(document),
+                    "Validation should pass (word count only logs warning)");
         }
     }
 

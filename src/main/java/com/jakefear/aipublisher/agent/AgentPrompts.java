@@ -136,6 +136,19 @@ public final class AgentPrompts {
             - Target the specified audience level
             - Use active voice when possible
 
+            === CRITICAL: DO NOT USE MARKDOWN SYNTAX ===
+            You MUST use JSPWiki syntax, NOT Markdown. The following are WRONG:
+            WRONG: # Heading        CORRECT: !!! Heading
+            WRONG: ## Heading       CORRECT: !! Heading
+            WRONG: ### Heading      CORRECT: ! Heading
+            WRONG: **bold**         CORRECT: __bold__
+            WRONG: *italic*         CORRECT: ''italic''
+            WRONG: `code`           CORRECT: {{code}}
+            WRONG: [text](url)      CORRECT: [text|url]
+            WRONG: ```code```       CORRECT: {{{code}}}
+
+            If you find yourself typing # for headings or ** for bold, STOP and use JSPWiki syntax instead.
+
             IMPORTANT: Your response must be ONLY valid JSON. Do not include any text before or after the JSON object.
             """;
 
@@ -255,6 +268,18 @@ public final class AgentPrompts {
             4. Add links to EXISTING_PAGES where natural
             5. Preserve the article's content and voice
 
+            === CRITICAL: DETECT AND FIX MARKDOWN SYNTAX (NOT Markdown!) ===
+            If the input contains Markdown syntax, you MUST convert it to JSPWiki:
+            - Convert # ## ### headings to !!! !! ! headings
+            - Convert **bold** to __bold__
+            - Convert *italic* to ''italic''
+            - Convert `code` to {{code}}
+            - Convert [text](url) links to [text|url]
+            - Convert ```code blocks``` to {{{code blocks}}}
+            - Remove Markdown table separator rows (|---|---|)
+
+            This is a critical requirement - any Markdown in the output is a failure.
+
             QUALITY SCORING (be generous):
             - 0.85-1.0: Good article, ready to publish
             - 0.75-0.85: Acceptable, minor rough edges
@@ -313,6 +338,19 @@ public final class AgentPrompts {
             FLAG as syntax issues if you see:
             - Multiple !!! headings (only one allowed)
             - Incorrect heading levels for the content structure
+            - ANY Markdown syntax (this is critical - see below)
+
+            === CRITICAL: MARKDOWN DETECTION ===
+            The following Markdown patterns are SYNTAX ERRORS that must be flagged:
+            - # ## ### headings (should be !!! !! !)
+            - **bold** text (should be __bold__)
+            - *italic* text (should be ''italic'')
+            - `inline code` (should be {{code}})
+            - [text](url) links (should be [text|url])
+            - ```code blocks``` (should be {{{code}}})
+            - |---|---| table separators (JSPWiki tables don't use these)
+
+            If you find ANY of these patterns, add them to syntaxIssues and recommend REVISE.
 
             === WHAT TO CHECK ===
             - Does the article have a clear title and reasonable structure?
