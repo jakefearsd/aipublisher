@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Unmatched;
 
 import java.util.function.Supplier;
 import java.util.ArrayList;
@@ -241,6 +242,14 @@ public class AiPublisherCommand implements Callable<Integer> {
     @Option(names = {"--key-file"},
             description = "Path to file containing Anthropic API key")
     private Path keyFile;
+
+    /**
+     * Capture Spring Boot properties (--property.name=value) that picocli doesn't recognize.
+     * Spring Boot already processed these before picocli runs, so we just need to
+     * prevent picocli from rejecting them as unknown options.
+     */
+    @Unmatched
+    private List<String> unmatchedOptions;
 
     // For testing - allows injecting a custom reader
     private BufferedReader inputReader;
