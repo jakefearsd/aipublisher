@@ -58,9 +58,11 @@ public enum DocumentState {
      */
     private static final Set<DocumentState> CREATED_TRANSITIONS = EnumSet.of(RESEARCHING, REJECTED);
     private static final Set<DocumentState> RESEARCHING_TRANSITIONS = EnumSet.of(DRAFTING, AWAITING_APPROVAL, REJECTED);
-    private static final Set<DocumentState> DRAFTING_TRANSITIONS = EnumSet.of(FACT_CHECKING, AWAITING_APPROVAL, REJECTED);
+    // Note: EDITING added to allow skipping fact-check phase (--pipeline.skip-fact-check=true)
+    private static final Set<DocumentState> DRAFTING_TRANSITIONS = EnumSet.of(FACT_CHECKING, EDITING, AWAITING_APPROVAL, REJECTED);
     private static final Set<DocumentState> FACT_CHECKING_TRANSITIONS = EnumSet.of(EDITING, DRAFTING, AWAITING_APPROVAL, REJECTED);
-    private static final Set<DocumentState> EDITING_TRANSITIONS = EnumSet.of(CRITIQUING, FACT_CHECKING, DRAFTING, AWAITING_APPROVAL, REJECTED);
+    // Note: PUBLISHED added to allow skipping critique phase (--pipeline.skip-critique=true)
+    private static final Set<DocumentState> EDITING_TRANSITIONS = EnumSet.of(CRITIQUING, PUBLISHED, FACT_CHECKING, DRAFTING, AWAITING_APPROVAL, REJECTED);
     private static final Set<DocumentState> CRITIQUING_TRANSITIONS = EnumSet.of(PUBLISHED, EDITING, DRAFTING, AWAITING_APPROVAL, REJECTED);
     private static final Set<DocumentState> AWAITING_APPROVAL_TRANSITIONS = EnumSet.of(RESEARCHING, DRAFTING, FACT_CHECKING, EDITING, CRITIQUING, PUBLISHED, REJECTED);
     private static final Set<DocumentState> TERMINAL_STATES = EnumSet.of(PUBLISHED, REJECTED);
