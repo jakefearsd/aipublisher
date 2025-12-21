@@ -24,6 +24,18 @@ public class PipelineProperties {
     private Duration phaseTimeout = Duration.ofMinutes(5);
 
     /**
+     * Skip the fact-checking phase entirely.
+     * Useful for rapid iteration when content accuracy is manually verified.
+     */
+    private boolean skipFactCheck = false;
+
+    /**
+     * Skip the critique phase entirely.
+     * Useful for faster pipeline execution when syntax checking is not needed.
+     */
+    private boolean skipCritique = false;
+
+    /**
      * Approval checkpoint settings.
      */
     private ApprovalSettings approval = new ApprovalSettings();
@@ -50,6 +62,22 @@ public class PipelineProperties {
 
     public void setApproval(ApprovalSettings approval) {
         this.approval = approval;
+    }
+
+    public boolean isSkipFactCheck() {
+        return skipFactCheck;
+    }
+
+    public void setSkipFactCheck(boolean skipFactCheck) {
+        this.skipFactCheck = skipFactCheck;
+    }
+
+    public boolean isSkipCritique() {
+        return skipCritique;
+    }
+
+    public void setSkipCritique(boolean skipCritique) {
+        this.skipCritique = skipCritique;
     }
 
     /**

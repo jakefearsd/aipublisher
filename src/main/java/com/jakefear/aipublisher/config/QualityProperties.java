@@ -21,6 +21,13 @@ public class QualityProperties {
      */
     private double minEditorScore = 0.8;
 
+    /**
+     * Whether to require at least one verified claim from fact checker.
+     * If false, accepts APPROVE recommendation even with empty claim arrays.
+     * Useful when models return "no issues" as empty arrays.
+     */
+    private boolean requireVerifiedClaims = true;
+
     public String getMinFactcheckConfidence() {
         return minFactcheckConfidence;
     }
@@ -35,5 +42,13 @@ public class QualityProperties {
 
     public void setMinEditorScore(double minEditorScore) {
         this.minEditorScore = minEditorScore;
+    }
+
+    public boolean isRequireVerifiedClaims() {
+        return requireVerifiedClaims;
+    }
+
+    public void setRequireVerifiedClaims(boolean requireVerifiedClaims) {
+        this.requireVerifiedClaims = requireVerifiedClaims;
     }
 }

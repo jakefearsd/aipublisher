@@ -42,7 +42,7 @@ public class LlmConfig {
     @Value("${ollama.base-url:http://localhost:11434}")
     private String ollamaBaseUrl;
 
-    @Value("${ollama.model:llama3.2}")
+    @Value("${ollama.model:qwen2.5:14b}")
     private String ollamaModel;
 
     @Value("${ollama.timeout:PT5M}")

@@ -113,7 +113,7 @@ public final class IntegrationTestHelper {
 
     private static String getOllamaModel() {
         String model = System.getenv("OLLAMA_MODEL");
-        return (model != null && !model.isBlank()) ? model : "llama3.2";
+        return (model != null && !model.isBlank()) ? model : "qwen2.5:14b";
     }
 
     private static String getAnthropicModel() {

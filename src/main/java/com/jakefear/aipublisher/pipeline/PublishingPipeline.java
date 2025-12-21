@@ -94,13 +94,23 @@ public class PublishingPipeline {
             document = executeDraftingPhase(document);
 
             // Phase 3: Fact Checking (with revision loop)
-            document = executeFactCheckPhase(document);
+            if (pipelineProperties.isSkipFactCheck()) {
+                log.info("Phase 3: Fact Checking - SKIPPED (pipeline.skip-fact-check=true)");
+                monitoringService.phaseCompleted(document, DocumentState.FACT_CHECKING, "skipped");
+            } else {
+                document = executeFactCheckPhase(document);
+            }
 
             // Phase 4: Editing
             document = executeEditingPhase(document);
 
             // Phase 5: Critique (final quality check)
-            document = executeCritiquePhase(document);
+            if (pipelineProperties.isSkipCritique()) {
+                log.info("Phase 5: Critique - SKIPPED (pipeline.skip-critique=true)");
+                monitoringService.phaseCompleted(document, DocumentState.CRITIQUING, "skipped");
+            } else {
+                document = executeCritiquePhase(document);
+            }
 
             // Phase 6: Publishing
             Path outputPath = executePublishPhase(document);

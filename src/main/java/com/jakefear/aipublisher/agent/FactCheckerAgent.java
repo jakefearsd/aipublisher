@@ -2,6 +2,7 @@ package com.jakefear.aipublisher.agent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.jakefear.aipublisher.config.QualityProperties;
 import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.search.SearchResult;
 import com.jakefear.aipublisher.search.WikipediaSearchService;
@@ -24,6 +25,7 @@ import static com.jakefear.aipublisher.util.JsonParsingUtils.*;
 public class FactCheckerAgent extends BaseAgent {
 
     private WikipediaSearchService wikipediaSearchService;
+    private QualityProperties qualityProperties;
 
     /**
      * Default constructor for Spring - uses setter injection.
@@ -46,6 +48,14 @@ public class FactCheckerAgent extends BaseAgent {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     public void setWikipediaSearchService(WikipediaSearchService wikipediaSearchService) {
         this.wikipediaSearchService = wikipediaSearchService;
+    }
+
+    /**
+     * Set the quality properties (called by Spring via @Autowired).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setQualityProperties(QualityProperties qualityProperties) {
+        this.qualityProperties = qualityProperties;
     }
 
     // Constructor for testing
@@ -198,9 +208,15 @@ public class FactCheckerAgent extends BaseAgent {
         }
 
         // Check that fact-checking actually occurred (should have verified some claims)
+        // Unless require-verified-claims is false, in which case we trust APPROVE even with empty claims
         if (report.verifiedClaims().isEmpty() && report.questionableClaims().isEmpty()) {
-            log.warn("Validation failed: no claims were checked");
-            return false;
+            boolean requireClaims = qualityProperties == null || qualityProperties.isRequireVerifiedClaims();
+            if (requireClaims) {
+                log.warn("Validation failed: no claims were checked (set quality.require-verified-claims=false to accept)");
+                return false;
+            } else {
+                log.info("No claims checked but require-verified-claims=false, accepting result");
+            }
         }
 
         return true;

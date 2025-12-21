@@ -37,11 +37,13 @@ Documents progress through six phases:
 ## Features
 
 - **Multi-Agent Architecture** - Five specialized AI agents with role-appropriate temperature settings
+- **Multiple LLM Providers** - Support for Anthropic (Claude) and Ollama (local inference)
 - **Domain Discovery Mode** - Interactive AI-assisted session to build comprehensive topic universes
 - **Human-in-the-Loop Curation** - AI suggests topics and relationships, you curate and refine
 - **JSPWiki Syntax Output** - Native JSPWiki markup format (not Markdown) for wiki compatibility
 - **Automatic Revision Loop** - Fact checker and critic can trigger re-drafting for quality issues
 - **Syntax Validation** - Critic agent catches any Markdown syntax that should be JSPWiki
+- **Configurable Pipeline** - Skip phases (fact-check, critique) for faster iteration
 - **Human Approval Workflow** - Optional review checkpoints at each phase boundary
 - **Quality Scoring** - Editor and Critic assign 0.0-1.0 quality scores with configurable thresholds
 - **Wiki Integration** - Automatic internal linking to existing pages, CamelCase naming
@@ -49,13 +51,15 @@ Documents progress through six phases:
 - **Web Search Integration** - Optional DuckDuckGo-based web search for research and verification
 - **Source Reliability Assessment** - Automatic classification of source trustworthiness
 - **Pipeline Monitoring** - Event system for tracking progress and metrics
-- **Flexible API Key Management** - Environment variable, CLI flag, or key file
+- **Flexible Configuration** - All settings overridable via command-line arguments
 
 ## Requirements
 
 - Java 21 or later
 - Maven 3.8+
-- Anthropic API key ([Get one here](https://console.anthropic.com/settings/keys))
+- One of the following LLM providers:
+  - **Anthropic API key** ([Get one here](https://console.anthropic.com/settings/keys)) - Cloud-based, paid
+  - **Ollama server** ([Install Ollama](https://ollama.ai)) - Local inference, free
 
 ## Quick Start
 
@@ -67,20 +71,36 @@ cd aipublisher
 mvn clean package -DskipTests
 ```
 
-### 2. Set Your API Key
+### 2. Configure Your LLM Provider
 
-Choose one of these methods:
+Choose either Anthropic (cloud) or Ollama (local):
 
+**Option A: Anthropic (Claude API)**
 ```bash
-# Option 1: Environment variable (recommended)
+# Environment variable (recommended)
 export ANTHROPIC_API_KEY='your-api-key-here'
 
-# Option 2: Command line flag
+# Or command line flag
 java -jar target/aipublisher.jar -t "Topic" -k "your-api-key-here"
 
-# Option 3: Key file
+# Or key file
 echo "your-api-key-here" > ~/.anthropic-key
 java -jar target/aipublisher.jar -t "Topic" --key-file ~/.anthropic-key
+```
+
+**Option B: Ollama (Local Inference - Free)**
+```bash
+# Start Ollama and pull a model
+ollama pull qwen2.5:14b
+
+# Run with Ollama (automatically uses localhost:11434)
+java -jar target/aipublisher.jar -t "Topic" --llm.provider=ollama
+
+# Or with custom Ollama server
+java -jar target/aipublisher.jar -t "Topic" \
+  --llm.provider=ollama \
+  --ollama.base-url=http://your-server:11434 \
+  --ollama.model=qwen2.5:14b
 ```
 
 ### 3. Generate an Article
@@ -1099,6 +1119,25 @@ Options:
   -h, --help                 Show this help message and exit.
   -V, --version              Print version information and exit.
 
+LLM Provider Options:
+      --llm.provider=<provider>
+                             LLM provider: "anthropic" or "ollama" (default: anthropic)
+      --ollama.base-url=<url>
+                             Ollama server URL (default: http://localhost:11434)
+      --ollama.model=<model> Ollama model name (default: qwen2.5:14b)
+      --anthropic.model=<model>
+                             Anthropic model name (default: claude-sonnet-4-20250514)
+
+Pipeline Options:
+      --pipeline.skip-fact-check=<bool>
+                             Skip fact-checking phase (default: false)
+      --pipeline.skip-critique=<bool>
+                             Skip critique phase (default: false)
+
+Quality Options:
+      --quality.require-verified-claims=<bool>
+                             Require verified claims from fact-checker (default: true)
+
 Stub Generation Options:
       --analyze-gaps         Analyze wiki for gaps (report only, no generation)
       --stubs-only           Generate stub pages for existing wiki content
@@ -1129,26 +1168,88 @@ Examples:
   aipublisher -u my-wiki --generate-stubs        # Generate articles and stubs
   aipublisher --analyze-gaps -u my-wiki          # Report gaps with universe context
   aipublisher --stubs-only -u my-wiki            # Generate stubs with universe context
+
+  # Using Ollama (local inference)
+  aipublisher -t "Topic" --llm.provider=ollama
+  aipublisher -t "Topic" --llm.provider=ollama --ollama.model=llama3.2
+
+  # Fast iteration (skip validation phases)
+  aipublisher -t "Topic" --pipeline.skip-fact-check=true --pipeline.skip-critique=true
 ```
 
 ## Configuration
 
-Configuration is managed through `src/main/resources/application.properties`:
+Configuration is managed through `src/main/resources/application.properties` or via command-line arguments.
 
-### Claude API Settings
+### LLM Provider Selection
+
+AI Publisher supports two LLM providers: Anthropic (Claude) and Ollama (local inference).
 
 ```properties
-# API Configuration
-anthropic.api.key=${ANTHROPIC_API_KEY}
-anthropic.model=claude-sonnet-4-20250514
-anthropic.max-tokens=4096
+# Provider selection: "anthropic" or "ollama"
+llm.provider=anthropic
 
 # Temperature settings per agent (0.0=deterministic, 1.0=creative)
-anthropic.temperature.research=0.3
-anthropic.temperature.writer=0.7
-anthropic.temperature.factchecker=0.1
-anthropic.temperature.editor=0.5
-anthropic.temperature.critic=0.3
+# Used by both providers
+llm.temperature.research=0.3
+llm.temperature.writer=0.7
+llm.temperature.factchecker=0.3
+llm.temperature.editor=0.5
+llm.temperature.critic=0.3
+```
+
+**Command-line override:**
+```bash
+java -jar target/aipublisher.jar -t "Topic" --llm.provider=ollama
+```
+
+### Anthropic (Claude) Settings
+
+```properties
+# API key (via environment variable recommended)
+anthropic.api.key=${ANTHROPIC_API_KEY}
+
+# Model to use
+anthropic.model=claude-sonnet-4-20250514
+
+# Maximum tokens per response
+anthropic.max-tokens=4096
+```
+
+**Command-line override:**
+```bash
+java -jar target/aipublisher.jar -t "Topic" \
+  --anthropic.model=claude-opus-4-20250514
+```
+
+### Ollama Settings
+
+```properties
+# Ollama server URL
+ollama.base-url=http://localhost:11434
+
+# Model to use (must be pulled first: ollama pull <model>)
+ollama.model=qwen2.5:14b
+
+# Maximum tokens to predict
+ollama.num-predict=4096
+
+# Request timeout (ISO-8601 duration)
+ollama.timeout=PT5M
+```
+
+**Command-line override:**
+```bash
+java -jar target/aipublisher.jar -t "Topic" \
+  --llm.provider=ollama \
+  --ollama.base-url=http://your-server:11434 \
+  --ollama.model=llama3.2
+```
+
+**Environment variables (useful for CI/testing):**
+```bash
+export OLLAMA_BASE_URL=http://your-server:11434
+export OLLAMA_MODEL=qwen2.5:14b
 ```
 
 ### Pipeline Settings
@@ -1160,11 +1261,23 @@ pipeline.max-revision-cycles=3
 # Timeout per phase
 pipeline.phase-timeout=PT5M
 
+# Skip phases for faster iteration (useful for testing/development)
+pipeline.skip-fact-check=false
+pipeline.skip-critique=false
+
 # Human approval checkpoints (enable/disable each)
 pipeline.approval.after-research=false
 pipeline.approval.after-draft=false
 pipeline.approval.after-factcheck=false
 pipeline.approval.before-publish=true
+```
+
+**Command-line override:**
+```bash
+# Skip fact-checking and critique phases for rapid iteration
+java -jar target/aipublisher.jar -t "Topic" \
+  --pipeline.skip-fact-check=true \
+  --pipeline.skip-critique=true
 ```
 
 ### Web Search Settings
@@ -1196,6 +1309,18 @@ quality.min-editor-score=0.8
 
 # Minimum critic score to publish (syntax validation threshold)
 quality.min-critic-score=0.8
+
+# Require at least one verified claim from fact checker
+# Set to false to accept APPROVE even when model returns empty claim arrays
+# Useful for models that express "no issues found" with empty arrays
+quality.require-verified-claims=true
+```
+
+**Command-line override for lenient validation:**
+```bash
+# Accept fact-check APPROVE even without verified claims
+java -jar target/aipublisher.jar -t "Topic" \
+  --quality.require-verified-claims=false
 ```
 
 ## Architecture
@@ -1464,18 +1589,30 @@ instances.
 # All unit tests (no API key required)
 mvn test
 
-# Include integration tests (requires API key)
-ANTHROPIC_API_KEY='your-key' mvn test -Dgroups=integration
-
-# Only integration tests
-ANTHROPIC_API_KEY='your-key' mvn test -Dgroups=integration
-
 # Skip integration tests explicitly
 mvn test -DexcludeGroups=integration
 
 # Specific test class
 mvn test -Dtest=PublishingPipelineTest
 ```
+
+**Integration tests with Anthropic (paid):**
+```bash
+ANTHROPIC_API_KEY='your-key' mvn test -Dgroups=integration
+```
+
+**Integration tests with Ollama (free, recommended):**
+```bash
+# Using local Ollama server
+OLLAMA_BASE_URL='http://localhost:11434' mvn test -Dgroups=integration
+
+# Using remote Ollama server with specific model
+OLLAMA_BASE_URL='http://your-server:11434' \
+OLLAMA_MODEL='qwen2.5:14b' \
+mvn test -Dgroups=integration
+```
+
+Note: Integration tests prefer Ollama over Anthropic when `OLLAMA_BASE_URL` is set. The default model is `qwen2.5:14b`.
 
 ### Building
 
@@ -1515,10 +1652,23 @@ Note: Running via Maven is slower due to compilation overhead. For regular use, 
 - **Java 21** - Modern Java with records, pattern matching
 - **Spring Boot 3.3** - Application framework and dependency injection
 - **LangChain4j 0.36** - LLM integration framework
-- **Claude Sonnet 4** - Anthropic's AI model
+- **LLM Providers**:
+  - **Claude Sonnet 4** - Anthropic's cloud API (default)
+  - **Ollama** - Local inference with models like Qwen 2.5, Llama 3.2, etc.
 - **Picocli 4.7** - Professional CLI framework
 - **JUnit 5** - Testing framework
 - **Mockito** - Mocking for unit tests
+
+### Recommended Ollama Models
+
+| Model | Size | Quality | Speed | Best For |
+|-------|------|---------|-------|----------|
+| `qwen2.5:14b` | 14B | High | Medium | Production use (default) |
+| `qwen2.5:7b` | 7B | Good | Fast | Development/testing |
+| `llama3.2` | 3B | Moderate | Very Fast | Quick prototyping |
+| `mistral` | 7B | Good | Fast | General use |
+
+Note: Larger models generally produce better structured JSON and follow prompts more reliably.
 
 ## License
 
