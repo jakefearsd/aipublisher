@@ -141,28 +141,33 @@ public class EditorAgent extends BaseAgent {
         prompt.append(draft.wikiContent());
         prompt.append("\n\n");
 
-        // Fact-check feedback
-        prompt.append("--- FACT-CHECK FEEDBACK ---\n\n");
-        prompt.append("Overall Confidence: ").append(factCheckReport.overallConfidence()).append("\n");
-        prompt.append("Recommendation: ").append(factCheckReport.recommendedAction()).append("\n");
+        // Fact-check feedback (only if fact-checking was not skipped)
+        if (factCheckReport != null) {
+            prompt.append("--- FACT-CHECK FEEDBACK ---\n\n");
+            prompt.append("Overall Confidence: ").append(factCheckReport.overallConfidence()).append("\n");
+            prompt.append("Recommendation: ").append(factCheckReport.recommendedAction()).append("\n");
 
-        // Issues to address
-        if (!factCheckReport.questionableClaims().isEmpty()) {
-            prompt.append("\nISSUES TO ADDRESS:\n");
-            for (QuestionableClaim claim : factCheckReport.questionableClaims()) {
-                prompt.append("- Claim: \"").append(claim.claim()).append("\"\n");
-                prompt.append("  Issue: ").append(claim.issue()).append("\n");
-                if (claim.suggestion() != null && !claim.suggestion().isBlank()) {
-                    prompt.append("  Suggestion: ").append(claim.suggestion()).append("\n");
+            // Issues to address
+            if (!factCheckReport.questionableClaims().isEmpty()) {
+                prompt.append("\nISSUES TO ADDRESS:\n");
+                for (QuestionableClaim claim : factCheckReport.questionableClaims()) {
+                    prompt.append("- Claim: \"").append(claim.claim()).append("\"\n");
+                    prompt.append("  Issue: ").append(claim.issue()).append("\n");
+                    if (claim.suggestion() != null && !claim.suggestion().isBlank()) {
+                        prompt.append("  Suggestion: ").append(claim.suggestion()).append("\n");
+                    }
                 }
             }
-        }
 
-        if (!factCheckReport.consistencyIssues().isEmpty()) {
-            prompt.append("\nCONSISTENCY ISSUES:\n");
-            for (String issue : factCheckReport.consistencyIssues()) {
-                prompt.append("- ").append(issue).append("\n");
+            if (!factCheckReport.consistencyIssues().isEmpty()) {
+                prompt.append("\nCONSISTENCY ISSUES:\n");
+                for (String issue : factCheckReport.consistencyIssues()) {
+                    prompt.append("- ").append(issue).append("\n");
+                }
             }
+        } else {
+            prompt.append("--- FACT-CHECK FEEDBACK ---\n\n");
+            prompt.append("Fact-checking was skipped. Please ensure content accuracy during editing.\n");
         }
 
         // Intelligent link suggestions from LinkEvaluator
