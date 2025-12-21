@@ -485,6 +485,82 @@ class CriticAgentTest {
     }
 
     @Nested
+    @DisplayName("Defensive Null Handling")
+    class DefensiveNullHandling {
+
+        @Test
+        @DisplayName("Throws AgentException when FinalArticle is null")
+        void throwsAgentExceptionWhenFinalArticleIsNull() {
+            // This test documents the current behavior: CriticAgent requires FinalArticle to be set
+            // If called without a FinalArticle (which shouldn't happen in normal pipeline flow),
+            // it will throw AgentException (wrapping the underlying NPE). This is acceptable
+            // because CriticAgent is only called after EditorAgent.
+
+            // Create a document without FinalArticle (simulating incorrect usage)
+            TopicBrief brief = TopicBrief.simple("Test Topic", "developers", 500);
+            PublishingDocument docWithoutFinalArticle = new PublishingDocument(brief);
+            docWithoutFinalArticle.transitionTo(DocumentState.RESEARCHING);
+            docWithoutFinalArticle.setResearchBrief(createResearchBrief());
+            docWithoutFinalArticle.transitionTo(DocumentState.DRAFTING);
+            docWithoutFinalArticle.setDraft(createDraft());
+            docWithoutFinalArticle.transitionTo(DocumentState.FACT_CHECKING);
+            docWithoutFinalArticle.setFactCheckReport(createFactCheckReport());
+            docWithoutFinalArticle.transitionTo(DocumentState.EDITING);
+            // Note: NOT setting FinalArticle
+            docWithoutFinalArticle.transitionTo(DocumentState.CRITIQUING);
+
+            // Assert that FinalArticle is actually null
+            assertNull(docWithoutFinalArticle.getFinalArticle(),
+                    "FinalArticle should be null for this test");
+
+            // This is expected to throw AgentException because FinalArticle is null
+            // The CriticAgent.buildUserPrompt() accesses article.wikiContent() without null check
+            // BaseAgent wraps the NPE in an AgentException
+            AgentException exception = assertThrows(AgentException.class,
+                    () -> agent.process(docWithoutFinalArticle),
+                    "CriticAgent should throw AgentException when FinalArticle is null");
+
+            // Verify the underlying cause is NPE
+            assertNotNull(exception.getCause());
+            assertTrue(exception.getCause() instanceof NullPointerException,
+                    "Underlying cause should be NullPointerException");
+        }
+
+        @Test
+        @DisplayName("Requires FinalArticle to be present - documents contract")
+        void requiresFinalArticleToBePresent() {
+            // This test documents the contract that CriticAgent expects:
+            // - FinalArticle must be set before calling process()
+            // - This is enforced by the pipeline which runs EditorAgent before CriticAgent
+
+            // Verify our normal test setup has FinalArticle set
+            assertNotNull(document.getFinalArticle(),
+                    "Normal test setup should have FinalArticle set");
+            assertFalse(document.getFinalArticle().wikiContent().isBlank(),
+                    "FinalArticle should have content");
+
+            // Verify we can process normally
+            String jsonResponse = """
+                    {
+                      "overallScore": 0.85,
+                      "structureScore": 0.9,
+                      "syntaxScore": 0.8,
+                      "readabilityScore": 0.85,
+                      "structureIssues": [],
+                      "syntaxIssues": [],
+                      "styleIssues": [],
+                      "suggestions": [],
+                      "recommendedAction": "APPROVE"
+                    }
+                    """;
+            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+
+            assertDoesNotThrow(() -> agent.process(document),
+                    "CriticAgent should process successfully when FinalArticle is present");
+        }
+    }
+
+    @Nested
     @DisplayName("Contribution Recording")
     class ContributionRecording {
 

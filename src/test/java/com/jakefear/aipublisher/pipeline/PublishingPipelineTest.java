@@ -926,6 +926,223 @@ class PublishingPipelineTest {
     }
 
     @Nested
+    @DisplayName("Skip Phase Flags")
+    class SkipPhaseFlags {
+
+        @Test
+        @DisplayName("Skips fact-check when skip-fact-check=true")
+        void skipsFactCheckWhenFlagIsTrue() throws IOException {
+            // Arrange
+            pipelineProperties.setSkipFactCheck(true);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            // Note: NOT setting up fact check - it should be skipped
+            setupEditorSuccess();
+            setupCriticSuccess();
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success(), "Pipeline should succeed with skip-fact-check: " +
+                    (result.errorMessage() != null ? result.errorMessage() : "no error"));
+            verify(factCheckerAgent, never()).process(any());
+            verify(editorAgent).process(any()); // Editor should still be called
+        }
+
+        @Test
+        @DisplayName("Skips critique when skip-critique=true")
+        void skipsCritiqueWhenFlagIsTrue() throws IOException {
+            // Arrange
+            pipelineProperties.setSkipCritique(true);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupFactCheckSuccess();
+            setupEditorSuccess();
+            // Note: NOT setting up critic - it should be skipped
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success(), "Pipeline should succeed with skip-critique: " +
+                    (result.errorMessage() != null ? result.errorMessage() : "no error"));
+            verify(criticAgent, never()).process(any());
+            verify(editorAgent).process(any()); // Editor should still be called
+        }
+
+        @Test
+        @DisplayName("Skips both phases when both flags are true")
+        void skipsBothPhasesWhenBothFlagsAreTrue() throws IOException {
+            // Arrange - combined skip scenario
+            pipelineProperties.setSkipFactCheck(true);
+            pipelineProperties.setSkipCritique(true);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupEditorSuccess();
+            // Note: NOT setting up fact check or critic - both should be skipped
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success(), "Pipeline should succeed with both phases skipped: " +
+                    (result.errorMessage() != null ? result.errorMessage() : "no error"));
+            verify(factCheckerAgent, never()).process(any());
+            verify(criticAgent, never()).process(any());
+            verify(researchAgent).process(any()); // Research should still be called
+            verify(writerAgent).process(any()); // Writer should still be called
+            verify(editorAgent).process(any()); // Editor should still be called
+        }
+
+        @Test
+        @DisplayName("Document has null FactCheckReport when fact-check is skipped")
+        void documentHasNullFactCheckReportWhenSkipped() throws IOException {
+            // Arrange
+            pipelineProperties.setSkipFactCheck(true);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupEditorSuccess();
+            setupCriticSuccess();
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success());
+            assertNull(result.document().getFactCheckReport(),
+                    "FactCheckReport should be null when fact-check is skipped");
+        }
+
+        @Test
+        @DisplayName("Document has null CriticReport when critique is skipped")
+        void documentHasNullCriticReportWhenSkipped() throws IOException {
+            // Arrange
+            pipelineProperties.setSkipCritique(true);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupFactCheckSuccess();
+            setupEditorSuccess();
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success());
+            assertNull(result.document().getCriticReport(),
+                    "CriticReport should be null when critique is skipped");
+        }
+
+        @Test
+        @DisplayName("Document has both null reports when both phases skipped")
+        void documentHasBothNullReportsWhenBothSkipped() throws IOException {
+            // Arrange
+            pipelineProperties.setSkipFactCheck(true);
+            pipelineProperties.setSkipCritique(true);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupEditorSuccess();
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success());
+            assertNull(result.document().getFactCheckReport(),
+                    "FactCheckReport should be null when fact-check is skipped");
+            assertNull(result.document().getCriticReport(),
+                    "CriticReport should be null when critique is skipped");
+        }
+
+        @Test
+        @DisplayName("Approval service called correct number of times with skip-fact-check")
+        void approvalServiceCalledCorrectlyWithSkipFactCheck() throws IOException {
+            // Arrange
+            pipelineProperties.setSkipFactCheck(true);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupEditorSuccess();
+            setupCriticSuccess();
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success());
+            // Should be called 4 times: after research, draft, editing, and critique
+            // (NOT after fact-check since it's skipped)
+            verify(approvalService, times(4)).checkAndApprove(any());
+        }
+
+        @Test
+        @DisplayName("Approval service called correct number of times with skip-critique")
+        void approvalServiceCalledCorrectlyWithSkipCritique() throws IOException {
+            // Arrange
+            pipelineProperties.setSkipCritique(true);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupFactCheckSuccess();
+            setupEditorSuccess();
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success());
+            // Should be called 4 times: after research, draft, fact-check, and editing
+            // (NOT after critique since it's skipped)
+            verify(approvalService, times(4)).checkAndApprove(any());
+        }
+
+        @Test
+        @DisplayName("Approval service called correct number of times with both phases skipped")
+        void approvalServiceCalledCorrectlyWithBothSkipped() throws IOException {
+            // Arrange
+            pipelineProperties.setSkipFactCheck(true);
+            pipelineProperties.setSkipCritique(true);
+            TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
+            setupResearchSuccess();
+            setupWriterSuccess();
+            setupEditorSuccess();
+            when(outputService.getExistingPagesList()).thenReturn(List.of());
+            when(outputService.writeDocument(any())).thenReturn(tempDir.resolve("Test.md"));
+
+            // Act
+            PipelineResult result = pipeline.execute(topicBrief);
+
+            // Assert
+            assertTrue(result.success());
+            // Should be called 3 times: after research, draft, and editing
+            // (NOT after fact-check or critique since both are skipped)
+            verify(approvalService, times(3)).checkAndApprove(any());
+        }
+    }
+
+    @Nested
     @DisplayName("Approval Workflow")
     class ApprovalWorkflow {
 

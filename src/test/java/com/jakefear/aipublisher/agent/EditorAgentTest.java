@@ -627,4 +627,134 @@ class EditorAgentTest {
             assertNotNull(contribution.processingTime());
         }
     }
+
+    @Nested
+    @DisplayName("Skip Fact-Check Scenario (--pipeline.skip-fact-check=true)")
+    class SkipFactCheckScenario {
+
+        private PublishingDocument documentWithoutFactCheck;
+
+        @BeforeEach
+        void setUpDocumentWithoutFactCheck() {
+            TopicBrief brief = TopicBrief.simple("Test Topic", "developers", 1000);
+            documentWithoutFactCheck = new PublishingDocument(brief);
+            documentWithoutFactCheck.transitionTo(DocumentState.RESEARCHING);
+
+            // Set up research brief
+            ResearchBrief researchBrief = new ResearchBrief(
+                    List.of(KeyFact.unsourced("Test fact")),
+                    List.of(),
+                    List.of("Introduction"),
+                    List.of(),
+                    Map.of(),
+                    List.of()
+            );
+            documentWithoutFactCheck.setResearchBrief(researchBrief);
+            documentWithoutFactCheck.transitionTo(DocumentState.DRAFTING);
+
+            // Set up article draft
+            ArticleDraft draft = new ArticleDraft(
+                    "!!! Test Topic\n\nThis is test content for the article.",
+                    "A test article",
+                    List.of(),
+                    List.of("Technology"),
+                    Map.of()
+            );
+            documentWithoutFactCheck.setDraft(draft);
+
+            // Skip fact-checking - transition directly to EDITING
+            // Note: No FactCheckReport is set, simulating --pipeline.skip-fact-check=true
+            documentWithoutFactCheck.transitionTo(DocumentState.EDITING);
+        }
+
+        @Test
+        @DisplayName("Processes successfully when FactCheckReport is null")
+        void processesSuccessfullyWithNullFactCheckReport() {
+            assertNull(documentWithoutFactCheck.getFactCheckReport(),
+                    "FactCheckReport should be null for this test");
+
+            String jsonResponse = """
+                    {
+                      "wikiContent": "!!! Test Topic\\n\\nPolished content.",
+                      "qualityScore": 0.85
+                    }
+                    """;
+
+            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+
+            // Should not throw NullPointerException
+            PublishingDocument result = agent.process(documentWithoutFactCheck);
+
+            assertNotNull(result.getFinalArticle());
+            assertTrue(result.getFinalArticle().wikiContent().contains("Test Topic"));
+        }
+
+        @Test
+        @DisplayName("Prompt indicates fact-checking was skipped")
+        void promptIndicatesFactCheckingWasSkipped() {
+            assertNull(documentWithoutFactCheck.getFactCheckReport());
+
+            String jsonResponse = """
+                    {
+                      "wikiContent": "!!! Test Topic\\n\\nContent.",
+                      "qualityScore": 0.85
+                    }
+                    """;
+
+            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+                String prompt = invocation.getArgument(0);
+                assertTrue(prompt.contains("Fact-checking was skipped") ||
+                           prompt.contains("skipped"),
+                        "Prompt should indicate fact-checking was skipped");
+                return jsonResponse;
+            });
+
+            agent.process(documentWithoutFactCheck);
+        }
+
+        @Test
+        @DisplayName("Does not include fact-check confidence when skipped")
+        void doesNotIncludeFactCheckConfidenceWhenSkipped() {
+            assertNull(documentWithoutFactCheck.getFactCheckReport());
+
+            String jsonResponse = """
+                    {
+                      "wikiContent": "!!! Test Topic\\n\\nContent.",
+                      "qualityScore": 0.85
+                    }
+                    """;
+
+            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+                String prompt = invocation.getArgument(0);
+                // Should not contain confidence level from a fact-check report
+                assertFalse(prompt.contains("Overall Confidence: HIGH") ||
+                            prompt.contains("Overall Confidence: MEDIUM") ||
+                            prompt.contains("Overall Confidence: LOW"),
+                        "Prompt should not contain fact-check confidence when skipped");
+                return jsonResponse;
+            });
+
+            agent.process(documentWithoutFactCheck);
+        }
+
+        @Test
+        @DisplayName("Validation passes with null FactCheckReport")
+        void validationPassesWithNullFactCheckReport() {
+            assertNull(documentWithoutFactCheck.getFactCheckReport());
+
+            String jsonResponse = """
+                    {
+                      "wikiContent": "!!! Test Topic\\n\\nGood content.",
+                      "qualityScore": 0.85
+                    }
+                    """;
+
+            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+
+            agent.process(documentWithoutFactCheck);
+
+            assertTrue(agent.validate(documentWithoutFactCheck),
+                    "Validation should pass when fact-check was skipped but article is good");
+        }
+    }
 }

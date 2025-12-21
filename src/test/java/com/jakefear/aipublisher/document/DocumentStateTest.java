@@ -265,4 +265,69 @@ class DocumentStateTest {
             assertTrue(valid.contains(DocumentState.REJECTED));
         }
     }
+
+    @Nested
+    @DisplayName("Skip Phase Transitions (--pipeline.skip-* flags)")
+    class SkipPhaseTransitions {
+
+        @Test
+        @DisplayName("DRAFTING can transition directly to EDITING (skip fact-check)")
+        void draftingCanTransitionToEditingSkippingFactCheck() {
+            // This transition is needed when --pipeline.skip-fact-check=true
+            assertTrue(DocumentState.DRAFTING.canTransitionTo(DocumentState.EDITING),
+                    "DRAFTING should be able to transition to EDITING when fact-check is skipped");
+        }
+
+        @Test
+        @DisplayName("EDITING can transition directly to PUBLISHED (skip critique)")
+        void editingCanTransitionToPublishedSkippingCritique() {
+            // This transition is needed when --pipeline.skip-critique=true
+            assertTrue(DocumentState.EDITING.canTransitionTo(DocumentState.PUBLISHED),
+                    "EDITING should be able to transition to PUBLISHED when critique is skipped");
+        }
+
+        @Test
+        @DisplayName("DRAFTING valid transitions include EDITING for skip scenario")
+        void draftingValidTransitionsIncludeEditing() {
+            Set<DocumentState> valid = DocumentState.DRAFTING.getValidTransitions();
+            assertTrue(valid.contains(DocumentState.EDITING),
+                    "DRAFTING valid transitions should include EDITING for skip-fact-check");
+            assertTrue(valid.contains(DocumentState.FACT_CHECKING),
+                    "DRAFTING should still support normal flow to FACT_CHECKING");
+        }
+
+        @Test
+        @DisplayName("EDITING valid transitions include PUBLISHED for skip scenario")
+        void editingValidTransitionsIncludePublished() {
+            Set<DocumentState> valid = DocumentState.EDITING.getValidTransitions();
+            assertTrue(valid.contains(DocumentState.PUBLISHED),
+                    "EDITING valid transitions should include PUBLISHED for skip-critique");
+            assertTrue(valid.contains(DocumentState.CRITIQUING),
+                    "EDITING should still support normal flow to CRITIQUING");
+        }
+
+        @Test
+        @DisplayName("Full skip path: DRAFTING -> EDITING -> PUBLISHED works")
+        void fullSkipPathWorks() {
+            // Simulates --pipeline.skip-fact-check=true --pipeline.skip-critique=true
+            assertTrue(DocumentState.DRAFTING.canTransitionTo(DocumentState.EDITING));
+            assertTrue(DocumentState.EDITING.canTransitionTo(DocumentState.PUBLISHED));
+        }
+
+        @Test
+        @DisplayName("Skip fact-check but run critique: DRAFTING -> EDITING -> CRITIQUING -> PUBLISHED")
+        void skipFactCheckButRunCritique() {
+            assertTrue(DocumentState.DRAFTING.canTransitionTo(DocumentState.EDITING));
+            assertTrue(DocumentState.EDITING.canTransitionTo(DocumentState.CRITIQUING));
+            assertTrue(DocumentState.CRITIQUING.canTransitionTo(DocumentState.PUBLISHED));
+        }
+
+        @Test
+        @DisplayName("Run fact-check but skip critique: DRAFTING -> FACT_CHECKING -> EDITING -> PUBLISHED")
+        void runFactCheckButSkipCritique() {
+            assertTrue(DocumentState.DRAFTING.canTransitionTo(DocumentState.FACT_CHECKING));
+            assertTrue(DocumentState.FACT_CHECKING.canTransitionTo(DocumentState.EDITING));
+            assertTrue(DocumentState.EDITING.canTransitionTo(DocumentState.PUBLISHED));
+        }
+    }
 }
