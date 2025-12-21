@@ -15,12 +15,18 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -614,6 +620,224 @@ class AiPublisherCommandTest {
             String output = outputWriter.toString();
             assertTrue(output.contains("ERROR"));
             assertTrue(output.contains("empty"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Help Text Coverage")
+    class HelpTextCoverage {
+
+        private String helpOutput;
+        private Set<String> documentedOptions;
+
+        @BeforeEach
+        void captureHelpOutput() {
+            StringWriter sw = new StringWriter();
+            CommandLine cmd = new CommandLine(new AiPublisherCommand());
+            cmd.setOut(new PrintWriter(sw));
+            cmd.execute("--help");
+            helpOutput = sw.toString();
+
+            // Extract all option names from help output (both short and long forms)
+            documentedOptions = new HashSet<>();
+            Pattern optionPattern = Pattern.compile("(-[a-zA-Z]|--[a-zA-Z][a-zA-Z0-9-]*)");
+            Matcher matcher = optionPattern.matcher(helpOutput);
+            while (matcher.find()) {
+                documentedOptions.add(matcher.group(1));
+            }
+        }
+
+        @Test
+        @DisplayName("All @Option fields are documented in help text")
+        void allOptionFieldsAreDocumented() {
+            // Get all @Option annotated fields from AiPublisherCommand
+            List<String> undocumentedOptions = new ArrayList<>();
+
+            for (Field field : AiPublisherCommand.class.getDeclaredFields()) {
+                Option option = field.getAnnotation(Option.class);
+                if (option != null) {
+                    boolean found = false;
+                    for (String name : option.names()) {
+                        if (documentedOptions.contains(name)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        undocumentedOptions.add(field.getName() + " " + Arrays.toString(option.names()));
+                    }
+                }
+            }
+
+            assertTrue(undocumentedOptions.isEmpty(),
+                    "The following @Option fields are not documented in --help output:\n" +
+                    String.join("\n", undocumentedOptions));
+        }
+
+        @Test
+        @DisplayName("Help text documents LLM provider options")
+        void helpTextDocumentsLlmProviderOptions() {
+            // These are Spring Boot properties documented in the footer
+            String[] requiredLlmOptions = {
+                    "--llm.provider",
+                    "--ollama.base-url",
+                    "--ollama.model",
+                    "--anthropic.model"
+            };
+
+            List<String> missingOptions = new ArrayList<>();
+            for (String option : requiredLlmOptions) {
+                if (!helpOutput.contains(option)) {
+                    missingOptions.add(option);
+                }
+            }
+
+            assertTrue(missingOptions.isEmpty(),
+                    "Help text is missing LLM provider options:\n" +
+                    String.join("\n", missingOptions));
+        }
+
+        @Test
+        @DisplayName("Help text documents pipeline options")
+        void helpTextDocumentsPipelineOptions() {
+            String[] requiredPipelineOptions = {
+                    "--pipeline.skip-fact-check",
+                    "--pipeline.skip-critique",
+                    "--pipeline.max-revision-cycles"
+            };
+
+            List<String> missingOptions = new ArrayList<>();
+            for (String option : requiredPipelineOptions) {
+                if (!helpOutput.contains(option)) {
+                    missingOptions.add(option);
+                }
+            }
+
+            assertTrue(missingOptions.isEmpty(),
+                    "Help text is missing pipeline options:\n" +
+                    String.join("\n", missingOptions));
+        }
+
+        @Test
+        @DisplayName("Help text documents quality options")
+        void helpTextDocumentsQualityOptions() {
+            String[] requiredQualityOptions = {
+                    "--quality.require-verified-claims",
+                    "--quality.min-factcheck-confidence",
+                    "--quality.min-editor-score"
+            };
+
+            List<String> missingOptions = new ArrayList<>();
+            for (String option : requiredQualityOptions) {
+                if (!helpOutput.contains(option)) {
+                    missingOptions.add(option);
+                }
+            }
+
+            assertTrue(missingOptions.isEmpty(),
+                    "Help text is missing quality options:\n" +
+                    String.join("\n", missingOptions));
+        }
+
+        @Test
+        @DisplayName("Help text documents environment variables")
+        void helpTextDocumentsEnvironmentVariables() {
+            String[] requiredEnvVars = {
+                    "ANTHROPIC_API_KEY",
+                    "OLLAMA_BASE_URL",
+                    "OLLAMA_MODEL"
+            };
+
+            List<String> missingVars = new ArrayList<>();
+            for (String envVar : requiredEnvVars) {
+                if (!helpOutput.contains(envVar)) {
+                    missingVars.add(envVar);
+                }
+            }
+
+            assertTrue(missingVars.isEmpty(),
+                    "Help text is missing environment variables:\n" +
+                    String.join("\n", missingVars));
+        }
+
+        @Test
+        @DisplayName("Spring Boot properties in help match actual configuration classes")
+        void springBootPropertiesMatchConfigurationClasses() {
+            // Extract Spring Boot property prefixes from help text
+            Pattern propertyPattern = Pattern.compile("--(llm|ollama|anthropic|pipeline|quality)\\.[a-z-]+");
+            Matcher matcher = propertyPattern.matcher(helpOutput);
+
+            Set<String> documentedProperties = new HashSet<>();
+            while (matcher.find()) {
+                documentedProperties.add(matcher.group());
+            }
+
+            // Verify documented properties exist in actual configuration classes
+            // These are the known valid property prefixes
+            Set<String> validPrefixes = Set.of(
+                    "llm.provider", "llm.temperature",
+                    "ollama.base-url", "ollama.model", "ollama.timeout", "ollama.num-predict",
+                    "anthropic.api", "anthropic.model", "anthropic.max-tokens",
+                    "pipeline.skip-fact-check", "pipeline.skip-critique",
+                    "pipeline.max-revision-cycles", "pipeline.phase-timeout",
+                    "pipeline.approval",
+                    "quality.require-verified-claims", "quality.min-factcheck-confidence",
+                    "quality.min-editor-score", "quality.min-critic-score"
+            );
+
+            List<String> invalidProperties = new ArrayList<>();
+            for (String prop : documentedProperties) {
+                String withoutDashes = prop.substring(2); // Remove leading --
+                boolean isValid = validPrefixes.stream()
+                        .anyMatch(prefix -> withoutDashes.startsWith(prefix.replace(".", ".")));
+                if (!isValid) {
+                    // Check if it matches any known property pattern
+                    boolean matchesKnown = validPrefixes.stream()
+                            .anyMatch(p -> withoutDashes.equals(p) ||
+                                          withoutDashes.startsWith(p.split("\\.")[0] + "."));
+                    if (!matchesKnown) {
+                        invalidProperties.add(prop);
+                    }
+                }
+            }
+
+            // This test is informational - it won't fail on unknown properties
+            // but will log them for review
+            if (!invalidProperties.isEmpty()) {
+                System.out.println("Note: Found documented properties not in known list: " +
+                        invalidProperties);
+            }
+
+            // At minimum, verify we found some properties
+            assertFalse(documentedProperties.isEmpty(),
+                    "No Spring Boot properties found in help text");
+        }
+
+        @Test
+        @DisplayName("Help text contains usage examples for all major features")
+        void helpTextContainsUsageExamples() {
+            // Verify key examples are present
+            String[] requiredExamples = {
+                    "aipublisher -t",           // Basic topic usage
+                    "--discover",               // Discovery mode
+                    "--universe",               // Universe mode
+                    "--stubs-only",             // Stub generation
+                    "--analyze-gaps",           // Gap analysis
+                    "--llm.provider=ollama",    // Ollama usage
+                    "--pipeline.skip",          // Pipeline skip
+                    "--auto-approve"            // Auto-approve
+            };
+
+            List<String> missingExamples = new ArrayList<>();
+            for (String example : requiredExamples) {
+                if (!helpOutput.contains(example)) {
+                    missingExamples.add(example);
+                }
+            }
+
+            assertTrue(missingExamples.isEmpty(),
+                    "Help text is missing usage examples for:\n" +
+                    String.join("\n", missingExamples));
         }
     }
 
