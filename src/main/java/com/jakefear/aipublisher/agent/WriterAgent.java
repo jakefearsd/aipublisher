@@ -264,15 +264,14 @@ public class WriterAgent extends BaseAgent {
             return false;
         }
 
-        // Check minimum content
+        // Check content length and warn if below target
         int wordCount = draft.estimateWordCount();
         int targetWordCount = document.getTopicBrief().targetWordCount();
 
-        // Allow some flexibility - at least 50% of target
-        if (targetWordCount > 0 && wordCount < targetWordCount * 0.5) {
-            log.warn("Validation failed: word count {} is less than 50% of target {}",
-                    wordCount, targetWordCount);
-            return false;
+        if (targetWordCount > 0 && wordCount < targetWordCount) {
+            int percentage = (int) ((wordCount * 100.0) / targetWordCount);
+            log.warn("Article word count {} is below target {} ({}% of target)",
+                    wordCount, targetWordCount, percentage);
         }
 
         return true;

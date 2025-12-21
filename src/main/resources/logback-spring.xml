@@ -29,8 +29,8 @@
         <appender-ref ref="CONSOLE" />
     </root>
 
-    <!-- Application loggers at INFO level -->
-    <logger name="com.jakefear.aipublisher" level="INFO" additivity="true">
+    <!-- Application loggers at DEBUG level, only to file (not console) -->
+    <logger name="com.jakefear.aipublisher" level="DEBUG" additivity="false">
         <appender-ref ref="SESSION_FILE" />
     </logger>
 

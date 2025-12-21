@@ -31,6 +31,7 @@ public final class JsonParsingUtils {
      * - ```json ... ```
      * - ``` ... ```
      * - Leading/trailing whitespace
+     * - Literal newlines inside JSON strings (escaped to \n)
      *
      * @param response The raw response from an AI model
      * @return Cleaned JSON string, or "{}" if input is null
@@ -53,7 +54,71 @@ public final class JsonParsingUtils {
             cleaned = cleaned.substring(0, cleaned.length() - 3);
         }
 
-        return cleaned.trim();
+        cleaned = cleaned.trim();
+
+        // Escape literal newlines inside JSON strings
+        // Some LLMs put actual newlines in string values instead of \n
+        cleaned = escapeNewlinesInJsonStrings(cleaned);
+
+        return cleaned;
+    }
+
+    /**
+     * Escape literal newlines that appear inside JSON string values.
+     * <p>
+     * JSON strings cannot contain literal newlines - they must be escaped as \n.
+     * Some LLMs produce invalid JSON with actual newlines in strings.
+     * This method fixes that by escaping newlines within quoted strings.
+     *
+     * @param json The JSON string to fix
+     * @return JSON with properly escaped newlines in strings
+     */
+    public static String escapeNewlinesInJsonStrings(String json) {
+        if (json == null || json.isEmpty()) {
+            return json;
+        }
+
+        StringBuilder result = new StringBuilder(json.length());
+        boolean inString = false;
+        boolean escaped = false;
+
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+
+            if (escaped) {
+                // Previous char was backslash, this char is escaped
+                result.append(c);
+                escaped = false;
+                continue;
+            }
+
+            if (c == '\\') {
+                result.append(c);
+                escaped = true;
+                continue;
+            }
+
+            if (c == '"') {
+                inString = !inString;
+                result.append(c);
+                continue;
+            }
+
+            if (inString && c == '\n') {
+                // Literal newline inside string - escape it
+                result.append("\\n");
+            } else if (inString && c == '\r') {
+                // Literal carriage return inside string - escape it
+                result.append("\\r");
+            } else if (inString && c == '\t') {
+                // Literal tab inside string - escape it
+                result.append("\\t");
+            } else {
+                result.append(c);
+            }
+        }
+
+        return result.toString();
     }
 
     /**

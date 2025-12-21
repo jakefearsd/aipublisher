@@ -279,8 +279,8 @@ class PublishingPipelineTest {
         }
 
         @Test
-        @DisplayName("Continues with markers after max revision cycles")
-        void continuesWithMarkersAfterMaxRevisionCycles() throws IOException {
+        @DisplayName("Continues after max revision cycles without embedding markers")
+        void continuesAfterMaxRevisionCyclesWithoutEmbeddingMarkers() throws IOException {
             // Arrange
             pipelineProperties.setMaxRevisionCycles(2);
             TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
@@ -303,17 +303,17 @@ class PublishingPipelineTest {
             PipelineResult result = pipeline.execute(topicBrief);
 
             // Assert - pipeline continues instead of failing
-            assertTrue(result.success(), "Pipeline should succeed with fact-check markers: " +
+            assertTrue(result.success(), "Pipeline should succeed after max revisions: " +
                     (result.errorMessage() != null ? result.errorMessage() : "no error"));
-            // Draft should now contain fact-check failure markers
+            // Draft should NOT contain failure markers (they are logged instead)
             String draftContent = result.document().getDraft().wikiContent();
-            assertTrue(draftContent.contains("FACT CHECK FAIL BEGIN"));
-            assertTrue(draftContent.contains("FACT CHECK FAIL END"));
+            assertFalse(draftContent.contains("FACT CHECK FAIL BEGIN"),
+                    "Content should not contain embedded failure markers");
         }
 
         @Test
-        @DisplayName("Markers include questionable claims")
-        void markersIncludeQuestionableClaims() throws IOException {
+        @DisplayName("Content remains clean after max revision cycles")
+        void contentRemainsCleanAfterMaxRevisionCycles() throws IOException {
             // Arrange
             pipelineProperties.setMaxRevisionCycles(1);
             TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
@@ -334,18 +334,17 @@ class PublishingPipelineTest {
             // Act
             PipelineResult result = pipeline.execute(topicBrief);
 
-            // Assert
-            assertTrue(result.success(), "Pipeline should succeed with fact-check markers: " +
+            // Assert - content should be clean without embedded markers
+            assertTrue(result.success(), "Pipeline should succeed: " +
                     (result.errorMessage() != null ? result.errorMessage() : "no error"));
             String draftContent = result.document().getDraft().wikiContent();
-            assertTrue(draftContent.contains("Questionable Claim"));
-            assertTrue(draftContent.contains("The stock market always goes up"));
-            assertTrue(draftContent.contains("Historical data shows"));
+            assertFalse(draftContent.contains("Questionable Claim"),
+                    "Content should not contain embedded failure details");
         }
 
         @Test
-        @DisplayName("Markers include consistency issues")
-        void markersIncludeConsistencyIssues() throws IOException {
+        @DisplayName("Logs issues to session log after max revision cycles")
+        void logsIssuesToSessionLogAfterMaxRevisionCycles() throws IOException {
             // Arrange
             pipelineProperties.setMaxRevisionCycles(1);
             TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
@@ -366,12 +365,12 @@ class PublishingPipelineTest {
             // Act
             PipelineResult result = pipeline.execute(topicBrief);
 
-            // Assert
-            assertTrue(result.success(), "Pipeline should succeed with fact-check markers: " +
+            // Assert - pipeline succeeds, issues are logged (not embedded)
+            assertTrue(result.success(), "Pipeline should succeed: " +
                     (result.errorMessage() != null ? result.errorMessage() : "no error"));
             String draftContent = result.document().getDraft().wikiContent();
-            assertTrue(draftContent.contains("Consistency Issues"));
-            assertTrue(draftContent.contains("Date conflict between sections"));
+            assertFalse(draftContent.contains("Consistency Issues"),
+                    "Content should not contain embedded consistency issues");
         }
     }
 
@@ -560,29 +559,22 @@ class PublishingPipelineTest {
     }
 
     @Nested
-    @DisplayName("Fact Check Failure Markers")
-    class FactCheckFailureMarkers {
+    @DisplayName("Fact Check Failure Logging")
+    class FactCheckFailureLogging {
 
         @Test
-        @DisplayName("Returns original content when report is null")
-        void returnsOriginalContentWhenReportIsNull() {
-            // Arrange
-            String content = "!!! Title\n\nOriginal content.";
-
-            // Act
-            String result = pipeline.addFactCheckFailureMarkers(content, null);
-
-            // Assert
-            assertEquals(content, result);
+        @DisplayName("Does not throw when report is null")
+        void doesNotThrowWhenReportIsNull() {
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logFactCheckFailures("TestPage", null));
         }
 
         @Test
-        @DisplayName("Returns original content when no questionable claims")
-        void returnsOriginalContentWhenNoQuestionableClaims() {
+        @DisplayName("Does not throw when no questionable claims")
+        void doesNotThrowWhenNoQuestionableClaims() {
             // Arrange
-            String content = "!!! Title\n\nOriginal content.";
             FactCheckReport report = new FactCheckReport(
-                    content,
+                    "content",
                     List.of(VerifiedClaim.verified("All good", 0)),
                     List.of(), // No questionable claims
                     List.of(),
@@ -590,20 +582,16 @@ class PublishingPipelineTest {
                     RecommendedAction.APPROVE
             );
 
-            // Act
-            String result = pipeline.addFactCheckFailureMarkers(content, report);
-
-            // Assert
-            assertEquals(content, result);
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logFactCheckFailures("TestPage", report));
         }
 
         @Test
-        @DisplayName("Adds markers with questionable claims")
-        void addsMarkersWithQuestionableClaims() {
+        @DisplayName("Logs questionable claims without throwing")
+        void logsQuestionableClaimsWithoutThrowing() {
             // Arrange
-            String content = "!!! Title\n\nOriginal content.";
             FactCheckReport report = new FactCheckReport(
-                    content,
+                    "content",
                     List.of(),
                     List.of(QuestionableClaim.withSuggestion(
                             "Bad claim",
@@ -615,27 +603,16 @@ class PublishingPipelineTest {
                     RecommendedAction.REVISE
             );
 
-            // Act
-            String result = pipeline.addFactCheckFailureMarkers(content, report);
-
-            // Assert
-            assertTrue(result.contains("'''FACT CHECK FAIL BEGIN'''"));
-            assertTrue(result.contains("'''FACT CHECK FAIL END'''"));
-            assertTrue(result.contains("Bad claim"));
-            assertTrue(result.contains("This is wrong"));
-            assertTrue(result.contains("Try this instead"));
-            // Original content is preserved
-            assertTrue(result.contains("!!! Title"));
-            assertTrue(result.contains("Original content."));
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logFactCheckFailures("TestPage", report));
         }
 
         @Test
-        @DisplayName("Adds markers with consistency issues")
-        void addsMarkersWithConsistencyIssues() {
+        @DisplayName("Logs consistency issues without throwing")
+        void logsConsistencyIssuesWithoutThrowing() {
             // Arrange
-            String content = "!!! Title\n\nOriginal content.";
             FactCheckReport report = new FactCheckReport(
-                    content,
+                    "content",
                     List.of(),
                     List.of(QuestionableClaim.withoutSuggestion("Claim", "Issue")),
                     List.of("Inconsistent dates", "Conflicting terminology"),
@@ -643,22 +620,16 @@ class PublishingPipelineTest {
                     RecommendedAction.REVISE
             );
 
-            // Act
-            String result = pipeline.addFactCheckFailureMarkers(content, report);
-
-            // Assert
-            assertTrue(result.contains("'''Consistency Issues:'''"));
-            assertTrue(result.contains("Inconsistent dates"));
-            assertTrue(result.contains("Conflicting terminology"));
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logFactCheckFailures("TestPage", report));
         }
 
         @Test
-        @DisplayName("Numbers multiple questionable claims")
-        void numbersMultipleQuestionableClaims() {
+        @DisplayName("Logs multiple questionable claims without throwing")
+        void logsMultipleQuestionableClaimsWithoutThrowing() {
             // Arrange
-            String content = "Content";
             FactCheckReport report = new FactCheckReport(
-                    content,
+                    "content",
                     List.of(),
                     List.of(
                             QuestionableClaim.withoutSuggestion("First claim", "Issue 1"),
@@ -670,35 +641,8 @@ class PublishingPipelineTest {
                     RecommendedAction.REVISE
             );
 
-            // Act
-            String result = pipeline.addFactCheckFailureMarkers(content, report);
-
-            // Assert
-            assertTrue(result.contains("'''1. Questionable Claim:'''"));
-            assertTrue(result.contains("'''2. Questionable Claim:'''"));
-            assertTrue(result.contains("'''3. Questionable Claim:'''"));
-        }
-
-        @Test
-        @DisplayName("Includes max revision count in message")
-        void includesMaxRevisionCountInMessage() {
-            // Arrange
-            pipelineProperties.setMaxRevisionCycles(5);
-            String content = "Content";
-            FactCheckReport report = new FactCheckReport(
-                    content,
-                    List.of(),
-                    List.of(QuestionableClaim.withoutSuggestion("Claim", "Issue")),
-                    List.of(),
-                    ConfidenceLevel.LOW,
-                    RecommendedAction.REVISE
-            );
-
-            // Act
-            String result = pipeline.addFactCheckFailureMarkers(content, report);
-
-            // Assert
-            assertTrue(result.contains("5 revision attempts"));
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logFactCheckFailures("TestPage", report));
         }
     }
 
@@ -783,8 +727,8 @@ class PublishingPipelineTest {
         }
 
         @Test
-        @DisplayName("Continues with markers after max revision cycles")
-        void continuesWithMarkersAfterMaxRevisionCycles() throws IOException {
+        @DisplayName("Continues after max revision cycles without embedding markers")
+        void continuesAfterMaxRevisionCyclesWithoutEmbeddingMarkers() throws IOException {
             // Arrange
             pipelineProperties.setMaxRevisionCycles(2);
             TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
@@ -807,17 +751,17 @@ class PublishingPipelineTest {
             PipelineResult result = pipeline.execute(topicBrief);
 
             // Assert - pipeline continues instead of failing
-            assertTrue(result.success(), "Pipeline should succeed with critique markers: " +
+            assertTrue(result.success(), "Pipeline should succeed after max revisions: " +
                     (result.errorMessage() != null ? result.errorMessage() : "no error"));
-            // Final article should now contain critique markers
+            // Final article should NOT contain critique markers (they are logged instead)
             String finalContent = result.document().getFinalArticle().wikiContent();
-            assertTrue(finalContent.contains("CRITIQUE REVIEW NOTES BEGIN"));
-            assertTrue(finalContent.contains("CRITIQUE REVIEW NOTES END"));
+            assertFalse(finalContent.contains("CRITIQUE REVIEW NOTES BEGIN"),
+                    "Content should not contain embedded failure markers");
         }
 
         @Test
-        @DisplayName("Markers include syntax issues")
-        void markersIncludeSyntaxIssues() throws IOException {
+        @DisplayName("Content remains clean after max revision cycles")
+        void contentRemainsCleanAfterMaxRevisionCycles() throws IOException {
             // Arrange
             pipelineProperties.setMaxRevisionCycles(1);
             TopicBrief topicBrief = TopicBrief.simple("Test", "testers", 500);
@@ -838,12 +782,12 @@ class PublishingPipelineTest {
             // Act
             PipelineResult result = pipeline.execute(topicBrief);
 
-            // Assert
-            assertTrue(result.success(), "Pipeline should succeed with critique markers: " +
+            // Assert - content should be clean without embedded markers
+            assertTrue(result.success(), "Pipeline should succeed: " +
                     (result.errorMessage() != null ? result.errorMessage() : "no error"));
             String finalContent = result.document().getFinalArticle().wikiContent();
-            assertTrue(finalContent.contains("Syntax Issues"));
-            assertTrue(finalContent.contains("Markdown heading found"));
+            assertFalse(finalContent.contains("Syntax Issues"),
+                    "Content should not contain embedded syntax issues");
         }
 
         private void setCriticReport(PublishingDocument doc, RecommendedAction action) {
@@ -868,27 +812,20 @@ class PublishingPipelineTest {
     }
 
     @Nested
-    @DisplayName("Critique Failure Markers")
-    class CritiqueFailureMarkers {
+    @DisplayName("Critique Failure Logging")
+    class CritiqueFailureLogging {
 
         @Test
-        @DisplayName("Returns original content when report is null")
-        void returnsOriginalContentWhenReportIsNull() {
-            // Arrange
-            String content = "!!! Title\n\nOriginal content.";
-
-            // Act
-            String result = pipeline.addCritiqueFailureMarkers(content, null);
-
-            // Assert
-            assertEquals(content, result);
+        @DisplayName("Does not throw when report is null")
+        void doesNotThrowWhenReportIsNull() {
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logCritiqueFailures("TestPage", null));
         }
 
         @Test
-        @DisplayName("Returns original content when no issues")
-        void returnsOriginalContentWhenNoIssues() {
+        @DisplayName("Does not throw when no issues")
+        void doesNotThrowWhenNoIssues() {
             // Arrange
-            String content = "!!! Title\n\nOriginal content.";
             CriticReport report = new CriticReport(
                     0.9, 0.9, 0.9, 0.9,
                     List.of(), // No structure issues
@@ -898,46 +835,31 @@ class PublishingPipelineTest {
                     RecommendedAction.APPROVE
             );
 
-            // Act
-            String result = pipeline.addCritiqueFailureMarkers(content, report);
-
-            // Assert
-            assertEquals(content, result);
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logCritiqueFailures("TestPage", report));
         }
 
         @Test
-        @DisplayName("Adds markers with syntax issues")
-        void addsMarkersWithSyntaxIssues() {
+        @DisplayName("Logs syntax issues without throwing")
+        void logsSyntaxIssuesWithoutThrowing() {
             // Arrange
-            String content = "!!! Title\n\nOriginal content.";
             CriticReport report = new CriticReport(
                     0.7, 0.8, 0.6, 0.8,
                     List.of(),
-                    List.of("# Heading should be !!!", "`code` should be {{code}}"),
+                    List.of("Heading issue", "Code formatting issue"),
                     List.of(),
                     List.of(),
                     RecommendedAction.REVISE
             );
 
-            // Act
-            String result = pipeline.addCritiqueFailureMarkers(content, report);
-
-            // Assert
-            assertTrue(result.contains("'''CRITIQUE REVIEW NOTES BEGIN'''"));
-            assertTrue(result.contains("'''CRITIQUE REVIEW NOTES END'''"));
-            assertTrue(result.contains("'''Syntax Issues:'''"));
-            assertTrue(result.contains("# Heading should be !!!"));
-            assertTrue(result.contains("`code` should be {{code}}"));
-            // Original content is preserved
-            assertTrue(result.contains("!!! Title"));
-            assertTrue(result.contains("Original content."));
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logCritiqueFailures("TestPage", report));
         }
 
         @Test
-        @DisplayName("Adds markers with structure issues")
-        void addsMarkersWithStructureIssues() {
+        @DisplayName("Logs structure issues without throwing")
+        void logsStructureIssuesWithoutThrowing() {
             // Arrange
-            String content = "!!! Title\n\nOriginal content.";
             CriticReport report = new CriticReport(
                     0.7, 0.6, 0.8, 0.8,
                     List.of("Missing introduction", "No conclusion section"),
@@ -947,20 +869,14 @@ class PublishingPipelineTest {
                     RecommendedAction.REVISE
             );
 
-            // Act
-            String result = pipeline.addCritiqueFailureMarkers(content, report);
-
-            // Assert
-            assertTrue(result.contains("'''Structure Issues:'''"));
-            assertTrue(result.contains("Missing introduction"));
-            assertTrue(result.contains("No conclusion section"));
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logCritiqueFailures("TestPage", report));
         }
 
         @Test
-        @DisplayName("Adds markers with style issues")
-        void addsMarkersWithStyleIssues() {
+        @DisplayName("Logs style issues without throwing")
+        void logsStyleIssuesWithoutThrowing() {
             // Arrange
-            String content = "!!! Title\n\nOriginal content.";
             CriticReport report = new CriticReport(
                     0.7, 0.8, 0.8, 0.6,
                     List.of(),
@@ -970,20 +886,14 @@ class PublishingPipelineTest {
                     RecommendedAction.REVISE
             );
 
-            // Act
-            String result = pipeline.addCritiqueFailureMarkers(content, report);
-
-            // Assert
-            assertTrue(result.contains("'''Style Issues:'''"));
-            assertTrue(result.contains("Passive voice overused"));
-            assertTrue(result.contains("Paragraphs too long"));
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logCritiqueFailures("TestPage", report));
         }
 
         @Test
-        @DisplayName("Adds markers with suggestions")
-        void addsMarkersWithSuggestions() {
+        @DisplayName("Logs suggestions without throwing")
+        void logsSuggestionsWithoutThrowing() {
             // Arrange
-            String content = "!!! Title\n\nOriginal content.";
             CriticReport report = new CriticReport(
                     0.7, 0.8, 0.8, 0.8,
                     List.of("Minor structure issue"),
@@ -993,20 +903,14 @@ class PublishingPipelineTest {
                     RecommendedAction.REVISE
             );
 
-            // Act
-            String result = pipeline.addCritiqueFailureMarkers(content, report);
-
-            // Assert
-            assertTrue(result.contains("'''Suggestions:'''"));
-            assertTrue(result.contains("Add more examples"));
-            assertTrue(result.contains("Consider adding a table of contents"));
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logCritiqueFailures("TestPage", report));
         }
 
         @Test
-        @DisplayName("Adds markers with all issue types")
-        void addsMarkersWithAllIssueTypes() {
+        @DisplayName("Logs all issue types without throwing")
+        void logsAllIssueTypesWithoutThrowing() {
             // Arrange
-            String content = "Content";
             CriticReport report = new CriticReport(
                     0.6, 0.6, 0.5, 0.6,
                     List.of("Structure problem"),
@@ -1016,36 +920,8 @@ class PublishingPipelineTest {
                     RecommendedAction.REVISE
             );
 
-            // Act
-            String result = pipeline.addCritiqueFailureMarkers(content, report);
-
-            // Assert
-            assertTrue(result.contains("'''Syntax Issues:'''"));
-            assertTrue(result.contains("'''Structure Issues:'''"));
-            assertTrue(result.contains("'''Style Issues:'''"));
-            assertTrue(result.contains("'''Suggestions:'''"));
-        }
-
-        @Test
-        @DisplayName("Includes max revision count in message")
-        void includesMaxRevisionCountInMessage() {
-            // Arrange
-            pipelineProperties.setMaxRevisionCycles(5);
-            String content = "Content";
-            CriticReport report = new CriticReport(
-                    0.7, 0.8, 0.6, 0.8,
-                    List.of(),
-                    List.of("Syntax issue"),
-                    List.of(),
-                    List.of(),
-                    RecommendedAction.REVISE
-            );
-
-            // Act
-            String result = pipeline.addCritiqueFailureMarkers(content, report);
-
-            // Assert
-            assertTrue(result.contains("5 revision attempts"));
+            // Act & Assert - should not throw
+            assertDoesNotThrow(() -> pipeline.logCritiqueFailures("TestPage", report));
         }
     }
 

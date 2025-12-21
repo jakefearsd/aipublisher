@@ -274,24 +274,14 @@ public class PublishingPipeline {
             }
         }
 
-        // Max revisions exceeded - annotate content with fact-check markers and continue
+        // Max revisions exceeded - log issues and continue without modifying content
         log.warn("Maximum revision cycles ({}) exceeded during fact checking. " +
-                "Adding fact-check failure markers to content.", maxRevisions);
+                "Logging issues to session log.", maxRevisions);
 
         FactCheckReport report = document.getFactCheckReport();
-        String annotatedContent = addFactCheckFailureMarkers(document.getDraft().wikiContent(), report);
+        logFactCheckFailures(document.getPageName(), report);
 
-        // Update the draft with annotated content (bypassing state validation)
-        ArticleDraft annotatedDraft = new ArticleDraft(
-                annotatedContent,
-                document.getDraft().summary(),
-                document.getDraft().internalLinks(),
-                document.getDraft().categories(),
-                document.getDraft().metadata()
-        );
-        document.updateDraftWithAnnotations(annotatedDraft);
-
-        String summary = String.format("Max revisions exceeded. %d questionable claims marked in content.",
+        String summary = String.format("Max revisions exceeded. %d questionable claims logged.",
                 report.questionableClaims().size());
         monitoringService.phaseCompleted(document, DocumentState.FACT_CHECKING, summary);
 
@@ -300,51 +290,39 @@ public class PublishingPipeline {
     }
 
     /**
-     * Add fact-check failure markers to content for questionable claims.
-     * Markers are visible in the wiki output so users can review and fix issues.
+     * Log fact-check failure information to session log.
+     * Issues are logged for review but not embedded in the published content.
      *
-     * @param content The original wiki content
+     * @param pageName The page name for context in logs
      * @param report The fact-check report with issues
-     * @return Content with fact-check failure markers added
      */
-    String addFactCheckFailureMarkers(String content, FactCheckReport report) {
+    void logFactCheckFailures(String pageName, FactCheckReport report) {
         if (report == null || report.questionableClaims().isEmpty()) {
-            return content;
+            return;
         }
 
-        StringBuilder annotated = new StringBuilder(content);
-
-        // Add a summary section at the end with all questionable claims
-        annotated.append("\n\n");
-        annotated.append("----\n\n");
-        annotated.append("'''FACT CHECK FAIL BEGIN'''\n\n");
-        annotated.append("The following claims in this article could not be verified after ")
-                .append(pipelineProperties.getMaxRevisionCycles())
-                .append(" revision attempts. Please review and correct these issues:\n\n");
+        log.warn("=== FACT CHECK ISSUES FOR: {} ===", pageName);
+        log.warn("The following claims could not be verified after {} revision attempts:",
+                pipelineProperties.getMaxRevisionCycles());
 
         int claimNum = 1;
         for (QuestionableClaim claim : report.questionableClaims()) {
-            annotated.append("'''").append(claimNum++).append(". Questionable Claim:'''\n");
-            annotated.append("* __Claim:__ ").append(claim.claim()).append("\n");
-            annotated.append("* __Issue:__ ").append(claim.issue()).append("\n");
+            log.warn("  {}. Questionable Claim:", claimNum++);
+            log.warn("     Claim: {}", claim.claim());
+            log.warn("     Issue: {}", claim.issue());
             if (claim.suggestion() != null && !claim.suggestion().isBlank()) {
-                annotated.append("* __Suggestion:__ ").append(claim.suggestion()).append("\n");
+                log.warn("     Suggestion: {}", claim.suggestion());
             }
-            annotated.append("\n");
         }
 
-        // Add consistency issues if any
         if (!report.consistencyIssues().isEmpty()) {
-            annotated.append("'''Consistency Issues:'''\n");
+            log.warn("  Consistency Issues:");
             for (String issue : report.consistencyIssues()) {
-                annotated.append("* ").append(issue).append("\n");
+                log.warn("     - {}", issue);
             }
-            annotated.append("\n");
         }
 
-        annotated.append("'''FACT CHECK FAIL END'''\n");
-
-        return annotated.toString();
+        log.warn("=== END FACT CHECK ISSUES ===");
     }
 
     /**
@@ -490,24 +468,14 @@ public class PublishingPipeline {
             }
         }
 
-        // Max revisions exceeded - annotate content with critique markers and continue
+        // Max revisions exceeded - log issues and continue without modifying content
         log.warn("Maximum revision cycles ({}) exceeded during critique. " +
-                "Adding critique failure markers to content.", maxRevisions);
+                "Logging issues to session log.", maxRevisions);
 
         CriticReport report = document.getCriticReport();
-        String annotatedContent = addCritiqueFailureMarkers(document.getFinalArticle().wikiContent(), report);
+        logCritiqueFailures(document.getPageName(), report);
 
-        // Update the final article with annotated content
-        FinalArticle annotatedArticle = new FinalArticle(
-                annotatedContent,
-                document.getFinalArticle().metadata(),
-                document.getFinalArticle().editSummary(),
-                document.getFinalArticle().qualityScore(),
-                document.getFinalArticle().addedLinks()
-        );
-        document.updateFinalArticleWithAnnotations(annotatedArticle);
-
-        String summary = String.format("Max revisions exceeded. %s marked in content.",
+        String summary = String.format("Max revisions exceeded. %s logged.",
                 report.getIssueSummary());
         monitoringService.phaseCompleted(document, DocumentState.CRITIQUING, summary);
 
@@ -516,16 +484,15 @@ public class PublishingPipeline {
     }
 
     /**
-     * Add critique failure markers to content for unresolved issues.
-     * Markers are visible in the wiki output so users can review and fix issues.
+     * Log critique failure information to session log.
+     * Issues are logged for review but not embedded in the published content.
      *
-     * @param content The original wiki content
+     * @param pageName The page name for context in logs
      * @param report The critic report with issues
-     * @return Content with critique failure markers added
      */
-    String addCritiqueFailureMarkers(String content, CriticReport report) {
+    void logCritiqueFailures(String pageName, CriticReport report) {
         if (report == null) {
-            return content;
+            return;
         }
 
         boolean hasIssues = !report.structureIssues().isEmpty() ||
@@ -533,58 +500,42 @@ public class PublishingPipeline {
                 !report.styleIssues().isEmpty();
 
         if (!hasIssues) {
-            return content;
+            return;
         }
 
-        StringBuilder annotated = new StringBuilder(content);
+        log.warn("=== CRITIQUE ISSUES FOR: {} ===", pageName);
+        log.warn("The following issues were noted after {} revision attempts:",
+                pipelineProperties.getMaxRevisionCycles());
 
-        // Add a summary section at the end with all issues
-        annotated.append("\n\n");
-        annotated.append("----\n\n");
-        annotated.append("'''CRITIQUE REVIEW NOTES BEGIN'''\n\n");
-        annotated.append("The following issues were noted during review after ")
-                .append(pipelineProperties.getMaxRevisionCycles())
-                .append(" revision attempts. Please review:\n\n");
-
-        // Add syntax issues
         if (!report.syntaxIssues().isEmpty()) {
-            annotated.append("'''Syntax Issues:'''\n");
+            log.warn("  Syntax Issues:");
             for (String issue : report.syntaxIssues()) {
-                annotated.append("* ").append(issue).append("\n");
+                log.warn("     - {}", issue);
             }
-            annotated.append("\n");
         }
 
-        // Add structure issues
         if (!report.structureIssues().isEmpty()) {
-            annotated.append("'''Structure Issues:'''\n");
+            log.warn("  Structure Issues:");
             for (String issue : report.structureIssues()) {
-                annotated.append("* ").append(issue).append("\n");
+                log.warn("     - {}", issue);
             }
-            annotated.append("\n");
         }
 
-        // Add style issues
         if (!report.styleIssues().isEmpty()) {
-            annotated.append("'''Style Issues:'''\n");
+            log.warn("  Style Issues:");
             for (String issue : report.styleIssues()) {
-                annotated.append("* ").append(issue).append("\n");
+                log.warn("     - {}", issue);
             }
-            annotated.append("\n");
         }
 
-        // Add suggestions if any
         if (!report.suggestions().isEmpty()) {
-            annotated.append("'''Suggestions:'''\n");
+            log.warn("  Suggestions:");
             for (String suggestion : report.suggestions()) {
-                annotated.append("* ").append(suggestion).append("\n");
+                log.warn("     - {}", suggestion);
             }
-            annotated.append("\n");
         }
 
-        annotated.append("'''CRITIQUE REVIEW NOTES END'''\n");
-
-        return annotated.toString();
+        log.warn("=== END CRITIQUE ISSUES ===");
     }
 
     /**

@@ -21,7 +21,7 @@ public final class AgentPrompts {
             a writer to create an accurate, well-structured wiki article.
 
             OUTPUT FORMAT:
-            You MUST respond with ONLY a valid JSON object (no markdown, no explanation, no text before or after).
+            You MUST respond with ONLY a valid JSON object. No explanation or text before or after.
             The JSON must have this exact structure:
             {
               "keyFacts": ["fact1", "fact2", ...],
@@ -53,8 +53,13 @@ public final class AgentPrompts {
             YOUR TASK:
             Transform the provided research brief into a clear, well-structured wiki article.
 
+            CRITICAL - WORD COUNT REQUIREMENT:
+            You MUST write an article that meets or exceeds the target word count specified in the brief.
+            If the target is 1000 words, write AT LEAST 1000 words. This is a hard requirement.
+            Expand on each section with examples, explanations, and details to reach the target length.
+
             OUTPUT FORMAT:
-            You MUST respond with ONLY a valid JSON object (no markdown, no explanation, no text before or after).
+            You MUST respond with ONLY a valid JSON object. No explanation or text before or after.
             The JSON must have this exact structure:
             {
               "wikiContent": "<the full article in JSPWiki markup>",
@@ -63,67 +68,71 @@ public final class AgentPrompts {
               "categories": ["Category1", "Category2"]
             }
 
-            CRITICAL: The wikiContent field must contain the article with ACTUAL line breaks (not literal \\n text).
-            Use real newlines in your JSON string value, like this:
-            "wikiContent": "!!! My Title
+            IMPORTANT: In the wikiContent JSON string, represent newlines as the escape sequence \\n (backslash-n).
+            Example: "wikiContent": "!!! My Title\\n\\nFirst paragraph here.\\n\\n!! Section One\\n\\nContent..."
 
-            First paragraph here.
+            === JSPWIKI MARKUP SYNTAX ===
 
-            !! Section One
+            HEADINGS (follow this hierarchy exactly):
+            !!! Article Title    (use ONCE at the very top for the title only)
+            !! Section Heading   (use for main sections like Introduction, Overview, See Also)
+            ! Subsection         (use for subsections within a section)
 
-            Content of section one."
-
-            JSPWIKI MARKUP SYNTAX (NOT Markdown!):
-            JSPWiki uses its own syntax that is DIFFERENT from Markdown. You MUST use these exact patterns:
-
-            HEADINGS:
-            - !!! Large heading (H1/title)
-            - !! Medium heading (H2/section)
-            - ! Small heading (H3/subsection)
-            DO NOT use # symbols for headings.
+            Example heading structure:
+            !!! Guide to Investing
+            !! Introduction
+            !! Key Concepts
+            ! Risk Management
+            ! Diversification
+            !! See Also
 
             TEXT FORMATTING:
-            - __bold text__ (double underscores, NOT asterisks)
-            - ''italic text'' (two single quotes, NOT asterisks)
-            - {{monospace/code}} (double curly braces for inline code)
+            __bold text__        (double underscores on each side)
+            ''italic text''      (two single quotes on each side)
+            {{monospace}}        (double curly braces for code or technical terms)
 
             LINKS:
-            - [PageName] for internal wiki links
-            - [Display Text|PageName] for internal links with custom text
-            - [http://example.com] for external links
-            - [Display Text|http://example.com] for external links with custom text
-            DO NOT use Markdown [text](url) syntax.
+            [PageName]                      (internal wiki link)
+            [Display Text|PageName]         (internal link with custom display text)
+            [https://example.com]           (external URL)
+            [Display Text|https://example.com]  (external link with custom text)
 
             CODE BLOCKS:
-            - {{{ for start of preformatted/code block
-            - }}} for end of preformatted/code block
+            {{{
+            code goes here
+            }}}
 
             LISTS:
-            - * Bullet item (asterisk at start of line)
-            - ** Nested bullet item
-            - # Numbered item
-            - ## Nested numbered item
+            * Bullet item
+            ** Nested bullet
+            * Another bullet
+
+            # Numbered item
+            ## Nested numbered
+            # Another numbered
 
             TABLES:
-            - || Header 1 || Header 2
-            - | Cell 1 | Cell 2
+            || Header 1 || Header 2 || Header 3
+            | Cell 1    | Cell 2    | Cell 3
+            | Cell 4    | Cell 5    | Cell 6
 
             SPECIAL ELEMENTS:
-            - [{TableOfContents}] for automatic table of contents
-            - [{Image src='image.png'}] for images
-            - ---- for horizontal rule
+            [{TableOfContents}]              (automatic table of contents)
+            [{Image src='filename.png'}]     (embedded image)
+            ----                             (horizontal divider line)
+            [{SET categories='Cat1,Cat2'}]   (category metadata)
 
-            STRUCTURE RULES:
+            === STRUCTURE RULES ===
             - For articles over 800 words, include [{TableOfContents}] after the intro paragraph
             - First paragraph should work as a standalone summary
-            - End with a "!! See Also" section linking to related pages using [PageName] syntax
-            - Use categories at the bottom: [{SET categories='Category1,Category2'}]
+            - End with a !! See Also section linking to related pages
+            - Place categories at the bottom: [{SET categories='Category1,Category2'}]
 
-            STYLE GUIDELINES:
+            === STYLE GUIDELINES ===
             - Write in encyclopedic, neutral tone
             - Explain concepts before using them
             - Use concrete examples where helpful
-            - Keep paragraphs focused and scannable (3-7 sentences preferred)
+            - Keep paragraphs focused (3-7 sentences preferred)
             - Target the specified audience level
             - Use active voice when possible
 
@@ -141,7 +150,7 @@ public final class AgentPrompts {
             incorrect or misleading information, not minor imprecisions or stylistic choices.
 
             OUTPUT FORMAT:
-            You MUST respond with ONLY a valid JSON object (no markdown, no explanation, no text before or after).
+            You MUST respond with ONLY a valid JSON object. No explanation or text before or after.
             The JSON must have this exact structure:
             {
               "verifiedClaims": [
@@ -192,12 +201,12 @@ public final class AgentPrompts {
             You are an editor preparing wiki content for publication in JSPWiki format.
 
             YOUR TASK:
-            Polish the article for publication. Focus on fixing any obvious Markdown syntax
-            that should be JSPWiki syntax, and make light improvements to clarity.
-            You will also be provided with a list of existing wiki pages - add links where natural.
+            Polish the article for publication. Ensure all formatting uses correct JSPWiki syntax
+            and make light improvements to clarity. You will also be provided with a list of
+            existing wiki pages - add links where natural.
 
             OUTPUT FORMAT:
-            You MUST respond with ONLY a valid JSON object (no markdown, no explanation, no text before or after).
+            You MUST respond with ONLY a valid JSON object. No explanation or text before or after.
             The JSON must have this exact structure:
             {
               "wikiContent": "<the full polished article in JSPWiki markup>",
@@ -211,23 +220,40 @@ public final class AgentPrompts {
               "addedLinks": ["PageName1", "PageName2"]
             }
 
-            CRITICAL: The wikiContent field must contain the article with ACTUAL line breaks (not literal \\n text).
-            Use real newlines in your JSON string value.
+            IMPORTANT: In the wikiContent JSON string, represent newlines as the escape sequence \\n (backslash-n).
+            Example: "wikiContent": "!!! Title\\n\\nPolished content...\\n\\n!! Section\\n\\nMore content..."
 
-            JSPWIKI SYNTAX (NOT Markdown - convert if found):
+            === JSPWIKI SYNTAX REFERENCE ===
 
-            HEADINGS: !!! (H1), !! (H2), ! (H3) - NOT # symbols
-            BOLD: __text__ - NOT **text**
-            ITALIC: ''text'' - NOT *text*
-            CODE: {{inline}} and {{{ block }}} - NOT backticks
-            LINKS: [PageName] or [Text|URL] - NOT [text](url)
-            LISTS: * for bullets, # for numbered
+            HEADINGS:
+            !!! Title            (use exactly ONCE for article title)
+            !! Section           (main sections)
+            ! Subsection         (subsections)
 
-            EDITING APPROACH:
-            1. Convert any Markdown syntax to JSPWiki (this is the main task)
-            2. Light clarity improvements only
-            3. Add links to EXISTING_PAGES where natural
-            4. Preserve the article's content and voice
+            TEXT FORMATTING:
+            __bold__             (double underscores)
+            ''italic''           (two single quotes)
+            {{code}}             (double curly braces)
+
+            LINKS:
+            [PageName]           (internal link)
+            [Text|PageName]      (internal link with display text)
+            [Text|https://url]   (external link with display text)
+
+            LISTS:
+            * bullet item        (asterisk)
+            # numbered item      (hash/pound sign)
+
+            OTHER:
+            ----                 (horizontal rule)
+            {{{ code block }}}   (preformatted text)
+
+            === EDITING APPROACH ===
+            1. Verify heading hierarchy: one !!! at top, !! for sections, ! for subsections
+            2. Ensure all formatting uses JSPWiki syntax as shown above
+            3. Make light clarity improvements only
+            4. Add links to EXISTING_PAGES where natural
+            5. Preserve the article's content and voice
 
             QUALITY SCORING (be generous):
             - 0.85-1.0: Good article, ready to publish
@@ -241,7 +267,6 @@ public final class AgentPrompts {
             - Do NOT change factual content
             - Do NOT remove content
             - Keep edits minimal - don't over-polish
-            - Preserve any fact-checker annotations in output
 
             IMPORTANT: Your response must be ONLY valid JSON. Do not include any text before or after the JSON object.
             """;
@@ -257,7 +282,7 @@ public final class AgentPrompts {
             there are significant problems that would embarrass the publication.
 
             OUTPUT FORMAT:
-            You MUST respond with ONLY a valid JSON object (no markdown, no explanation, no text before or after).
+            You MUST respond with ONLY a valid JSON object. No explanation or text before or after.
             The JSON must have this exact structure:
             {
               "overallScore": 0.85,
@@ -271,21 +296,30 @@ public final class AgentPrompts {
               "recommendedAction": "APPROVE|REVISE|REJECT"
             }
 
-            SYNTAX CHECK (only flag obvious problems):
-            Look for Markdown syntax that should be JSPWiki:
-            - # Heading -> should be !!! or !! or !
-            - **bold** -> should be __bold__
-            - `code` -> should be {{code}}
-            - [text](url) -> should be [text|url]
+            === JSPWIKI SYNTAX TO VERIFY ===
 
-            Only flag these if they actually appear. Don't penalize for missing optional elements.
+            Correct heading hierarchy:
+            !!! Title            (exactly once at top)
+            !! Section           (main sections)
+            ! Subsection         (subsections)
 
-            WHAT TO CHECK:
+            Correct formatting:
+            __bold__             (double underscores)
+            ''italic''           (two single quotes)
+            {{code}}             (double curly braces)
+            [Text|Link]          (links with pipe separator)
+            ----                 (horizontal rule)
+
+            FLAG as syntax issues if you see:
+            - Multiple !!! headings (only one allowed)
+            - Incorrect heading levels for the content structure
+
+            === WHAT TO CHECK ===
             - Does the article have a clear title and reasonable structure?
             - Is the content readable and coherent?
-            - Are there any obvious Markdown syntax issues?
+            - Does all formatting follow JSPWiki syntax?
 
-            WHAT NOT TO WORRY ABOUT:
+            === WHAT NOT TO WORRY ABOUT ===
             - Missing TableOfContents (optional)
             - Missing "See Also" section (optional)
             - Missing categories (optional)
@@ -293,15 +327,15 @@ public final class AgentPrompts {
             - Paragraph length variations
             - Whether examples are "concrete enough"
 
-            SCORING (be generous - most articles are fine):
+            === SCORING (be generous - most articles are fine) ===
             - 0.80-1.0: Good, approve it
             - 0.70-0.80: Has minor issues but acceptable
             - 0.60-0.70: Some problems but still publishable
             - Below 0.60: Significant problems
 
-            RECOMMENDED ACTIONS (default to APPROVE):
+            === RECOMMENDED ACTIONS (default to APPROVE) ===
             - APPROVE: Use this for most articles. Default choice.
-            - REVISE: Only if there's pervasive Markdown syntax or major structural problems
+            - REVISE: Only for pervasive syntax issues or major structural problems
             - REJECT: Almost never use this. Reserved for incomprehensible content.
 
             The goal is to publish content, not achieve perfection. APPROVE unless there's
