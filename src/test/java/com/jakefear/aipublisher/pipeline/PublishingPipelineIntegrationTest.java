@@ -1,5 +1,7 @@
 package com.jakefear.aipublisher.pipeline;
 
+import com.jakefear.aipublisher.EnabledIfLlmAvailable;
+import com.jakefear.aipublisher.IntegrationTestHelper;
 import com.jakefear.aipublisher.agent.*;
 import com.jakefear.aipublisher.approval.ApprovalCallback;
 import com.jakefear.aipublisher.approval.ApprovalDecision;
@@ -11,10 +13,8 @@ import com.jakefear.aipublisher.document.TopicBrief;
 import com.jakefear.aipublisher.glossary.GlossaryService;
 import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
-import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
@@ -24,16 +24,17 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration tests for the complete publishing pipeline using the real Claude API.
+ * Integration tests for the complete publishing pipeline using a real LLM.
  *
- * These tests are only run when the ANTHROPIC_API_KEY environment variable is set.
- * They make real API calls and consume tokens/credits.
+ * These tests run when either Ollama or Anthropic is configured:
+ * - OLLAMA_BASE_URL: Use local Ollama (free, preferred)
+ * - ANTHROPIC_API_KEY: Use Anthropic API (paid)
  *
  * Run with: mvn test -Dtest=PublishingPipelineIntegrationTest
  * Or run all integration tests: mvn test -Dgroups=integration
  */
 @Tag("integration")
-@EnabledIfEnvironmentVariable(named = "ANTHROPIC_API_KEY", matches = ".+")
+@EnabledIfLlmAvailable
 @DisplayName("PublishingPipeline Integration")
 class PublishingPipelineIntegrationTest {
 
@@ -44,14 +45,14 @@ class PublishingPipelineIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        String apiKey = System.getenv("ANTHROPIC_API_KEY");
+        System.out.println("Using LLM: " + IntegrationTestHelper.getProviderName());
 
         // Create agents with appropriate temperatures
-        ChatLanguageModel researchModel = createModel(apiKey, 0.3);
-        ChatLanguageModel writerModel = createModel(apiKey, 0.7);
-        ChatLanguageModel factCheckerModel = createModel(apiKey, 0.1);
-        ChatLanguageModel editorModel = createModel(apiKey, 0.5);
-        ChatLanguageModel criticModel = createModel(apiKey, 0.3);
+        ChatLanguageModel researchModel = IntegrationTestHelper.buildModel(0.3);
+        ChatLanguageModel writerModel = IntegrationTestHelper.buildModel(0.7);
+        ChatLanguageModel factCheckerModel = IntegrationTestHelper.buildModel(0.1);
+        ChatLanguageModel editorModel = IntegrationTestHelper.buildModel(0.5);
+        ChatLanguageModel criticModel = IntegrationTestHelper.buildModel(0.3);
 
         ResearchAgent researchAgent = new ResearchAgent(researchModel, AgentPrompts.RESEARCH);
         WriterAgent writerAgent = new WriterAgent(writerModel, AgentPrompts.WRITER);
@@ -86,15 +87,6 @@ class PublishingPipelineIntegrationTest {
                 researchAgent, writerAgent, factCheckerAgent, editorAgent, criticAgent,
                 outputService, approvalService, monitoringService, glossaryService, pipelineProperties, qualityProperties
         );
-    }
-
-    private ChatLanguageModel createModel(String apiKey, double temperature) {
-        return AnthropicChatModel.builder()
-                .apiKey(apiKey)
-                .modelName("claude-sonnet-4-20250514")
-                .maxTokens(4096)
-                .temperature(temperature)
-                .build();
     }
 
     @Test

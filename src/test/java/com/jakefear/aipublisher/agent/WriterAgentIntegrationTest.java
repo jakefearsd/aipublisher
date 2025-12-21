@@ -1,13 +1,13 @@
 package com.jakefear.aipublisher.agent;
 
+import com.jakefear.aipublisher.EnabledIfLlmAvailable;
+import com.jakefear.aipublisher.IntegrationTestHelper;
 import com.jakefear.aipublisher.document.*;
-import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.util.List;
 import java.util.Map;
@@ -15,16 +15,17 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration tests for WriterAgent using the real Claude API.
+ * Integration tests for WriterAgent using a real LLM.
  *
- * These tests are only run when the ANTHROPIC_API_KEY environment variable is set.
- * They make real API calls and consume tokens/credits.
+ * These tests run when either Ollama or Anthropic is configured:
+ * - OLLAMA_BASE_URL: Use local Ollama (free, preferred)
+ * - ANTHROPIC_API_KEY: Use Anthropic API (paid)
  *
  * Run with: mvn test -Dtest=WriterAgentIntegrationTest
  * Or run all integration tests: mvn test -Dgroups=integration
  */
 @Tag("integration")
-@EnabledIfEnvironmentVariable(named = "ANTHROPIC_API_KEY", matches = ".+")
+@EnabledIfLlmAvailable
 @DisplayName("WriterAgent Integration")
 class WriterAgentIntegrationTest {
 
@@ -33,15 +34,9 @@ class WriterAgentIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        String apiKey = System.getenv("ANTHROPIC_API_KEY");
-        ChatLanguageModel model = AnthropicChatModel.builder()
-                .apiKey(apiKey)
-                .modelName("claude-sonnet-4-20250514")
-                .maxTokens(4096)
-                .temperature(0.7)
-                .build();
-
+        ChatLanguageModel model = IntegrationTestHelper.buildModel(0.7);
         agent = new WriterAgent(model, AgentPrompts.WRITER);
+        System.out.println("Using LLM: " + IntegrationTestHelper.getProviderName());
 
         // Create document with research brief
         TopicBrief brief = TopicBrief.simple("Git branching strategies", "software developers", 600);

@@ -196,6 +196,14 @@ public abstract class BaseAgent implements Agent {
     }
 
     /**
+     * Get a multi-line string from a JSON node, normalizing escaped newlines.
+     * Use this for content fields like wikiContent where LLMs may incorrectly escape newlines.
+     */
+    protected String getMultilineString(JsonNode node, String field, String defaultValue) {
+        return JsonParsingUtils.getMultilineString(node, field, defaultValue);
+    }
+
+    /**
      * Get an int from a JSON node, with a default if missing or null.
      */
     protected int getIntOrDefault(JsonNode node, String field, int defaultValue) {

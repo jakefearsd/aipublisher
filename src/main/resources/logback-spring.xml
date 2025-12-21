@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- Suppress logback's internal status messages -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
     <!-- Prevent classloader issues during shutdown by delaying logback shutdown -->
-    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
+    <shutdownHook class="ch.qos.logback.core.hook.DefaultShutdownHook">
         <delay>100</delay>
     </shutdownHook>
 

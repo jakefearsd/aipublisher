@@ -44,6 +44,13 @@
             <version>${langchain4j.version}</version>
         </dependency>
 
+        <!-- LangChain4j Ollama (local models) -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-ollama</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+
         <!-- LangChain4j Spring Boot Integration -->
         <dependency>
             <groupId>dev.langchain4j</groupId>

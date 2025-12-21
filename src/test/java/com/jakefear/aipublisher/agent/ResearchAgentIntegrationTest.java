@@ -1,27 +1,28 @@
 package com.jakefear.aipublisher.agent;
 
+import com.jakefear.aipublisher.EnabledIfLlmAvailable;
+import com.jakefear.aipublisher.IntegrationTestHelper;
 import com.jakefear.aipublisher.document.*;
-import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration tests for ResearchAgent using the real Claude API.
+ * Integration tests for ResearchAgent using a real LLM.
  *
- * These tests are only run when the ANTHROPIC_API_KEY environment variable is set.
- * They make real API calls and consume tokens/credits.
+ * These tests run when either Ollama or Anthropic is configured:
+ * - OLLAMA_BASE_URL: Use local Ollama (free, preferred)
+ * - ANTHROPIC_API_KEY: Use Anthropic API (paid)
  *
  * Run with: mvn test -Dtest=ResearchAgentIntegrationTest
  * Or run all integration tests: mvn test -Dgroups=integration
  */
 @Tag("integration")
-@EnabledIfEnvironmentVariable(named = "ANTHROPIC_API_KEY", matches = ".+")
+@EnabledIfLlmAvailable
 @DisplayName("ResearchAgent Integration")
 class ResearchAgentIntegrationTest {
 
@@ -29,15 +30,9 @@ class ResearchAgentIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        String apiKey = System.getenv("ANTHROPIC_API_KEY");
-        ChatLanguageModel model = AnthropicChatModel.builder()
-                .apiKey(apiKey)
-                .modelName("claude-sonnet-4-20250514")
-                .maxTokens(4096)
-                .temperature(0.3)
-                .build();
-
+        ChatLanguageModel model = IntegrationTestHelper.buildModel(0.3);
         agent = new ResearchAgent(model, AgentPrompts.RESEARCH);
+        System.out.println("Using LLM: " + IntegrationTestHelper.getProviderName());
     }
 
     @Test

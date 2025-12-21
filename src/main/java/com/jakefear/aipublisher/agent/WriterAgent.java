@@ -216,8 +216,8 @@ public class WriterAgent extends BaseAgent {
 
         JsonNode root = parseJson(response);
 
-        // Parse wiki content (required)
-        String wikiContent = getStringOrDefault(root, "wikiContent", "");
+        // Parse wiki content (required) - use getMultilineString to normalize escaped newlines
+        String wikiContent = getMultilineString(root, "wikiContent", "");
         if (wikiContent.isBlank()) {
             throw new JsonProcessingException("No wikiContent found in response") {};
         }

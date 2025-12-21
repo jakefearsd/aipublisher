@@ -54,8 +54,9 @@ import java.util.concurrent.Callable;
 @Command(
         name = "aipublisher",
         mixinStandardHelpOptions = true,
-        version = "AI Publisher 0.2.0",
+        version = "AI Publisher 0.1.1-SNAPSHOT",
         description = "Generate well-researched, fact-checked articles using AI agents.",
+        usageHelpWidth = 120,
         footer = {
                 "",
                 "Examples:",
@@ -86,8 +87,10 @@ import java.util.concurrent.Callable;
                 "",
                 "Stub Generation (fill gaps in existing wiki):",
                 "  aipublisher --analyze-gaps                     # Report gaps only",
+                "  aipublisher --analyze-gaps -u my-wiki          # Report gaps with universe context",
                 "  aipublisher --stubs-only                       # Generate stubs for existing content",
-                "  aipublisher --stubs-only --context \"Finance\"   # With domain context",
+                "  aipublisher --stubs-only -u my-wiki            # Generate stubs with universe context",
+                "  aipublisher --stubs-only --context \"Finance\"   # With manual domain context",
                 "",
                 "Cost Profiles (for --discover):",
                 "  MINIMAL       Quick prototype, 2-4 topics, ~$0.50-2",

@@ -97,6 +97,40 @@ public final class JsonParsingUtils {
     }
 
     /**
+     * Get a multi-line string from a JSON node, normalizing escaped newlines.
+     * <p>
+     * Some LLMs produce literal "\n" text instead of actual newlines when asked
+     * to include multi-line content in JSON. This method converts those to real newlines.
+     *
+     * @param node The parent node
+     * @param field Field name to extract
+     * @param defaultValue Value to return if field is missing or null
+     * @return Field value with normalized newlines
+     */
+    public static String getMultilineString(JsonNode node, String field, String defaultValue) {
+        String value = getStringOrDefault(node, field, defaultValue);
+        return normalizeNewlines(value);
+    }
+
+    /**
+     * Normalize escaped newlines in a string.
+     * Converts literal "\n" (backslash-n) to actual newline characters.
+     *
+     * @param text The text to normalize
+     * @return Text with normalized newlines
+     */
+    public static String normalizeNewlines(String text) {
+        if (text == null) {
+            return null;
+        }
+        // Replace literal \n (two characters) with actual newline
+        // Also handle \r\n for Windows-style line endings
+        return text.replace("\\r\\n", "\n")
+                   .replace("\\n", "\n")
+                   .replace("\\r", "\r");
+    }
+
+    /**
      * Get an int from a JSON node, with a default if missing or null.
      *
      * @param node The parent node

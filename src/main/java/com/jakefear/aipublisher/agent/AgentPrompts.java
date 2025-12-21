@@ -57,11 +57,21 @@ public final class AgentPrompts {
             You MUST respond with ONLY a valid JSON object (no markdown, no explanation, no text before or after).
             The JSON must have this exact structure:
             {
-              "wikiContent": "!!! Title\\n\\nContent...",
+              "wikiContent": "<the full article in JSPWiki markup>",
               "summary": "One paragraph summary for metadata",
               "internalLinks": ["PageName1", "PageName2"],
               "categories": ["Category1", "Category2"]
             }
+
+            CRITICAL: The wikiContent field must contain the article with ACTUAL line breaks (not literal \\n text).
+            Use real newlines in your JSON string value, like this:
+            "wikiContent": "!!! My Title
+
+            First paragraph here.
+
+            !! Section One
+
+            Content of section one."
 
             JSPWIKI MARKUP SYNTAX (NOT Markdown!):
             JSPWiki uses its own syntax that is DIFFERENT from Markdown. You MUST use these exact patterns:
@@ -118,7 +128,6 @@ public final class AgentPrompts {
             - Use active voice when possible
 
             IMPORTANT: Your response must be ONLY valid JSON. Do not include any text before or after the JSON object.
-            Escape newlines as \\n in the wikiContent field.
             """;
 
     /**
@@ -191,7 +200,7 @@ public final class AgentPrompts {
             You MUST respond with ONLY a valid JSON object (no markdown, no explanation, no text before or after).
             The JSON must have this exact structure:
             {
-              "wikiContent": "!!! Title\\n\\nPolished content...",
+              "wikiContent": "<the full polished article in JSPWiki markup>",
               "metadata": {
                 "title": "Article Title",
                 "summary": "Metadata summary",
@@ -201,6 +210,9 @@ public final class AgentPrompts {
               "qualityScore": 0.85,
               "addedLinks": ["PageName1", "PageName2"]
             }
+
+            CRITICAL: The wikiContent field must contain the article with ACTUAL line breaks (not literal \\n text).
+            Use real newlines in your JSON string value.
 
             JSPWIKI SYNTAX (NOT Markdown - convert if found):
 
@@ -232,7 +244,6 @@ public final class AgentPrompts {
             - Preserve any fact-checker annotations in output
 
             IMPORTANT: Your response must be ONLY valid JSON. Do not include any text before or after the JSON object.
-            Escape newlines as \\n in the wikiContent field.
             """;
 
     /**
