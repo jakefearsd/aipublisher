@@ -32,14 +32,12 @@ Documents progress through six phases:
 3. **Fact Checking** - Verify all claims, identify questionable content
 4. **Editing** - Polish prose, integrate wiki links, score quality
 5. **Critique** - Validate JSPWiki syntax, review structure, final quality check
-6. **Publishing** - Write the final `.md` file to the output directory
+6. **Publishing** - Write the final `.txt` file to the output directory
 
 ## Features
 
 - **Multi-Agent Architecture** - Five specialized AI agents with role-appropriate temperature settings
 - **Multiple LLM Providers** - Support for Anthropic (Claude) and Ollama (local inference)
-- **Domain Discovery Mode** - Interactive AI-assisted session to build comprehensive topic universes
-- **Human-in-the-Loop Curation** - AI suggests topics and relationships, you curate and refine
 - **JSPWiki Syntax Output** - Native JSPWiki markup format (not Markdown) for wiki compatibility
 - **Automatic Revision Loop** - Fact checker and critic can trigger re-drafting for quality issues
 - **Syntax Validation** - Critic agent catches any Markdown syntax that should be JSPWiki
@@ -51,7 +49,8 @@ Documents progress through six phases:
 - **Web Search Integration** - Optional DuckDuckGo-based web search for research and verification
 - **Source Reliability Assessment** - Automatic classification of source trustworthiness
 - **Pipeline Monitoring** - Event system for tracking progress and metrics
-- **Flexible Configuration** - All settings overridable via command-line arguments
+- **Universe-Based Generation** - Generate articles from topic universes created with [aidiscovery](https://github.com/jakefearsd/aidiscovery)
+- **Gap Detection & Stub Generation** - Automatically detect and fill gaps in wiki content
 
 ## Requirements
 
@@ -122,7 +121,7 @@ java -jar target/aipublisher.jar
 
 ## Running Without Maven
 
-Once built, AI Publisher runs as a standalone JAR with no Maven required. This section covers all the ways to run the application.
+Once built, AI Publisher runs as a standalone JAR with no Maven required.
 
 ### Executable JAR
 
@@ -147,7 +146,7 @@ alias aipublisher='java -jar /path/to/aipublisher.jar'
 
 # Then use:
 aipublisher --topic "My Topic"
-aipublisher --discover -c minimal
+aipublisher --universe my-wiki
 
 # Option 2: Executable script
 cat > /usr/local/bin/aipublisher << 'EOF'
@@ -185,9 +184,10 @@ ANTHROPIC_API_KEY='sk-ant-api03-...' java -jar aipublisher.jar --topic "Kubernet
 # Basic article
 java -jar aipublisher.jar -t "Apache Kafka"
 
-# Customized article
+# Customized article with content type
 java -jar aipublisher.jar \
   --topic "Introduction to Docker" \
+  --type tutorial \
   --audience "developers new to containers" \
   --words 2000 \
   --output ./wiki/pages
@@ -196,19 +196,13 @@ java -jar aipublisher.jar \
 java -jar aipublisher.jar -t "GraphQL APIs" --auto-approve -q
 ```
 
-**Domain Discovery Mode:**
+**Universe-Based Generation:**
 ```bash
-# Interactive discovery (prompts for cost profile)
-java -jar aipublisher.jar --discover
+# Generate articles from a saved topic universe
+java -jar aipublisher.jar --universe my-wiki
 
-# Quick prototype (~5 minutes, ~$1 API cost)
-java -jar aipublisher.jar --discover -c minimal
-
-# Standard project (~15 minutes, ~$5 API cost)
-java -jar aipublisher.jar --discover --cost-profile balanced
-
-# Enterprise documentation (~30 minutes, ~$15 API cost)
-java -jar aipublisher.jar --discover -c comprehensive
+# Generate articles and stubs for gaps
+java -jar aipublisher.jar --universe my-wiki --generate-stubs
 ```
 
 **Working with Output:**
@@ -218,8 +212,8 @@ java -jar aipublisher.jar -t "My Topic" -o ./docs/wiki
 
 # Output structure
 ./output/
-├── MyTopic.md           # Generated JSPWiki article
-└── debug/               # Debug artifacts (if pipeline fails)
+├── MyTopic.txt           # Generated JSPWiki article
+└── debug/                # Debug artifacts (if pipeline fails)
     └── MyTopic_draft.json
 ```
 
@@ -228,654 +222,12 @@ java -jar aipublisher.jar -t "My Topic" -o ./docs/wiki
 For large wikis or extended sessions, you may want to adjust JVM memory:
 
 ```bash
-# Increase heap for large discovery sessions
-java -Xmx2g -jar aipublisher.jar --discover -c comprehensive
-
-# Enable garbage collection logging for debugging
-java -Xlog:gc -jar aipublisher.jar --discover
+# Increase heap for large universes
+java -Xmx2g -jar aipublisher.jar --universe my-wiki
 
 # Quiet mode for scripts
 java -jar aipublisher.jar -t "Topic" --auto-approve -q 2>/dev/null
 ```
-
-### Integration with Shell Scripts
-
-```bash
-#!/bin/bash
-# generate-wiki.sh - Generate articles for multiple topics
-
-TOPICS=("Apache Kafka" "Kubernetes" "Docker" "GraphQL")
-OUTPUT_DIR="./wiki/pages"
-
-for topic in "${TOPICS[@]}"; do
-  echo "Generating: $topic"
-  java -jar aipublisher.jar \
-    --topic "$topic" \
-    --output "$OUTPUT_DIR" \
-    --auto-approve \
-    --quiet
-done
-
-echo "Generated ${#TOPICS[@]} articles in $OUTPUT_DIR"
-```
-
-### Troubleshooting
-
-**Java Version Issues:**
-```bash
-# Check Java version (requires 21+)
-java -version
-
-# Use specific Java version
-/path/to/java21/bin/java -jar aipublisher.jar --help
-
-# On macOS with multiple Java versions
-/usr/libexec/java_home -v 21 --exec java -jar aipublisher.jar --help
-```
-
-**API Key Issues:**
-```bash
-# Verify API key is set
-echo $ANTHROPIC_API_KEY
-
-# Test with verbose mode
-java -jar aipublisher.jar -t "Test" -v
-```
-
-**Permission Issues:**
-```bash
-# Make JAR executable
-chmod +x aipublisher.jar
-
-# Fix key file permissions
-chmod 600 ~/.anthropic-key
-```
-
-## Domain Discovery Mode
-
-Domain Discovery is an interactive session that helps you build a comprehensive **Topic Universe** - a structured plan for your entire wiki. Instead of generating articles one at a time, you work with AI to map out your entire domain, curate topics, define relationships, and identify gaps before generating any content.
-
-### Why Use Discovery Mode?
-
-- **Strategic Planning** - Map your entire knowledge domain before writing
-- **Human-in-the-Loop** - AI suggests, you curate and refine
-- **Relationship Mapping** - Define how topics connect (prerequisites, related concepts)
-- **Gap Analysis** - AI identifies missing topics and coverage gaps
-- **Generation Ordering** - Topological sort ensures prerequisites are written first
-- **Scope Control** - Define what's in/out of scope, assumed knowledge
-
-### Starting a Discovery Session
-
-```bash
-java -jar target/aipublisher.jar --discover
-```
-
-### Cost Profiles
-
-Cost profiles control how thoroughly the AI explores your domain. Higher profiles generate more topics but consume more API credits.
-
-| Profile | Topics | Rounds | Est. Discovery Cost | Est. Content Cost | Best For |
-|---------|--------|--------|---------------------|-------------------|----------|
-| **MINIMAL** | 2-4 | 1 | $0.50-2 | $5-15 | Prototyping, testing ideas, small personal wikis |
-| **BALANCED** | 9-31 | 3 | $2-5 | $30-75 | Most wikis, documentation projects, team knowledge bases |
-| **COMPREHENSIVE** | 25-150 | 5 | $5-15 | $100-250 | Enterprise documentation, complete technical references |
-
-**Specify via CLI:**
-```bash
-# Quick prototype mode
-java -jar target/aipublisher.jar --discover -c minimal
-
-# Standard coverage (default if prompted)
-java -jar target/aipublisher.jar --discover --cost-profile balanced
-
-# Full enterprise coverage
-java -jar target/aipublisher.jar --discover -c comprehensive
-```
-
-If you don't specify a cost profile on the command line, the session will prompt you to choose one before starting.
-
-**Profile Settings Breakdown:**
-
-| Setting | MINIMAL | BALANCED | COMPREHENSIVE |
-|---------|---------|----------|---------------|
-| Max expansion rounds | 1 | 3 | 5 |
-| Topics per round | 2 | 3 | 5 |
-| Suggestions per topic | 2-6 | 5-9 | 10-14 |
-| Max complexity | Intermediate | Advanced | Expert |
-| Word count multiplier | 0.6× | 1.0× | 1.5× |
-| Gap analysis | Skipped | Enabled | Enabled |
-| Relationship depth | Core only | Important | All |
-
-### The 8 Discovery Phases
-
-Discovery mode guides you through 8 phases to build a complete topic universe:
-
-#### Phase 1: Seed Input
-Provide your domain name and initial seed topics - the core subjects you definitely want to cover.
-
-```
-╔═══════════════════════════════════════════════════════════════════╗
-║              AI PUBLISHER - DOMAIN DISCOVERY MODE                 ║
-╚═══════════════════════════════════════════════════════════════════╝
-
-What domain or subject area is this wiki about?
-
-Examples:
-  • Apache Kafka
-  • Cloud Native Development
-  • Machine Learning Operations
-
-Domain name: Apache Kafka
-
-Enter your initial seed topics (one per line, empty line to finish):
-Seed topic 1: Kafka Producers
-  Brief description: How to send messages to Kafka
-Seed topic 2: Kafka Consumers
-  Brief description: How to read messages from Kafka
-Seed topic 3:
-
-Which topic should be the main landing page?
-  1. Kafka Producers
-  2. Kafka Consumers
-Selection [1]: 1
-
-✓ Created domain 'Apache Kafka' with 2 seed topics
-```
-
-#### Phase 2: Scope Setup (Optional)
-Define boundaries to help AI generate more relevant suggestions.
-
-```
-Configure scope? [Y/n/skip]: y
-
-What knowledge should readers already have? (comma-separated)
-Examples: Java programming, basic SQL, command line familiarity
-Assumed knowledge: Java programming, basic distributed systems
-
-What topics should be explicitly excluded? (comma-separated)
-Out of scope: Kafka Streams (separate wiki), Kafka Connect
-
-Any specific areas to prioritize? (comma-separated)
-Focus areas: Production deployment, Performance tuning
-
-Target audience description: Backend developers new to event streaming
-```
-
-#### Phase 3: Topic Expansion
-AI analyzes your seed topics and suggests related topics. You curate each suggestion.
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Expanding from: Kafka Producers
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-┌──────────────────────────────────────────────────────────┐
-│ 1/7: Producer Configuration                              │
-├──────────────────────────────────────────────────────────┤
-│ Essential settings for Kafka producers including acks,   │
-│ retries, batch size, and compression options.            │
-│ Category: component           Relevance: ████████░░ 80%  │
-│ Type: Reference               Complexity: Intermediate   │
-│ Why: Critical for production deployments                 │
-└──────────────────────────────────────────────────────────┘
-
-  [A]ccept  [R]eject  [D]efer  [M]odify  [S]kip rest  [Q]uit
-  Decision: a
-  ✓ Accepted
-
-┌──────────────────────────────────────────────────────────┐
-│ 2/7: Message Serialization                               │
-├──────────────────────────────────────────────────────────┤
-│ How to serialize messages using Avro, JSON, or Protobuf  │
-│ Category: prerequisite        Relevance: ███████░░░ 70%  │
-│ Type: Concept                 Complexity: Intermediate   │
-│ Why: Understanding serialization is essential            │
-└──────────────────────────────────────────────────────────┘
-
-  [A]ccept  [R]eject  [D]efer  [M]odify  [S]kip rest  [Q]uit
-  Decision: m
-
-  Current name: Message Serialization
-  New name [keep current]: Kafka Serialization Formats
-  Current description: How to serialize messages using Avro...
-  New description [keep current]:
-  ✓ Modified and accepted
-```
-
-**Curation Options:**
-- **Accept** - Add topic to universe as-is
-- **Reject** - Skip this topic entirely
-- **Defer** - Save to backlog for later consideration
-- **Modify** - Change name/description before accepting
-- **Skip rest** - Auto-accept high-relevance, defer low-relevance
-
-#### Phase 4: Relationship Mapping
-AI suggests how topics relate to each other. You confirm or modify relationships.
-
-```
-Analyzing relationships between your 12 topics...
-
-Found 15 potential relationships. Review the important ones:
-
-● Kafka Basics ──[PREREQUISITE_OF]──> Kafka Producers
-  └─ Understanding core concepts is essential before producing
-  [C]onfirm  [R]eject  [T]ype change: c
-  ✓ Confirmed
-
-◐ Producer Configuration ──[PART_OF]──> Kafka Producers
-  └─ Configuration is a component of producer setup
-  [C]onfirm  [R]eject  [T]ype change: t
-
-  Select relationship type:
-    1. Prerequisite Of
-    2. Part Of ← current
-    3. Example Of
-    4. Related To
-    5. Contrasts With
-    6. Implements
-    7. Supersedes
-    8. Pairs With
-  Selection: 4
-  ✓ Confirmed as RELATED_TO
-```
-
-**Relationship Types:**
-| Type | Meaning | Example |
-|------|---------|---------|
-| `PREREQUISITE_OF` | Must understand A before B | Java → Spring Boot |
-| `PART_OF` | A is a component of B | Partitions → Topics |
-| `EXAMPLE_OF` | A is an instance of B | Avro → Serialization |
-| `RELATED_TO` | Related but neither prerequisite | Producers ↔ Consumers |
-| `CONTRASTS_WITH` | Alternatives or opposites | Kafka vs RabbitMQ |
-| `IMPLEMENTS` | A implements concept B | KafkaProducer → Producer API |
-| `SUPERSEDES` | A replaces B | New API → Legacy API |
-| `PAIRS_WITH` | Commonly used together | Producers + Schema Registry |
-
-#### Phase 5: Gap Analysis
-AI analyzes your topic coverage and identifies potential gaps.
-
-```
-Analyzing topic coverage for gaps...
-
-Coverage Assessment:
-  Coverage:      ████████░░ 80%
-  Balance:       ███████░░░ 70%
-  Connectedness: █████████░ 90%
-
-Summary: Good coverage of producer topics but consumer side needs more depth.
-
-Found 3 gaps to review:
-
-🔴 [MISSING_PREREQUISITE] Consumer Group Coordination
-   Resolution: Add topic explaining how consumer groups coordinate
-
-   Add suggested topic 'Consumer Group Coordination'? [Y/n]: y
-   ✓ Topic added
-
-🟡 [COVERAGE_GAP] Error handling patterns not covered
-   Resolution: Add troubleshooting guide for common producer errors
-
-   Add suggested topic 'Producer Error Handling'? [Y/n]: y
-   ✓ Topic added
-
-🟢 [DEPTH_IMBALANCE] Security topics are shallow
-   Resolution: Consider expanding authentication/authorization coverage
-
-   Add suggested topic 'Kafka Security'? [Y/n]: n
-   → Skipped
-```
-
-**Gap Severity Levels:**
-- 🔴 **Critical** - Missing essential prerequisite or core concept
-- 🟡 **Moderate** - Notable gap that should be addressed
-- 🟢 **Minor** - Nice to have, can be addressed later
-
-#### Phase 6: Depth Calibration (Optional)
-Adjust word counts and complexity levels for each topic.
-
-```
-Would you like to adjust topic depths?
-Calibrate depths? [y/N/skip]: y
-
-Current topics and suggested word counts:
-
-   1. Kafka Producers                Intermediate (1000 words)
-   2. Producer Configuration         Intermediate (1000 words)
-   3. Kafka Serialization Formats    Intermediate (1000 words)
-   4. Consumer Group Coordination    Advanced (1500 words)
-   ...
-
-Enter topic number to adjust, or press Enter to finish:
-Topic #: 4
-  Current: Advanced (1500 words)
-  New word count: 2000
-  ✓ Updated
-
-Topic #:
-```
-
-#### Phase 7: Prioritization
-Assign generation priorities to control which topics are written first.
-
-```
-Review topic priorities:
-
-  Priority levels:
-    1. MUST_HAVE   - Essential, generate first
-    2. SHOULD_HAVE - Important, generate second
-    3. NICE_TO_HAVE - Optional, generate if time permits
-    4. BACKLOG     - Future consideration
-
-  MUST_HAVE (3 topics):
-    • Kafka Producers
-    • Kafka Consumers
-    • Kafka Basics
-
-  SHOULD_HAVE (8 topics):
-    • Producer Configuration
-    • Consumer Configuration
-    • Kafka Serialization Formats
-    ...
-
-Adjust priorities? [y/N]: y
-
-Enter topic name and new priority (e.g., 'Kafka Security 3'):
-> Kafka Security 1
-  ✓ Updated
->
-```
-
-#### Phase 8: Review
-Final review before saving the topic universe.
-
-```
-╔═══════════════════════════════════════════════════════════════════╗
-║                        DISCOVERY SUMMARY                          ║
-╚═══════════════════════════════════════════════════════════════════╝
-
-  Domain:        Apache Kafka
-  Topics:        14 accepted
-  Relationships: 23 mapped
-  Backlog:       3 items
-
-  Suggested generation order:
-     1. Kafka Basics [MUST_HAVE]
-     2. Kafka Producers [MUST_HAVE]
-     3. Kafka Consumers [MUST_HAVE]
-     4. Producer Configuration [SHOULD_HAVE]
-     5. Consumer Configuration [SHOULD_HAVE]
-     6. Kafka Serialization Formats [SHOULD_HAVE]
-     7. Consumer Group Coordination [SHOULD_HAVE]
-     8. Producer Error Handling [SHOULD_HAVE]
-     9. Kafka Security [MUST_HAVE]
-    10. Message Retention [SHOULD_HAVE]
-    ... and 4 more
-
-───────────────────────────────────────────────────────────────────
-
-Finalize this topic universe? [Y/n]: y
-
-✓ Topic universe finalized!
-
-Session ID: a1b2c3d4
-
-═══════════════════════════════════════════════════════════════════
-Topic universe saved!
-
-  ID:       kafka-wiki-2024-01
-  Name:     Apache Kafka
-  Topics:   14 accepted
-  Location: ~/.aipublisher/universes/kafka-wiki-2024-01.universe.json
-
-To generate articles from this universe, use:
-  aipublisher --universe kafka-wiki-2024-01
-═══════════════════════════════════════════════════════════════════
-```
-
-### Topic Universe Data Model
-
-The discovery session creates a `TopicUniverse` - a structured representation of your wiki's content plan:
-
-```
-TopicUniverse
-├── id: "kafka-wiki-2024-01"
-├── name: "Apache Kafka"
-├── description: "Comprehensive Kafka documentation for developers"
-├── topics: [
-│   ├── Topic {
-│   │   id: "KafkaProducers"
-│   │   name: "Kafka Producers"
-│   │   status: ACCEPTED
-│   │   priority: MUST_HAVE
-│   │   contentType: TUTORIAL
-│   │   complexity: INTERMEDIATE
-│   │   estimatedWords: 1500
-│   │   emphasize: ["performance", "error handling"]
-│   │   skip: ["legacy APIs"]
-│   │   isLandingPage: true
-│   │   }
-│   └── ...
-│   ]
-├── relationships: [
-│   ├── TopicRelationship {
-│   │   source: "KafkaBasics"
-│   │   target: "KafkaProducers"
-│   │   type: PREREQUISITE_OF
-│   │   status: CONFIRMED
-│   │   }
-│   └── ...
-│   ]
-├── scope: {
-│   assumedKnowledge: ["Java programming"]
-│   outOfScope: ["Kafka Streams"]
-│   focusAreas: ["Production deployment"]
-│   audienceDescription: "Backend developers new to event streaming"
-│   }
-└── backlog: ["Kafka Connect Integration", ...]
-```
-
-### Saved Universe Location
-
-Topic universes are saved to:
-```
-~/.aipublisher/universes/<universe-id>.universe.json
-```
-
-You can:
-- View saved universes with any JSON viewer
-- Edit them manually if needed
-- Share them with team members
-- Version control them alongside your wiki
-
-### Scope Configuration Reference
-
-The `scope` section of a universe file controls how content is written across all articles. This is where you define your audience, domain context, writing intent, and content boundaries.
-
-```json
-"scope": {
-  "audienceDescription": "Backend developers new to event streaming who have 1-2 years of programming experience",
-  "domainDescription": "Apache Kafka ecosystem for building real-time data pipelines and streaming applications",
-  "intent": "Educational tutorials that build understanding progressively. Use clear explanations, practical examples, and a friendly but professional tone. Focus on why concepts matter, not just how they work.",
-  "assumedKnowledge": ["Java programming basics", "Command line familiarity", "Basic networking concepts"],
-  "outOfScope": ["Kafka Streams (covered in separate wiki)", "Kafka Connect connectors", "Cloud-specific deployments"],
-  "focusAreas": ["Production deployment", "Performance tuning", "Error handling patterns"],
-  "preferredLanguage": "Java"
-}
-```
-
-#### Scope Fields
-
-| Field | Purpose | How It Influences Content |
-|-------|---------|---------------------------|
-| `audienceDescription` | **Who** the readers are | Adjusts vocabulary, depth of explanation, and assumed context. A "beginner" audience gets more foundational context; "senior engineers" get more advanced details. |
-| `domainDescription` | **What** domain/context | Provides context for the AI to understand the subject area and generate relevant examples and terminology. |
-| `intent` | **Why/How** to write | Controls tone, style, and purpose. This is your primary lever for shaping how content reads - whether educational, reference-style, conversational, formal, etc. |
-| `assumedKnowledge` | What readers already know | Listed concepts won't be explained in detail. The AI assumes readers understand these and focuses on new material. |
-| `outOfScope` | What to exclude | Topics listed here are explicitly avoided. Useful for preventing overlap with other documentation or focusing the wiki. |
-| `focusAreas` | What to emphasize | These aspects receive extra attention and depth. Good for highlighting what matters most to your readers. |
-| `preferredLanguage` | Programming language | Code examples use this language. Leave empty for non-programming topics. |
-
-#### Intent Examples
-
-The `intent` field is your most powerful tool for controlling content tone and style:
-
-**Educational/Tutorial Style:**
-```json
-"intent": "Educational tutorials for complete beginners. Build concepts step-by-step with simple language, relatable analogies, and hands-on examples. Explain the 'why' before the 'how'. Use a friendly, encouraging tone."
-```
-
-**Technical Reference Style:**
-```json
-"intent": "Comprehensive technical reference for experienced practitioners. Be precise and thorough. Include edge cases, performance considerations, and implementation details. Maintain formal, authoritative tone."
-```
-
-**Quick Reference/Cheatsheet Style:**
-```json
-"intent": "Quick reference guides for daily use. Be concise and scannable. Use bullet points, tables, and code snippets. Minimize prose - readers want answers fast."
-```
-
-**Conceptual/Architectural Style:**
-```json
-"intent": "High-level architectural guidance for system designers. Focus on trade-offs, patterns, and decision frameworks. Use diagrams conceptually. Less code, more reasoning."
-```
-
-### Manually Editing Universe Files
-
-Universe files are standard JSON and can be edited with any text editor. This section covers the complete file structure and how each field affects content generation.
-
-#### Complete Universe File Structure
-
-```json
-{
-  "id": "my-wiki-id",
-  "name": "My Wiki Name",
-  "description": "Brief description of the wiki's purpose",
-  "topics": [
-    {
-      "id": "TopicId",
-      "name": "Human Readable Topic Name",
-      "description": "What this topic covers",
-      "status": "ACCEPTED",
-      "contentType": "TUTORIAL",
-      "complexity": "INTERMEDIATE",
-      "priority": "MUST_HAVE",
-      "estimatedWords": 1500,
-      "emphasize": ["specific aspect to highlight"],
-      "skip": ["aspect to minimize"],
-      "userNotes": "Personal notes for reference",
-      "isLandingPage": false,
-      "category": "CategoryName"
-    }
-  ],
-  "relationships": [
-    {
-      "id": "rel-uuid",
-      "sourceTopicId": "TopicA",
-      "targetTopicId": "TopicB",
-      "type": "PREREQUISITE_OF",
-      "status": "CONFIRMED"
-    }
-  ],
-  "scope": {
-    "audienceDescription": "",
-    "domainDescription": "",
-    "intent": "",
-    "assumedKnowledge": [],
-    "outOfScope": [],
-    "focusAreas": [],
-    "preferredLanguage": ""
-  },
-  "backlog": ["Future topic idea 1", "Future topic idea 2"],
-  "createdAt": "2024-01-15T10:30:00Z",
-  "modifiedAt": "2024-01-15T10:30:00Z"
-}
-```
-
-#### Topic Fields Reference
-
-| Field | Type | Description | Effect on Generation |
-|-------|------|-------------|---------------------|
-| `id` | string | Unique identifier (CamelCase) | Used for file naming and relationships |
-| `name` | string | Display name | Article title |
-| `description` | string | What the topic covers | Guides research and content focus |
-| `status` | enum | PROPOSED, ACCEPTED, REJECTED, GENERATED, DEFERRED | Only ACCEPTED topics are generated |
-| `contentType` | enum | CONCEPT, TUTORIAL, REFERENCE, HOW_TO, TROUBLESHOOTING, COMPARISON | Controls article structure and style |
-| `complexity` | enum | BEGINNER, INTERMEDIATE, ADVANCED, EXPERT | Adjusts depth and prerequisite assumptions |
-| `priority` | enum | MUST_HAVE, SHOULD_HAVE, NICE_TO_HAVE, BACKLOG | Generation order (MUST_HAVE first) |
-| `estimatedWords` | int | Target word count | Article length |
-| `emphasize` | array | Aspects to highlight | Extra focus on these areas |
-| `skip` | array | Aspects to minimize | These won't be covered in depth |
-| `userNotes` | string | Personal notes | Not used in generation, for your reference |
-| `isLandingPage` | bool | Main entry point | Gets summary/overview treatment |
-| `category` | string | Wiki category | Used in article metadata |
-
-#### Content Types
-
-| Type | Best For | Typical Structure |
-|------|----------|-------------------|
-| `CONCEPT` | Explaining ideas, theories | Definition → Explanation → Examples → See Also |
-| `TUTORIAL` | Step-by-step learning | Overview → Prerequisites → Steps → Verification |
-| `REFERENCE` | API docs, specifications | Synopsis → Parameters → Returns → Examples |
-| `HOW_TO` | Task completion guides | Goal → Prerequisites → Steps → Troubleshooting |
-| `TROUBLESHOOTING` | Problem solving | Symptom → Cause → Solution → Prevention |
-| `COMPARISON` | Evaluating options | Overview → Criteria → Comparison Table → Recommendations |
-
-#### Relationship Types
-
-| Type | Meaning | Generation Effect |
-|------|---------|-------------------|
-| `PREREQUISITE_OF` | A must be understood before B | A generates before B; B links back to A |
-| `PART_OF` | A is a component of B | A may be more detailed; B provides overview |
-| `RELATED_TO` | Loosely connected | Cross-linking between articles |
-| `EXAMPLE_OF` | A is an instance of B | A inherits context from B |
-| `CONTRASTS_WITH` | Alternatives | Comparison content generated |
-| `IMPLEMENTS` | A implements pattern B | A references B's concepts |
-| `SUPERSEDES` | A replaces B | B marked as legacy if present |
-| `PAIRS_WITH` | Commonly used together | Both mention each other |
-
-#### Common Editing Tasks
-
-**Adding a new topic:**
-```json
-{
-  "id": "NewTopicName",
-  "name": "New Topic Name",
-  "description": "What this new topic will cover",
-  "status": "ACCEPTED",
-  "contentType": "CONCEPT",
-  "complexity": "INTERMEDIATE",
-  "priority": "SHOULD_HAVE",
-  "estimatedWords": 1000,
-  "emphasize": [],
-  "skip": [],
-  "userNotes": "",
-  "isLandingPage": false,
-  "category": ""
-}
-```
-
-**Changing generation order:**
-- Set `priority` to `MUST_HAVE` for topics to generate first
-- Add `PREREQUISITE_OF` relationships to enforce ordering
-
-**Adjusting content style for all articles:**
-- Edit the `scope.intent` field (see Intent Examples above)
-
-**Excluding topics from generation:**
-- Change `status` from `ACCEPTED` to `DEFERRED` or `REJECTED`
-
-**Adding topics flagged from gap analysis:**
-- Add new topic entries to the `topics` array with `status: "ACCEPTED"`
-
-### Best Practices for Discovery
-
-1. **Start with 3-5 seed topics** - Don't try to enumerate everything upfront
-2. **Be specific in descriptions** - Helps AI generate better suggestions
-3. **Define scope early** - Prevents AI from suggesting off-topic content
-4. **Use the backlog** - Defer interesting but non-essential topics
-5. **Review relationships carefully** - They determine generation order
-6. **Address critical gaps** - These are often missing prerequisites
-7. **Prioritize ruthlessly** - MUST_HAVE should be your core content
 
 ## Gap Detection and Stub Generation
 
@@ -910,41 +262,6 @@ java -jar target/aipublisher.jar --analyze-gaps --universe investing-basics
 java -jar target/aipublisher.jar --analyze-gaps --context "Finance"
 ```
 
-Output example:
-```
-╔═══════════════════════════════════════════════════════════════════╗
-║              AI PUBLISHER - GAP ANALYSIS MODE                     ║
-╚═══════════════════════════════════════════════════════════════════╝
-
-Analyzing wiki content for gaps...
-
-Detected 8 gap concepts:
-
-Definition (5):
-  - Present Value [Definition] (referenced by: CompoundInterest, TimeValueOfMoney)
-  - Discount Rate [Definition] (referenced by: CompoundInterest)
-  - Principal [Definition] (referenced by: CompoundInterest, SimpleInterest)
-  - Annual Percentage Rate [Definition] (referenced by: CompoundInterest)
-  - Amortization [Definition] (referenced by: LoanBasics)
-
-Redirect (1):
-  - APR [Redirect] -> AnnualPercentageRate (referenced by: LoanBasics)
-
-Full Article (1):
-  - Inflation [Full Article] (referenced by: InvestingBasics, CompoundInterest)
-
-Ignore (1):
-  - money [Ignore]
-
-═══════════════════════════════════════════════════════════════════
-Total gaps: 8
-
-To generate stubs for these gaps, use:
-  aipublisher --stubs-only
-  aipublisher --stubs-only --context "Finance"
-═══════════════════════════════════════════════════════════════════
-```
-
 ### Generating Stubs Only
 
 To generate stub pages for existing wiki content without generating main articles:
@@ -963,49 +280,6 @@ java -jar target/aipublisher.jar --stubs-only --context "Investing Basics"
 java -jar target/aipublisher.jar --stubs-only --universe investing-basics --audience "financial professionals"
 ```
 
-Output example:
-```
-╔═══════════════════════════════════════════════════════════════════╗
-║              AI PUBLISHER - STUB GENERATION MODE                  ║
-╚═══════════════════════════════════════════════════════════════════╝
-
-Loaded universe: investing-basics
-Domain context: Investing Basics
-Target audience: general readers
-
-Generate stub pages for gap concepts? [Y/n]: y
-
-Analyzing wiki content for gaps...
-Detected 8 gap concepts
-  - Definitions to generate: 5
-  - Redirects to create: 1
-  - Full articles needed: 1 (flagged for review)
-  - Ignored (too generic): 1
-
-Generating definition stubs...
-  ✓ Generated: PresentValue.txt
-  ✓ Generated: DiscountRate.txt
-  ✓ Generated: Principal.txt
-  ✓ Generated: AnnualPercentageRate.txt
-  ✓ Generated: Amortization.txt
-
-Creating redirect pages...
-  ✓ Generated: APR.txt
-
-Gaps requiring full articles (add to universe for generation):
-  - Inflation (referenced by: InvestingBasics, CompoundInterest)
-
-═══════════════════════════════════════════════════════════════════
-Stub generation complete!
-
-  Gaps detected:    8
-  Stubs generated:  5
-  Redirects:        1
-  Ignored:          1
-  Flagged review:   1
-═══════════════════════════════════════════════════════════════════
-```
-
 ### Generating Stubs After Universe Generation
 
 To automatically generate stubs after generating articles from a universe:
@@ -1021,40 +295,13 @@ This will:
 4. Generate stub pages for gap concepts
 5. Report any concepts that need full articles
 
-### Example Stub Page Output
-
-**Definition stub (PresentValue.txt):**
-```
-!!! Present Value
-
-__Present Value__ (PV) is the current worth of a future sum of money or stream of cash flows, given a specified rate of return. It represents how much a future payment is worth in today's dollars.
-
-The concept is fundamental to financial analysis and investment decisions. A dollar received today is worth more than a dollar received in the future because of its earning potential.
-
-!! See Also
-* [CompoundInterest]
-* [TimeValueOfMoney]
-* [DiscountRate]
-
-[{SET categories='Finance,InvestingConcepts'}]
-```
-
-**Redirect page (APR.txt):**
-```
-This page redirects to [AnnualPercentageRate].
-
-If you are not automatically redirected, click the link above.
-
-[{SET categories='Redirects'}]
-```
-
 ### Stub Generation Workflow
 
 The recommended workflow for comprehensive wiki coverage:
 
-1. **Create a topic universe** (optional but recommended):
+1. **Create a topic universe** (using aidiscovery):
    ```bash
-   java -jar target/aipublisher.jar --discover -c balanced
+   aidiscovery -c balanced
    ```
 
 2. **Generate main articles**:
@@ -1074,22 +321,14 @@ The recommended workflow for comprehensive wiki coverage:
 
 5. **Review flagged topics** - Any concepts flagged as FULL_ARTICLE should be added to your universe for comprehensive coverage.
 
-### Best Practices for Stub Generation
-
-1. **Run analysis first** - Use `--analyze-gaps` to preview before generating
-2. **Use universe context** - Use `--universe` to load domain name and audience from your saved universe
-3. **Review redirects** - Verify redirect targets are correct
-4. **Track full article flags** - Add significant gaps to your topic universe
-5. **Iterate** - After adding stub pages, run analysis again to catch new gaps
-
 ## Command Line Reference
 
 ```
-Usage: aipublisher [-hiqvV] [--auto-approve] [--discover] [--analyze-gaps]
-                   [--stubs-only] [--generate-stubs] [-c=<costProfile>]
-                   [-a=<audience>] [-k=<apiKey>] [--key-file=<keyFile>]
-                   [-o=<outputDirectory>] [-t=<topic>] [-u=<universe>]
-                   [-w=<wordCount>] [--context=<context>]
+Usage: aipublisher [-hiqvV] [--auto-approve] [--analyze-gaps] [--stubs-only]
+                   [--generate-stubs] [-a=<audience>] [-k=<apiKey>]
+                   [--key-file=<keyFile>] [-o=<outputDirectory>] [-t=<topic>]
+                   [--type=<contentType>] [-u=<universe>] [-w=<wordCount>]
+                   [--context=<context>] [--goal=<goal>]
                    [--related=<relatedPages>]... [--sections=<requiredSections>]...
 
 Generate well-researched, fact-checked articles using AI agents.
@@ -1097,11 +336,9 @@ Generate well-researched, fact-checked articles using AI agents.
 Options:
   -t, --topic=<topic>        Topic to write about (prompts interactively if not
                                specified)
-      --discover             Launch interactive domain discovery session
+      --type=<type>          Content type: concept, tutorial, reference, guide,
+                               comparison, troubleshooting, overview
   -u, --universe=<id>        Generate articles from a saved topic universe
-  -c, --cost-profile=<profile>
-                             Cost profile for discovery: MINIMAL, BALANCED, or
-                               COMPREHENSIVE (prompts if not specified)
   -i, --interactive          Force interactive mode even with topic specified
   -a, --audience=<audience>  Target audience for the article
                                (default: general readers)
@@ -1109,7 +346,8 @@ Options:
   -o, --output=<outputDirectory>
                              Output directory for generated articles
                                (default: ./output)
-      --context=<context>    Domain context for stub generation
+      --context=<context>    Domain context (e.g., 'e-commerce', 'microservices')
+      --goal=<goal>          Specific goal or outcome for tutorials and guides
       --sections=<sec1,sec2> Required sections (comma-separated)
       --related=<page1,page2>
                              Related pages for internal linking (comma-separated)
@@ -1125,6 +363,8 @@ LLM Provider Options:
       --ollama.base-url=<url>
                              Ollama server URL (default: http://localhost:11434)
       --ollama.model=<model> Ollama model name (default: qwen2.5:14b)
+      --ollama.timeout=<duration>
+                             Request timeout, ISO-8601 (default: PT5M)
       --anthropic.model=<model>
                              Anthropic model name (default: claude-sonnet-4-20250514)
 
@@ -1133,10 +373,16 @@ Pipeline Options:
                              Skip fact-checking phase (default: false)
       --pipeline.skip-critique=<bool>
                              Skip critique phase (default: false)
+      --pipeline.max-revision-cycles=<n>
+                             Max revision cycles before failing (default: 3)
 
 Quality Options:
       --quality.require-verified-claims=<bool>
                              Require verified claims from fact-checker (default: true)
+      --quality.min-factcheck-confidence=<level>
+                             Minimum confidence: LOW, MEDIUM, HIGH (default: MEDIUM)
+      --quality.min-editor-score=<n>
+                             Minimum editor score 0.0-1.0 (default: 0.8)
 
 Stub Generation Options:
       --analyze-gaps         Analyze wiki for gaps (report only, no generation)
@@ -1150,24 +396,25 @@ API Key Options:
       --key-file=<keyFile>   Path to file containing Anthropic API key
       ANTHROPIC_API_KEY      Environment variable (default)
 
-Cost Profiles (for --discover):
-  MINIMAL                    Quick prototype, 2-4 topics, ~$0.50-2
-  BALANCED                   Good coverage, 9-31 topics, ~$2-5 (default)
-  COMPREHENSIVE              Full coverage, 25-150 topics, ~$5-15
+Content Types:
+  concept         Explains what something is
+  tutorial        Step-by-step guide
+  reference       Quick lookup information
+  guide           Decision support and best practices
+  comparison      Analyzes alternatives
+  troubleshooting Problem diagnosis and solutions
+  overview        High-level introduction
 
 Examples:
   aipublisher                                    # Interactive mode
-  aipublisher --discover                         # Domain discovery (prompts for profile)
-  aipublisher --discover -c minimal              # Quick prototype mode
-  aipublisher --discover --cost-profile balanced # Standard coverage
   aipublisher -t "Apache Kafka"                  # Simple topic
-  aipublisher --topic "Machine Learning" --audience "beginners" --words 1500
+  aipublisher -t "How to use Docker" --type tutorial
+  aipublisher -t "Kafka vs RabbitMQ" --type comparison
   aipublisher -t "Docker" -a "DevOps engineers" -w 1000 --auto-approve
-  aipublisher -t "Kubernetes" -k sk-ant-api03-xxxxx
-  aipublisher -t "Kubernetes" --key-file ~/.anthropic-key
-  aipublisher -u my-wiki --generate-stubs        # Generate articles and stubs
-  aipublisher --analyze-gaps -u my-wiki          # Report gaps with universe context
-  aipublisher --stubs-only -u my-wiki            # Generate stubs with universe context
+  aipublisher --universe my-wiki                 # Generate from universe
+  aipublisher --universe my-wiki --generate-stubs
+  aipublisher --analyze-gaps --universe my-wiki
+  aipublisher --stubs-only --universe my-wiki
 
   # Using Ollama (local inference)
   aipublisher -t "Topic" --llm.provider=ollama
@@ -1295,7 +542,7 @@ search.max-results=5
 ```properties
 # Where to write generated articles
 output.directory=./output
-output.file-extension=.md
+output.file-extension=.txt
 ```
 
 ### Quality Thresholds
@@ -1444,15 +691,6 @@ src/main/java/com/jakefear/aipublisher/
 │   ├── BaseAgent.java        # Common agent functionality
 │   └── AgentPrompts.java     # System prompts for all agents
 │
-├── discovery/                # Domain discovery system
-│   ├── DiscoverySession.java       # Session state management
-│   ├── DiscoveryPhase.java         # 8-phase state machine
-│   ├── TopicExpander.java          # AI topic suggestion service
-│   ├── RelationshipSuggester.java  # AI relationship mapping
-│   ├── GapAnalyzer.java            # Coverage gap analysis
-│   ├── TopicSuggestion.java        # Suggested topic record
-│   └── RelationshipSuggestion.java # Suggested relationship record
-│
 ├── domain/                   # Topic universe data model
 │   ├── Topic.java               # Wiki topic with status/priority
 │   ├── TopicUniverse.java       # Complete domain container
@@ -1477,6 +715,11 @@ src/main/java/com/jakefear/aipublisher/
 │   ├── FinalArticle.java        # Editor output
 │   └── CriticReport.java        # Critic review results
 │
+├── gap/                      # Gap detection and stub generation
+│   ├── GapDetector.java         # Finds broken wiki links
+│   ├── GapConcept.java          # Gap concept model
+│   └── StubGenerationService.java # Generates stub pages
+│
 ├── search/                   # Web search integration
 │   ├── WebSearchService.java    # DuckDuckGo search
 │   ├── SearchResult.java        # Search result model
@@ -1497,9 +740,8 @@ src/main/java/com/jakefear/aipublisher/
 │   └── PipelineProperties.java  # Pipeline settings
 │
 └── cli/                      # Command-line interface
-    ├── AiPublisherCommand.java         # Main CLI
-    ├── InteractiveSession.java         # Single-article interactive mode
-    └── DiscoveryInteractiveSession.java # Domain discovery CLI
+    ├── AiPublisherCommand.java  # Main CLI
+    └── InteractiveSession.java  # Single-article interactive mode
 ```
 
 ## Example Session
@@ -1512,8 +754,9 @@ Running the pipeline for "Apache Kafka" produces output like:
 ║     Generate well-researched articles with AI agents      ║
 ╚═══════════════════════════════════════════════════════════╝
 
-Topic: Apache Kafka
-Audience: developers new to event streaming
+Topic:        Apache Kafka
+Content Type: Concept Explanation
+Audience:     developers new to event streaming
 Target words: 1500
 
 Phase 1: Research
@@ -1535,12 +778,12 @@ Phase 5: Critique
   Overall: 0.92, Action: APPROVE
 
 Phase 6: Publishing
-  Output: ./output/ApacheKafka.md
+  Output: ./output/ApacheKafka.txt
 
 ════════════════════════════════════════════════════════════
 SUCCESS! Article published.
 
-Output: ./output/ApacheKafka.md
+Output: ./output/ApacheKafka.txt
 Quality score: 0.92
 Word count: 1,523
 Total time: 52,341 ms
@@ -1636,16 +879,12 @@ If you prefer to run directly from source code (useful during development):
 ANTHROPIC_API_KEY='your-key' mvn spring-boot:run \
   -Dspring-boot.run.arguments="--topic='Your Topic'"
 
-# Discovery mode from source
-ANTHROPIC_API_KEY='your-key' mvn spring-boot:run \
-  -Dspring-boot.run.arguments="--discover -c minimal"
-
 # With multiple arguments
 ANTHROPIC_API_KEY='your-key' mvn spring-boot:run \
   -Dspring-boot.run.arguments="--topic='Docker',--audience='beginners',--words=1500"
 ```
 
-Note: Running via Maven is slower due to compilation overhead. For regular use, build the JAR once and use `java -jar` as described in the "Running Without Maven" section.
+Note: Running via Maven is slower due to compilation overhead. For regular use, build the JAR once and use `java -jar`.
 
 ## Technology Stack
 
@@ -1669,6 +908,12 @@ Note: Running via Maven is slower due to compilation overhead. For regular use, 
 | `mistral` | 7B | Good | Fast | General use |
 
 Note: Larger models generally produce better structured JSON and follow prompts more reliably.
+
+## Related Projects
+
+- **[aidiscovery](https://github.com/jakefearsd/aidiscovery)** - Topic universe discovery tool
+  - Create topic universes through interactive AI-assisted discovery
+  - Both tools share the `TopicUniverse` JSON format at `~/.aipublisher/universes/`
 
 ## License
 
