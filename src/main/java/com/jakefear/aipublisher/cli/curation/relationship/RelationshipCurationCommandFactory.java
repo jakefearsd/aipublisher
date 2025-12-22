@@ -20,6 +20,9 @@ public class RelationshipCurationCommandFactory {
      * @return The command, or null for quit/unrecognized
      */
     public CurationCommand<RelationshipSuggestion> getCommand(CurationAction action) {
+        if (action == null) {
+            return confirmCommand; // Default to confirm for unrecognized input
+        }
         return switch (action) {
             case CONFIRM, DEFAULT -> confirmCommand;
             case REJECT -> rejectCommand;
