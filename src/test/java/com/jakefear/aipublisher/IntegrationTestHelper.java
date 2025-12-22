@@ -1,90 +1,84 @@
 package com.jakefear.aipublisher;
 
-import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.time.Duration;
 
 /**
  * Helper class for integration tests that need an LLM.
- * Supports both Anthropic and Ollama based on environment configuration.
+ * Uses Ollama for local inference (no API key required).
  *
- * Configuration priority:
- * 1. If OLLAMA_BASE_URL is set, uses Ollama (free local inference)
- * 2. If ANTHROPIC_API_KEY is set, uses Anthropic (paid API)
- * 3. Otherwise, tests are skipped
- *
- * Environment variables:
- * - OLLAMA_BASE_URL: Ollama server URL (e.g., http://localhost:11434)
- * - OLLAMA_MODEL: Model to use (default: llama3.2)
- * - ANTHROPIC_API_KEY: Anthropic API key
- * - ANTHROPIC_MODEL: Model to use (default: claude-sonnet-4-20250514)
+ * Configuration:
+ * - OLLAMA_BASE_URL: Ollama server URL (default: http://inference.jakefear.com:11434)
+ * - OLLAMA_MODEL: Model to use (default: qwen2.5:14b)
  */
 public final class IntegrationTestHelper {
+
+    private static final String DEFAULT_OLLAMA_URL = "http://inference.jakefear.com:11434";
+    private static final String DEFAULT_OLLAMA_MODEL = "qwen2.5:14b";
 
     private IntegrationTestHelper() {
         // Utility class
     }
 
     /**
-     * Check if any LLM provider is available for integration tests.
+     * Check if the Ollama LLM provider is available for integration tests.
+     * Performs a connectivity check to the Ollama server.
      */
     public static boolean isLlmAvailable() {
-        return isOllamaAvailable() || isAnthropicAvailable();
+        return isOllamaReachable();
     }
 
     /**
-     * Check if Ollama is configured and available.
+     * Check if Ollama server is reachable.
      */
-    public static boolean isOllamaAvailable() {
-        String baseUrl = System.getenv("OLLAMA_BASE_URL");
-        return baseUrl != null && !baseUrl.isBlank();
-    }
-
-    /**
-     * Check if Anthropic API is configured.
-     */
-    public static boolean isAnthropicAvailable() {
-        String apiKey = System.getenv("ANTHROPIC_API_KEY");
-        return apiKey != null && !apiKey.isBlank();
+    public static boolean isOllamaReachable() {
+        String baseUrl = getOllamaBaseUrl();
+        try {
+            URI uri = URI.create(baseUrl + "/api/tags");
+            HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+            int responseCode = connection.getResponseCode();
+            connection.disconnect();
+            return responseCode == 200;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
      * Get the name of the active LLM provider.
      */
     public static String getProviderName() {
-        if (isOllamaAvailable()) {
-            return "Ollama (" + getOllamaModel() + ")";
-        } else if (isAnthropicAvailable()) {
-            return "Anthropic (" + getAnthropicModel() + ")";
-        }
-        return "None";
+        return "Ollama (" + getOllamaModel() + " @ " + getOllamaBaseUrl() + ")";
     }
 
     /**
-     * Build a ChatLanguageModel for integration tests.
-     * Prefers Ollama (free) over Anthropic (paid).
+     * Build a ChatLanguageModel for integration tests using Ollama.
      *
      * @param temperature The temperature setting (0.0-1.0)
      * @return Configured ChatLanguageModel
-     * @throws IllegalStateException if no LLM provider is configured
+     * @throws IllegalStateException if Ollama is not reachable
      */
     public static ChatLanguageModel buildModel(double temperature) {
-        if (isOllamaAvailable()) {
-            return buildOllamaModel(temperature);
-        } else if (isAnthropicAvailable()) {
-            return buildAnthropicModel(temperature);
+        if (!isOllamaReachable()) {
+            throw new IllegalStateException(
+                    "Ollama server not reachable at " + getOllamaBaseUrl() +
+                    ". Ensure Ollama is running.");
         }
-        throw new IllegalStateException(
-                "No LLM provider configured. Set OLLAMA_BASE_URL or ANTHROPIC_API_KEY.");
+        return buildOllamaModel(temperature);
     }
 
     /**
      * Build an Ollama model for testing.
      */
     public static ChatLanguageModel buildOllamaModel(double temperature) {
-        String baseUrl = System.getenv("OLLAMA_BASE_URL");
+        String baseUrl = getOllamaBaseUrl();
         String model = getOllamaModel();
 
         return OllamaChatModel.builder()
@@ -97,27 +91,18 @@ public final class IntegrationTestHelper {
     }
 
     /**
-     * Build an Anthropic model for testing.
+     * Get the Ollama base URL from environment or use default.
      */
-    public static ChatLanguageModel buildAnthropicModel(double temperature) {
-        String apiKey = System.getenv("ANTHROPIC_API_KEY");
-        String model = getAnthropicModel();
-
-        return AnthropicChatModel.builder()
-                .apiKey(apiKey)
-                .modelName(model)
-                .maxTokens(4096)
-                .temperature(temperature)
-                .build();
+    public static String getOllamaBaseUrl() {
+        String baseUrl = System.getenv("OLLAMA_BASE_URL");
+        return (baseUrl != null && !baseUrl.isBlank()) ? baseUrl : DEFAULT_OLLAMA_URL;
     }
 
-    private static String getOllamaModel() {
+    /**
+     * Get the Ollama model from environment or use default.
+     */
+    public static String getOllamaModel() {
         String model = System.getenv("OLLAMA_MODEL");
-        return (model != null && !model.isBlank()) ? model : "qwen2.5:14b";
-    }
-
-    private static String getAnthropicModel() {
-        String model = System.getenv("ANTHROPIC_MODEL");
-        return (model != null && !model.isBlank()) ? model : "claude-sonnet-4-20250514";
+        return (model != null && !model.isBlank()) ? model : DEFAULT_OLLAMA_MODEL;
     }
 }

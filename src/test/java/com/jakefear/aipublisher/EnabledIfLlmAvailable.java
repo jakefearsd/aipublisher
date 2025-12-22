@@ -11,15 +11,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * JUnit 5 annotation to enable tests only when an LLM provider is available.
- * Tests are enabled if either OLLAMA_BASE_URL or ANTHROPIC_API_KEY is set.
+ * JUnit 5 annotation to enable tests only when Ollama is available.
+ * Tests are enabled if the Ollama server is reachable.
  *
  * Usage:
  * <pre>
  * {@code
  * @EnabledIfLlmAvailable
  * class MyIntegrationTest {
- *     // tests here run only when an LLM is available
+ *     // tests here run only when Ollama is available
  * }
  * }
  * </pre>
@@ -34,10 +34,10 @@ public @interface EnabledIfLlmAvailable {
         public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
             if (IntegrationTestHelper.isLlmAvailable()) {
                 return ConditionEvaluationResult.enabled(
-                        "LLM available: " + IntegrationTestHelper.getProviderName());
+                        "Ollama available: " + IntegrationTestHelper.getProviderName());
             }
             return ConditionEvaluationResult.disabled(
-                    "No LLM provider configured. Set OLLAMA_BASE_URL or ANTHROPIC_API_KEY.");
+                    "Ollama server not reachable at " + IntegrationTestHelper.getOllamaBaseUrl());
         }
     }
 }

@@ -15,11 +15,12 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration tests for FactCheckerAgent using a real LLM.
+ * Integration tests for FactCheckerAgent using Ollama.
  *
- * These tests run when either Ollama or Anthropic is configured:
- * - OLLAMA_BASE_URL: Use local Ollama (free, preferred)
- * - ANTHROPIC_API_KEY: Use Anthropic API (paid)
+ * Tests run when Ollama server is reachable:
+ * - Default URL: http://inference.jakefear.com:11434
+ * - Override with OLLAMA_BASE_URL environment variable
+ * - Default model: qwen2.5:14b (override with OLLAMA_MODEL)
  *
  * Run with: mvn test -Dtest=FactCheckerAgentIntegrationTest
  * Or run all integration tests: mvn test -Dgroups=integration
