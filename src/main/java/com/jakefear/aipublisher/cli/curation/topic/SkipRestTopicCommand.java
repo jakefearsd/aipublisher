@@ -7,6 +7,7 @@ import com.jakefear.aipublisher.cli.input.ConsoleInputHelper;
 import com.jakefear.aipublisher.discovery.DiscoverySession;
 import com.jakefear.aipublisher.discovery.TopicSuggestion;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,7 +21,9 @@ public class SkipRestTopicCommand implements CurationCommand<TopicSuggestion> {
     private final List<TopicSuggestion> remainingSuggestions;
 
     public SkipRestTopicCommand(List<TopicSuggestion> remainingSuggestions) {
-        this.remainingSuggestions = remainingSuggestions;
+        // Create defensive copy immediately to avoid ConcurrentModificationException
+        // when remainingSuggestions is a subList view of the pending list
+        this.remainingSuggestions = new ArrayList<>(remainingSuggestions);
     }
 
     @Override
@@ -29,7 +32,7 @@ public class SkipRestTopicCommand implements CurationCommand<TopicSuggestion> {
         // Process current suggestion first
         processBasedOnRelevance(suggestion, session);
 
-        // Then process all remaining suggestions
+        // Process all remaining suggestions (already a copy from constructor)
         for (TopicSuggestion remaining : remainingSuggestions) {
             processBasedOnRelevance(remaining, session);
         }

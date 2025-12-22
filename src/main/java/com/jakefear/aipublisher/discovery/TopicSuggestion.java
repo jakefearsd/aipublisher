@@ -18,7 +18,8 @@ public record TopicSuggestion(
         int suggestedWordCount,
         double relevanceScore,
         String rationale,
-        String sourceContext
+        String sourceContext,
+        double searchConfidence
 ) {
     /**
      * Compact constructor with validation.
@@ -38,6 +39,7 @@ public record TopicSuggestion(
         if (relevanceScore < 0 || relevanceScore > 1) relevanceScore = 0.5;
         if (rationale == null) rationale = "";
         if (sourceContext == null) sourceContext = "";
+        if (searchConfidence < 0 || searchConfidence > 1) searchConfidence = -1.0; // -1 means not validated
     }
 
     /**
@@ -46,7 +48,7 @@ public record TopicSuggestion(
     public static TopicSuggestion simple(String name, String description) {
         return new TopicSuggestion(
                 name, description, "", ContentType.CONCEPT,
-                ComplexityLevel.INTERMEDIATE, 1000, 0.5, "", ""
+                ComplexityLevel.INTERMEDIATE, 1000, 0.5, "", "", -1.0
         );
     }
 
@@ -63,8 +65,37 @@ public record TopicSuggestion(
             String rationale) {
         return new TopicSuggestion(
                 name, description, category, contentType, complexity,
-                complexity.getMinWords(), relevance, rationale, ""
+                complexity.getMinWords(), relevance, rationale, "", -1.0
         );
+    }
+
+    /**
+     * Create a copy of this suggestion with a specific search confidence.
+     */
+    public TopicSuggestion withSearchConfidence(double confidence) {
+        return new TopicSuggestion(
+                name, description, category, suggestedContentType,
+                suggestedComplexity, suggestedWordCount, relevanceScore,
+                rationale, sourceContext, confidence
+        );
+    }
+
+    /**
+     * Check if this suggestion has been validated against search.
+     */
+    public boolean isSearchValidated() {
+        return searchConfidence >= 0;
+    }
+
+    /**
+     * Get a confidence indicator for display.
+     */
+    public String getConfidenceIndicator() {
+        if (searchConfidence < 0) return "⚪ Not validated";
+        if (searchConfidence >= 0.8) return "🟢 High confidence";
+        if (searchConfidence >= 0.5) return "🟡 Medium confidence";
+        if (searchConfidence >= 0.3) return "🟠 Low confidence";
+        return "🔴 Not found in search";
     }
 
     /**
@@ -106,6 +137,7 @@ public record TopicSuggestion(
         private double relevanceScore = 0.5;
         private String rationale = "";
         private String sourceContext = "";
+        private double searchConfidence = -1.0;
 
         public Builder(String name) {
             this.name = name;
@@ -152,11 +184,16 @@ public record TopicSuggestion(
             return this;
         }
 
+        public Builder searchConfidence(double confidence) {
+            this.searchConfidence = confidence;
+            return this;
+        }
+
         public TopicSuggestion build() {
             return new TopicSuggestion(
                     name, description, category, suggestedContentType,
                     suggestedComplexity, suggestedWordCount, relevanceScore,
-                    rationale, sourceContext
+                    rationale, sourceContext, searchConfidence
             );
         }
     }

@@ -119,6 +119,17 @@ public class DiscoverySession {
         return universeBuilder.build().scope();
     }
 
+    // ==================== Domain Context ====================
+
+    public void setDomainContext(DomainContext context) {
+        universeBuilder.domainContext(context);
+        recordEvent("Domain context set with " + context.keyThemes().size() + " themes");
+    }
+
+    public DomainContext getDomainContext() {
+        return universeBuilder.build().domainContext();
+    }
+
     // ==================== Topic Suggestions ====================
 
     public void addTopicSuggestions(List<TopicSuggestion> suggestions) {

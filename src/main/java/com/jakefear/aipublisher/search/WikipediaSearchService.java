@@ -27,9 +27,11 @@ import java.util.List;
  * - Already in encyclopedic tone matching wiki style
  * - Related pages map directly to internal wiki links
  * - Categories align with wiki categorization
+ *
+ * Implements SearchProvider for use in search-grounded topic discovery.
  */
 @Service
-public class WikipediaSearchService {
+public class WikipediaSearchService implements SearchProvider {
 
     private static final Logger log = LoggerFactory.getLogger(WikipediaSearchService.class);
 
@@ -390,11 +392,29 @@ public class WikipediaSearchService {
                 .trim();
     }
 
+    @Override
     public boolean isEnabled() {
         return enabled;
     }
 
     public int getMaxResults() {
         return maxResults;
+    }
+
+    // ==================== SearchProvider Interface ====================
+
+    @Override
+    public String getProviderName() {
+        return "wikipedia";
+    }
+
+    @Override
+    public List<String> getRelatedTopics(String topic) {
+        return getRelatedPages(topic);
+    }
+
+    @Override
+    public SearchResult getTopicSummary(String topic) {
+        return getArticleSummary(topic);
     }
 }

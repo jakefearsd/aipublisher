@@ -134,13 +134,13 @@ class TopicSuggestionTest {
         void normalizesRelevanceScore() {
             TopicSuggestion tooHigh = new TopicSuggestion(
                     "Test", "", "", ContentType.CONCEPT,
-                    ComplexityLevel.INTERMEDIATE, 1000, 1.5, "", ""
+                    ComplexityLevel.INTERMEDIATE, 1000, 1.5, "", "", -1.0
             );
             assertEquals(0.5, tooHigh.relevanceScore());
 
             TopicSuggestion tooLow = new TopicSuggestion(
                     "Test", "", "", ContentType.CONCEPT,
-                    ComplexityLevel.INTERMEDIATE, 1000, -0.5, "", ""
+                    ComplexityLevel.INTERMEDIATE, 1000, -0.5, "", "", -1.0
             );
             assertEquals(0.5, tooLow.relevanceScore());
         }
@@ -149,7 +149,7 @@ class TopicSuggestionTest {
         @DisplayName("Applies defaults for null values")
         void appliesDefaultsForNulls() {
             TopicSuggestion suggestion = new TopicSuggestion(
-                    "Test", null, null, null, null, 0, 0.5, null, null
+                    "Test", null, null, null, null, 0, 0.5, null, null, -1.0
             );
 
             assertEquals("", suggestion.description());

@@ -330,13 +330,14 @@ class TopicUniverseTest {
         @DisplayName("Applies defaults for null collections")
         void appliesDefaultsForNullCollections() {
             TopicUniverse u = new TopicUniverse(
-                    "id", "Name", null, null, null, null, null, null, null
+                    "id", "Name", null, null, null, null, null, null, null, null
             );
 
             assertNotNull(u.topics());
             assertNotNull(u.relationships());
             assertNotNull(u.backlog());
             assertNotNull(u.scope());
+            assertNotNull(u.domainContext());
         }
     }
 }

@@ -87,6 +87,14 @@ public class WriterAgent extends BaseAgent {
         ResearchBrief researchBrief = document.getResearchBrief();
 
         StringBuilder prompt = new StringBuilder();
+
+        // Include rich domain context if available (ensures consistency across articles)
+        String formattedContext = topicBrief.getFormattedContext();
+        if (!formattedContext.isBlank()) {
+            prompt.append(formattedContext);
+            prompt.append("\n---\n\n");
+        }
+
         prompt.append("Please write a wiki article based on the following research:\n\n");
 
         // Topic information

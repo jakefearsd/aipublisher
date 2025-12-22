@@ -391,6 +391,32 @@ public class DiscoveryInteractiveSession {
         printPhaseHeader("TOPIC EXPANSION", 3, 8, "Discover and curate related topics");
         sessionLog.info("Starting topic expansion phase");
 
+        // Build domain context from search BEFORE expansion
+        out.println("Gathering domain context from search...");
+        sessionLog.apiCall("TopicExpander", "buildDomainContext");
+        com.jakefear.aipublisher.domain.DomainContext domainContext = topicExpander.buildDomainContext(
+                session.getDomainName(),
+                session.getScope().domainDescription()
+        );
+        session.setDomainContext(domainContext);
+
+        // Show what was learned
+        if (domainContext.hasContent()) {
+            out.println("✓ Domain context established:");
+            if (!domainContext.domainSummary().isBlank()) {
+                String summary = domainContext.domainSummary();
+                if (summary.length() > 200) {
+                    summary = summary.substring(0, 200) + "...";
+                }
+                out.println("  Summary: " + summary);
+            }
+            if (!domainContext.keyThemes().isEmpty()) {
+                out.println("  Key themes: " + String.join(", ", domainContext.keyThemes()));
+            }
+            out.println();
+        }
+        sessionLog.apiResponse("TopicExpander", "Domain context built with " + domainContext.keyThemes().size() + " themes");
+
         TopicUniverse current = session.buildUniverse();
         Set<String> existingNames = current.topics().stream()
                 .map(Topic::name)
@@ -427,15 +453,15 @@ public class DiscoveryInteractiveSession {
                 out.printf("Expanding from: %s%n", topic.name());
                 out.println("━".repeat(60));
 
-                sessionLog.apiCall("TopicExpander", "expandTopic");
-                List<TopicSuggestion> suggestions = topicExpander.expandTopic(
+                sessionLog.apiCall("TopicExpander", "expandTopicWithSearch");
+                List<TopicSuggestion> suggestions = topicExpander.expandTopicWithSearch(
                         topic.name(),
                         session.getDomainName(),
                         existingNames,
                         session.getScope(),
                         costProfile
                 );
-                sessionLog.apiResponse("TopicExpander", "Generated " + suggestions.size() + " suggestions");
+                sessionLog.apiResponse("TopicExpander", "Generated " + suggestions.size() + " suggestions (search-grounded)");
 
                 if (suggestions.isEmpty()) {
                     out.println("No new suggestions generated.");

@@ -71,6 +71,14 @@ public class ResearchAgent extends BaseAgent {
         TopicBrief brief = document.getTopicBrief();
 
         StringBuilder prompt = new StringBuilder();
+
+        // Include rich domain context if available
+        String formattedContext = brief.getFormattedContext();
+        if (!formattedContext.isBlank()) {
+            prompt.append(formattedContext);
+            prompt.append("\n---\n\n");
+        }
+
         prompt.append("Please research the following topic:\n\n");
         prompt.append("TOPIC: ").append(brief.topic()).append("\n");
 

@@ -1,6 +1,8 @@
 package com.jakefear.aipublisher.document;
 
 import com.jakefear.aipublisher.content.ContentType;
+import com.jakefear.aipublisher.domain.DomainContext;
+import com.jakefear.aipublisher.domain.ScopeConfiguration;
 
 import java.util.List;
 import java.util.Objects;
@@ -54,7 +56,17 @@ public record TopicBrief(
         /**
          * Optional specific goal or outcome for the content.
          */
-        String specificGoal
+        String specificGoal,
+
+        /**
+         * Rich domain context from search for consistent article generation.
+         */
+        DomainContext richDomainContext,
+
+        /**
+         * Scope configuration defining audience, constraints, and focus.
+         */
+        ScopeConfiguration scope
 ) {
     /**
      * Compact constructor with validation.
@@ -77,14 +89,35 @@ public record TopicBrief(
      * Convenience constructor for simple topics (backwards compatible).
      */
     public static TopicBrief simple(String topic, String targetAudience, int targetWordCount) {
-        return new TopicBrief(topic, targetAudience, targetWordCount, List.of(), List.of(), List.of(), null, null, null);
+        return new TopicBrief(topic, targetAudience, targetWordCount, List.of(), List.of(), List.of(), null, null, null, null, null);
     }
 
     /**
      * Convenience constructor with content type.
      */
     public static TopicBrief withType(String topic, String targetAudience, int targetWordCount, ContentType contentType) {
-        return new TopicBrief(topic, targetAudience, targetWordCount, List.of(), List.of(), List.of(), contentType, null, null);
+        return new TopicBrief(topic, targetAudience, targetWordCount, List.of(), List.of(), List.of(), contentType, null, null, null, null);
+    }
+
+    /**
+     * Check if this brief has rich domain context.
+     */
+    public boolean hasRichContext() {
+        return richDomainContext != null && richDomainContext.hasContent();
+    }
+
+    /**
+     * Get formatted context string for prompts.
+     * Combines richDomainContext and scope if available.
+     */
+    public String getFormattedContext() {
+        if (richDomainContext == null) {
+            if (scope != null) {
+                return scope.toPromptFormat();
+            }
+            return "";
+        }
+        return richDomainContext.toPromptFormat(scope);
     }
 
     /**
@@ -104,6 +137,8 @@ public record TopicBrief(
         private ContentType contentType;
         private String domainContext;
         private String specificGoal;
+        private DomainContext richDomainContext;
+        private ScopeConfiguration scope;
 
         private Builder(String topic) {
             this.topic = topic;
@@ -149,10 +184,21 @@ public record TopicBrief(
             return this;
         }
 
+        public Builder richDomainContext(DomainContext context) {
+            this.richDomainContext = context;
+            return this;
+        }
+
+        public Builder scope(ScopeConfiguration scope) {
+            this.scope = scope;
+            return this;
+        }
+
         public TopicBrief build() {
             return new TopicBrief(topic, targetAudience, targetWordCount,
                     requiredSections, relatedPages, sourceUrls,
-                    contentType, domainContext, specificGoal);
+                    contentType, domainContext, specificGoal,
+                    richDomainContext, scope);
         }
     }
 }

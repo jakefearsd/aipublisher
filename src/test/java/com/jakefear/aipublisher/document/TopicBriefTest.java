@@ -59,6 +59,8 @@ class TopicBriefTest {
                     null,
                     null,
                     null,
+                    null,
+                    null,
                     null
             );
 
@@ -77,27 +79,27 @@ class TopicBriefTest {
         @DisplayName("Throws on null topic")
         void throwsOnNullTopic() {
             assertThrows(NullPointerException.class, () ->
-                    new TopicBrief(null, "audience", 1000, List.of(), List.of(), List.of(), null, null, null));
+                    new TopicBrief(null, "audience", 1000, List.of(), List.of(), List.of(), null, null, null, null, null));
         }
 
         @Test
         @DisplayName("Throws on blank topic")
         void throwsOnBlankTopic() {
             assertThrows(IllegalArgumentException.class, () ->
-                    new TopicBrief("   ", "audience", 1000, List.of(), List.of(), List.of(), null, null, null));
+                    new TopicBrief("   ", "audience", 1000, List.of(), List.of(), List.of(), null, null, null, null, null));
         }
 
         @Test
         @DisplayName("Throws on negative word count")
         void throwsOnNegativeWordCount() {
             assertThrows(IllegalArgumentException.class, () ->
-                    new TopicBrief("Topic", "audience", -100, List.of(), List.of(), List.of(), null, null, null));
+                    new TopicBrief("Topic", "audience", -100, List.of(), List.of(), List.of(), null, null, null, null, null));
         }
 
         @Test
         @DisplayName("Allows zero word count")
         void allowsZeroWordCount() {
-            var brief = new TopicBrief("Topic", "audience", 0, List.of(), List.of(), List.of(), null, null, null);
+            var brief = new TopicBrief("Topic", "audience", 0, List.of(), List.of(), List.of(), null, null, null, null, null);
             assertEquals(0, brief.targetWordCount());
         }
     }

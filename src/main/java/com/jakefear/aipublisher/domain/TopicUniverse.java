@@ -17,6 +17,7 @@ public record TopicUniverse(
         List<Topic> topics,
         List<TopicRelationship> relationships,
         ScopeConfiguration scope,
+        DomainContext domainContext,
         List<String> backlog,
         Instant createdAt,
         Instant modifiedAt
@@ -36,6 +37,7 @@ public record TopicUniverse(
         topics = topics == null ? List.of() : List.copyOf(topics);
         relationships = relationships == null ? List.of() : List.copyOf(relationships);
         if (scope == null) scope = ScopeConfiguration.empty();
+        if (domainContext == null) domainContext = DomainContext.empty();
         backlog = backlog == null ? List.of() : List.copyOf(backlog);
         if (createdAt == null) createdAt = Instant.now();
         if (modifiedAt == null) modifiedAt = createdAt;
@@ -52,6 +54,7 @@ public record TopicUniverse(
                 List.of(),
                 List.of(),
                 ScopeConfiguration.empty(),
+                DomainContext.empty(),
                 List.of(),
                 Instant.now(),
                 Instant.now()
@@ -313,8 +316,9 @@ public record TopicUniverse(
      * Topological sort based on prerequisite relationships.
      */
     private List<Topic> topologicalSort(List<Topic> topics) {
+        // Use merge function to handle any duplicate topic IDs (keep first occurrence)
         Map<String, Topic> topicMap = topics.stream()
-                .collect(Collectors.toMap(Topic::id, t -> t));
+                .collect(Collectors.toMap(Topic::id, t -> t, (existing, replacement) -> existing));
 
         Map<String, Set<String>> dependencies = new HashMap<>();
         for (Topic topic : topics) {
@@ -377,6 +381,7 @@ public record TopicUniverse(
         private List<Topic> topics = new ArrayList<>();
         private List<TopicRelationship> relationships = new ArrayList<>();
         private ScopeConfiguration scope = ScopeConfiguration.empty();
+        private DomainContext domainContext = DomainContext.empty();
         private List<String> backlog = new ArrayList<>();
         private Instant createdAt = Instant.now();
         private Instant modifiedAt = Instant.now();
@@ -393,6 +398,7 @@ public record TopicUniverse(
             this.topics = new ArrayList<>(universe.topics);
             this.relationships = new ArrayList<>(universe.relationships);
             this.scope = universe.scope;
+            this.domainContext = universe.domainContext;
             this.backlog = new ArrayList<>(universe.backlog);
             this.createdAt = universe.createdAt;
             this.modifiedAt = Instant.now();
@@ -419,7 +425,12 @@ public record TopicUniverse(
         }
 
         public Builder addTopic(Topic topic) {
-            this.topics.add(topic);
+            // Check for duplicates by ID to prevent adding same topic twice
+            boolean exists = this.topics.stream()
+                    .anyMatch(t -> t.id().equals(topic.id()));
+            if (!exists) {
+                this.topics.add(topic);
+            }
             return this;
         }
 
@@ -435,6 +446,11 @@ public record TopicUniverse(
 
         public Builder scope(ScopeConfiguration scope) {
             this.scope = scope;
+            return this;
+        }
+
+        public Builder domainContext(DomainContext domainContext) {
+            this.domainContext = domainContext;
             return this;
         }
 
@@ -456,7 +472,7 @@ public record TopicUniverse(
         public TopicUniverse build() {
             return new TopicUniverse(
                     id, name, description, topics, relationships,
-                    scope, backlog, createdAt, modifiedAt
+                    scope, domainContext, backlog, createdAt, modifiedAt
             );
         }
     }

@@ -49,7 +49,8 @@ class TopicCurationCommandsTest {
                 1000,
                 0.8,
                 "Test rationale",
-                ""
+                "",
+                -1.0
         );
     }
 
@@ -194,7 +195,7 @@ class TopicCurationCommandsTest {
             TopicSuggestion highRelevance = new TopicSuggestion(
                     "High", "desc", "cat",
                     ContentType.TUTORIAL, ComplexityLevel.INTERMEDIATE,
-                    1000, 0.9, "rationale", "");
+                    1000, 0.9, "rationale", "", -1.0);
 
             SkipRestTopicCommand command = new SkipRestTopicCommand(List.of(highRelevance));
 
@@ -211,7 +212,7 @@ class TopicCurationCommandsTest {
             TopicSuggestion lowRelevance = new TopicSuggestion(
                     "Low", "desc", "cat",
                     ContentType.TUTORIAL, ComplexityLevel.INTERMEDIATE,
-                    1000, 0.5, "rationale", "");
+                    1000, 0.5, "rationale", "", -1.0);
 
             SkipRestTopicCommand command = new SkipRestTopicCommand(List.of(lowRelevance));
 
