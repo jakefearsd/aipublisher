@@ -1,0 +1,11 @@
+!!! GermanReunificationTreaty
+
+The __German Reunification Treaty__ (formally known as the ''Two Plus Four Agreement'') is a 1990 agreement that led to the official reunification of Germany, marking the end of East and West Germany's division. This treaty resolved crucial issues such as the status of Berlin and the presence of Allied troops in Germany.
+
+* It was signed by the four Allied World War II powers (the United States, Soviet Union, France, and the United Kingdom) and representatives from the two German states on September 12, 1990.
+* The treaty paved the way for full sovereignty and unity for a single German state on October 3, 1990.
+
+!! See Also
+* [BerlinsReunificationProcess]
+
+[{SET categories='Investing Basics'}]

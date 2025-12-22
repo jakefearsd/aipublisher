@@ -1,0 +1,9 @@
+!!! __Defined Contribution Plans__
+
+A __defined contribution plan__ is an employer-sponsored retirement savings program where contributions are made by both the employee and sometimes the employer into a personal account for each participant. The final amount available at retirement depends on factors such as the contributions made, investment performance, and time horizon.
+
+* * *
+!! See Also
+- [CompoundInterestInRetirementPlanning]
+
+[{SET categories='Investing Basics, Retirement Planning'}]

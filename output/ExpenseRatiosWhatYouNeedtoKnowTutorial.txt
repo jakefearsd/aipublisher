@@ -1,0 +1,11 @@
+!!! __Expense Ratios: What You Need to Know__
+
+An expense ratio is a measure of what it costs an investment company to operate a mutual fund or exchange-traded fund (ETF). It includes management fees and other operating expenses.
+
+* Expense ratios are expressed as a percentage of the total assets under management.
+* A lower expense ratio can mean higher returns for investors over time, since less money goes towards covering operational costs.
+
+See Also
+* [Expense Ratios What You Need To Know]
+
+[{SET categories='Investing Basics, Mutual Funds'}]

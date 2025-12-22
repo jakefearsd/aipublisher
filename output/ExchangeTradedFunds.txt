@@ -1,0 +1,10 @@
+!!! ExchangeTradedFunds
+
+__Exchange Traded Funds (ETFs)__ are financial instruments that track an index, a commodity, or a basket of assets like stocks and bonds but trade like individual stocks on a stock exchange.
+
+ETFs provide investors with low-cost exposure to a diversified portfolio of securities. They can be bought and sold throughout the trading day at market-determined prices, offering flexibility similar to individual shares. ETFs are known for their tax efficiency and lower expense ratios compared to many mutual funds, making them an attractive option for both retail and institutional investors.
+
+See Also:
+* [ExpenseRatiosAndTheirEffectOnCompounding]
+
+[{SET categories='InvestingBasics'}]

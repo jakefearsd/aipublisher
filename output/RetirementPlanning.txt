@@ -1,0 +1,7 @@
+!!! RetirementPlanning
+
+Retirement planning is the process of making decisions and taking actions that will help ensure financial security during retirement. It involves setting goals, assessing current financial status, estimating future income needs, and implementing strategies to meet those needs over a person's expected lifespan.
+
+* __See Also__: [ThePowerOfStartingEarly], [CompoundInterestInRetirementPlanning]
+
+[{SET categories='Investing Basics'}]

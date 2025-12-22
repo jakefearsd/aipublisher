@@ -1,0 +1,10 @@
+!!! ExchangeTradedFundIndexing
+
+__Exchange Traded Fund Indexing__ (ETF indexing) is an investment strategy that involves tracking a specific market index using exchange-traded funds. This approach allows investors to replicate the performance of a broad market, sector, or asset class by purchasing ETFs designed to mirror these indexes. ETF indexing offers lower management fees compared to actively managed funds and provides diversification benefits through exposure to numerous securities within an index.
+
+* * *
+
+!! See Also
+* [ExchangeTradedFundsETFsExplained]
+
+[{SET categories='Investing Basics, Exchange Traded Funds'}]

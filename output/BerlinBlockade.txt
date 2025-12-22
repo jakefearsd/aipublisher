@@ -1,0 +1,8 @@
+!!! BerlinBlockade
+
+__Berlin Blockade__ was an event during the early years of the Cold War where the Soviet Union blocked access by land to West Berlin from June 1948 to May 1949, in an attempt to force the Western Allies (the United States, Britain, and France) out of the city. In response, the Western Allies organized a massive airlift known as the [BerlinAirlift] to supply food and fuel to the residents of West Berlin.
+
+See Also:
+* [EconomicImpactOfTheColdWarOnBerlin]
+
+[{SET categories='Investing Basics,Cold War History'}]

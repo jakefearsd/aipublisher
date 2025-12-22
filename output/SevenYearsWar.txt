@@ -1,0 +1,12 @@
+!!! Seven Years' War
+
+The __Seven Years' War__ (1756–1763) was a global conflict involving most of the great powers of Europe and their respective colonies. It is considered one of the first world wars, spanning territories across North America, Central America, Europe, Africa, Asia, and Oceania.
+
+* The war had significant impacts on European politics and territorial holdings.
+* In Prussia, under King Frederick II (Frederick the Great), it was a crucial test of military strategy and state governance.
+
+See Also:
+- [FrederickTheGreatAndPrussianBerlin]
+- [TheImpactOfTheSevenYearsWarOnPrussianBerlin]
+
+[{SET categories='History,Military'}]

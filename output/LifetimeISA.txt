@@ -1,0 +1,11 @@
+!!! Lifetime ISA
+
+A __Lifetime ISA__ (LISA) is a government-backed savings account designed for adults in the UK who wish to save for their first home purchase or retirement. Individuals can open and contribute to a LISA from age 18 until 50, with the government adding a 25% bonus on contributions up to a certain annual limit.
+
+* Users must use funds for either purchasing a first home that meets value restrictions or reaching age 60 without withdrawing for other reasons.
+* Funds withdrawn for non-eligible purposes incur penalties and taxes.
+
+See Also:
+* [InvestmentAccountTypes]
+
+[{SET categories='Finance'}]

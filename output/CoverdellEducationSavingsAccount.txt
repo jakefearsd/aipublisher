@@ -1,0 +1,11 @@
+!!! __Coverdell Education Savings Account__
+
+A Coverdell Education Savings Account (ESA) is a tax-advantaged savings plan designed to encourage saving for educational expenses from an early age. Contributions are not deductible, but qualified distributions are tax-free.
+
+* The funds in the account can be used for a wide range of education-related expenses at any accredited elementary, secondary or post-secondary institution.
+* Beneficiaries must be under 18 years old (or special needs students) when contributions begin and must use the funds before turning 30.
+
+See Also:
+[UnderstandingTaxAdvantagedAccounts]
+
+[{SET categories='InvestingBasics,TaxAdvantagedAccounts'}]

@@ -1,0 +1,10 @@
+!!! ThirtyYearsWar
+
+__The Thirty Years' War__ was a series of wars in Europe from 1618 to 1648 primarily fought in Central Europe but affecting many other countries as well. It began as a religious conflict between Protestants and Catholics within the Holy Roman Empire, but soon involved other European nations with varying motivations.
+
+* * *
+
+!! See Also
+- [BerlinsTransformationFromMargraviateToCapitalCity]
+
+[{SET categories='History,Geography'}]

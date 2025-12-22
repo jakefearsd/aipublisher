@@ -1,0 +1,8 @@
+!!! EastGermanyEconomy
+
+__East Germany Economy__ refers to the economic system of the German Democratic Republic (GDR), which existed from 1949 until 1990 when it reunified with West Germany. The economy was centrally planned, focusing on heavy industry and large-scale collective agriculture under communist control. It experienced both successes in certain sectors like engineering and challenges such as shortages and inefficiencies.
+
+* See Also:
+  * [EconomicImpactOfTheColdWarOnBerlin]
+
+[{SET categories='Investing Basics,Economics'}]

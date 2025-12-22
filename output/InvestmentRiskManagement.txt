@@ -1,0 +1,10 @@
+!!! InvestmentRiskManagement
+
+__InvestmentRiskManagement__ is the process of identifying, assessing, and prioritizing risks in investment activities, followed by applying resources to minimize, monitor, and control the probability or impact of unfortunate events. This includes strategies such as diversification, hedging, and setting stop-loss orders.
+
+This practice helps investors protect their capital while pursuing financial goals by mitigating potential losses that can arise from market volatility, economic changes, or specific company risks.
+
+! See Also
+* [CompoundInterestAndInflation]
+
+[{SET categories='Finance'}]

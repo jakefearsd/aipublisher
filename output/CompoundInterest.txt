@@ -1,0 +1,11 @@
+!!! Compound Interest
+
+__Compound interest__ is the addition of interest to the principal sum of a loan or deposit, or in other words, interest on interest. It is calculated not only on the initial principal but also on the accumulated interest of previous periods. This process increases the amount of interest earned over time compared to simple interest, where interest is calculated solely on the principal amount.
+
+* * *
+
+__See Also:__
+- [SimpleVsCompoundInterest]
+- [ThePowerOfStartingEarlyCompoundInterestInRetirementPlanning]
+
+[{SET categories='Investing Basics'}]

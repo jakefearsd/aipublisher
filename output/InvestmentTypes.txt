@@ -1,0 +1,10 @@
+!!! InvestmentTypes
+
+__Investment Types__ refer to various categories of financial instruments and assets that individuals and organizations can invest in to grow their wealth over time. These types range from conservative options like bonds and savings accounts, which offer lower risk but also lower potential returns, to more aggressive choices such as stocks and real estate, which carry higher risks but may provide greater rewards.
+
+* * *
+
+! See Also
+- [UnderstandingRiskTolerance]
+
+[{SET categories='Investing Basics'}]

@@ -1,0 +1,10 @@
+!!! __WestGermanyEconomy__
+
+The __WestGermanyEconomy__ refers to the economic system of West Germany (the Federal Republic of Germany) from its establishment in 1949 until German reunification in 1990. It was characterized by a strong emphasis on free market principles, social welfare policies, and export-oriented industrialization. This economy played a crucial role in rebuilding post-war Europe and had significant implications for the broader European economic landscape during the Cold War era.
+
+* * *
+
+! See Also
+- [EconomicImpactOfTheColdWarOnBerlin]
+
+[{SET categories='Investing Basics,Economic History'}]

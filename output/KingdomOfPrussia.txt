@@ -1,0 +1,8 @@
+!!! __KingdomOfPrussia__
+
+The __Kingdom of Prussia__ was a German kingdom that existed from 1701 to 1918, becoming one of the most powerful states within the German Empire. It originated as an independent state from the Duchy of Prussia and the Margraviate of Brandenburg, which were ruled in personal union since 1618 by the Hohenzollern dynasty. The kingdom played a crucial role in the unification of Germany and was the largest and most powerful component state until its dissolution after World War I.
+
+* See Also:
+  * [PrussianBerlin]
+
+[{SET categories='German History, European History'}]

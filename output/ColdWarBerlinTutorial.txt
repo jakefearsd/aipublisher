@@ -1,0 +1,10 @@
+!!! __ColdWarBerlinTutorial__
+
+A hypothetical educational resource designed to provide an overview of the geopolitical and historical context surrounding Cold War Berlin. This tutorial would likely cover key events, significant figures, and the impact of the era on the city's development.
+
+* * *
+
+__See Also:__
+- [ColdWarBerlin]
+
+[{SET categories='Investing Basics,Cold War History'}]

@@ -1,0 +1,10 @@
+!!! IndexFund
+
+An __IndexFund__ is a type of mutual fund or exchange-traded fund (ETF) designed to mimic the performance of a market index such as the S&P 500 by holding the same securities in the same proportions as the index. This approach allows investors to gain exposure to a broad range of stocks or bonds with minimal fees and management intervention.
+
+* Index funds are popular among both individual and institutional investors due to their simplicity, low costs, and historical track record of outperforming actively managed funds over long periods.
+  
+!! See Also
+- [LowCostIndexFundInvesting]
+
+[{SET categories='Investing Basics'}]

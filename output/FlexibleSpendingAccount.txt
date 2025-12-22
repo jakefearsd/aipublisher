@@ -1,0 +1,10 @@
+!!! Flexible Spending Account (FSA)
+
+A __Flexible Spending Account__ (FSA) is a type of tax-advantaged medical savings account in the United States that allows an individual to set aside a portion of their earnings on a pre-tax basis, typically through salary reduction agreements with employers. These funds are used to pay for qualified medical expenses, thereby reducing taxable income and lowering overall healthcare costs.
+
+* Flexible Spending Accounts are commonly offered as part of employee benefit packages and can be combined with other health savings plans like Health Savings Accounts (HSAs).
+
+See Also:
+* [UnderstandingTaxAdvantagedAccounts]
+
+[{SET categories='Investing Basics,Tax Planning'}]

@@ -1,0 +1,12 @@
+!!! Inflation Rate Calculation
+
+__Inflation Rate Calculation__ refers to the process of determining how much prices have increased over a specific period in an economy. This calculation helps measure the decline in purchasing power and is crucial for investors, economists, and policymakers.
+
+* Formula: The most common formula used is (CPI current period - CPI previous period) / CPI previous period * 100, where CPI stands for Consumer Price Index.
+  
+* Purpose: It aids in understanding real returns on investments by accounting for the decrease in value of money over time due to inflation.
+
+See Also:
+* [CompoundInterestAndInflation]
+
+[{SET categories='Economics'}]

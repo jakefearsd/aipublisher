@@ -1,0 +1,10 @@
+!!! __Investment Account Types Tutorial__
+
+An __Investment Account Types Tutorial__ is an educational guide that explains various types of investment accounts available to individuals and institutions for managing financial assets. This tutorial covers different account structures, such as brokerage accounts, retirement accounts, mutual funds, and more, each tailored to specific investment goals and tax implications.
+
+* * *
+
+! See Also:
+- [InvestmentAccountTypes]
+
+[{SET categories='Investing Basics'}]

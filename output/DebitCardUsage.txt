@@ -1,0 +1,10 @@
+!!! __DebitCardUsage__
+
+__Debit Card Usage__ refers to the practice of using a debit card to make purchases by deducting funds directly from the user's checking account linked to the card.
+
+When it comes to managing investment accounts, understanding how and when to use a debit card is important. Improper usage can lead to overspending, which might affect your ability to invest effectively or meet financial goals.
+
+! See Also
+* [AvoidingCommonMistakesWithInvestmentAccounts]
+
+[{SET categories='Investing Basics,Fundamentals'}]

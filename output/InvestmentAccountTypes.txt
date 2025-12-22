@@ -1,0 +1,66 @@
+!!! Investment Account Types
+
+DOMAIN CONTEXT: Investing Basics
+
+Investment accounts are financial tools designed to help individuals save money for various purposes such as retirement, education, or general wealth accumulation. These accounts often provide tax advantages and personalized management options to cater to individual needs.
+
+[{TableOfContents}]
+
+!! Introduction to Investment Account Types
+
+An investment account is a type of financial product that allows individuals to hold assets like stocks, bonds, mutual funds, and other securities for the purpose of earning returns over time. These accounts can provide various benefits including tax efficiency, professional management, and targeted savings goals.
+
+!! Individual Savings Accounts (ISAs)
+
+Individual Savings Accounts (ISAs) are a type of investment account that offers tax advantages on interest earned within the account. There are four main types of ISAs: cash ISA, stocks & shares ISA, innovative finance ISA (IFISA), and lifetime ISA (LISA).
+
+* __Cash ISA__: This is similar to a regular savings account but with better tax benefits.
+* __Stocks & Shares ISA__: Allows individuals to invest in the stock market and other securities like bonds or funds.
+* __Innovative Finance ISA (IFISA)__ : A newer type of ISA that allows investments in peer-to-peer lending platforms, crowdfunding projects, and other innovative financial products.
+* __Lifetime ISA (LISA)__ : This account is specifically designed to help individuals save for a first-time home purchase or retirement.
+
+!! Separately Managed Accounts (SMAs)
+
+Separately Managed Accounts (SMAs) are personalized investment management services tailored to individual investor needs. These accounts allow clients to have full transparency and control over their investments while receiving professional advice and portfolio management.
+
+!! Individual Retirement Accounts (IRAs)
+
+Individual Retirement Accounts (IRAs) are designed to help individuals save for retirement with tax benefits. There are two main types of IRAs: traditional IRA and Roth IRA.
+
+* __Traditional IRA__: Contributions may be tax-deductible, but withdrawals during retirement are taxed as income.
+* __Roth IRA__: Contributions are made after-tax, providing a benefit that all qualified withdrawals in retirement are tax-free.
+
+!! Other Commonly Used Investment Account Types
+
+There are several other commonly used investment account types that cater to specific needs or offer unique advantages:
+
+* __Employer-Sponsored Retirement Plans__: These include 401(k), 703(b) and others, which typically allow for pre-tax contributions.
+* __Health Savings Accounts (HSAs)__ : These accounts are designed specifically for individuals with high-deductible health plans to pay for medical expenses tax-free.
+
+!! Comparison of Different Investment Account Types
+
+Each type of investment account has specific rules regarding contributions, withdrawals, and tax implications. For example:
+
+* __Cash ISA__: Contributions up to a certain limit each year can be made without being taxed on the interest earned.
+* __Stocks & Shares ISA__: Offers unlimited contribution limits but may have higher management fees compared to other types of ISAs.
+* __Separately Managed Accounts (SMAs)__ : Provide professional management, which comes at an additional cost but offers potential for better returns and personalized advice.
+
+!! Conclusion
+
+Understanding the different types of investment accounts is crucial in making informed financial decisions. Each account type has its own set of advantages and rules that can be tailored to meet specific needs such as tax efficiency, retirement savings goals, or general wealth accumulation.
+
+!!! See Also
+
+* [CashISA]
+* [StocksAndSharesISA]
+* [InnovativeFinanceISA]
+* [LifetimeISA]
+* [SeparatelyManagedAccount]
+* [IndividualRetirementAccount]
+* [BankAccounts]
+
+* [Investment] - Overview of investment concepts
+* [MutualFunds] - Information on mutual funds
+* [RothIRA] - Detailed explanation of Roth IRA
+* [TypesOfInvestmentAccounts] - Comprehensive guide to types of investment accounts
+* [FinancialPlanning] - Strategies for financial planning

@@ -1,0 +1,10 @@
+!!! TraditionalIRA
+
+A __Traditional IRA__ (Individual Retirement Account) is a personal savings plan in the United States that provides tax advantages for retirement savings. Contributions to a Traditional IRA may be tax-deductible, and earnings within the account grow tax-deferred until withdrawals are made during retirement.
+
+* * *
+
+!! See Also
+- [RothIRAAndCompoundInterest]
+
+[{SET categories='Finance'}]

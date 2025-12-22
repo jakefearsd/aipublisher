@@ -1,0 +1,10 @@
+!!! FundOfFunds
+
+A __Fund of Funds__ is an investment vehicle that pools money from investors and allocates it across a diversified portfolio of other funds rather than investing directly in individual securities. This approach aims to provide access to a wide range of asset classes, strategies, and fund managers for investors who may not have the resources or expertise to build such a diverse portfolio themselves.
+
+* * *
+
+!! See Also
+- [AssetAllocation]
+
+[{SET categories='Investing'}]

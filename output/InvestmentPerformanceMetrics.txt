@@ -1,0 +1,11 @@
+!!! InvestmentPerformanceMetrics
+
+__Investment Performance Metrics__ are quantitative measures used to evaluate and report on the financial success of an investment over a specified period. These metrics help investors understand how well their investments have performed compared to benchmarks or other similar investments.
+
+* Examples include return on investment, Sharpe ratio, alpha, and beta.
+* These metrics provide insights into risk-adjusted returns, volatility, and market sensitivity.
+
+See Also:
+* [ExpenseRatiosWhatYouNeedToKnow]
+
+[{SET categories='Investing Basics'}]

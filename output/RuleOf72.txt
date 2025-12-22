@@ -1,0 +1,13 @@
+!!! Rule of 72
+
+The '''Rule of 72''' is a simple formula used in finance to estimate the number of years required to double an investment at a fixed annual rate of return. By dividing 72 by the annual interest rate, investors can quickly approximate how long it will take for their money to double.
+
+*Example*: At a 6% annual return, an investment would approximately double in 12 years (72 / 6 = 12).
+
+This rule provides a quick and easy way to understand the power of compound interest and its impact on long-term investments. It is particularly useful for educational purposes and back-of-the-envelope calculations.
+
+!! See Also
+* [The Power Of Starting Early]
+* [Compound Interest In Retirement Planning]
+
+[{SET categories='Mathematics,Investing Basics'}]

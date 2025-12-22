@@ -1,0 +1,11 @@
+!!! EffectiveInterestRate
+
+__Effective Interest Rate__ is the rate of interest that accounts for the effect of compounding over a given period. It represents the true cost of borrowing or the actual return on investment when interest compounds more than once per year.
+
+The effective interest rate is crucial in financial calculations as it provides a more accurate measure of the time value of money, which is essential for making informed decisions in investments and loans.
+
+See Also:
+* [CompoundInterestAndRetirementPlanning]
+* [CompoundInterestInRetirementPlanning]
+
+[{SET categories='Investing Basics'}]

@@ -1,0 +1,10 @@
+!!! Annual Percentage Rate
+
+__Annual Percentage Rate (APR)__ is the yearly cost of borrowing money from a financial institution expressed as a percentage of the loan amount. It includes any fees or additional costs associated with the transaction but does not account for compound interest effects over time.
+
+The APR provides consumers with a standardized way to compare different lending offers by taking into consideration both the interest rate and the total cost of credit. This makes it easier to understand how much you will actually pay back in terms of percentage when borrowing money, such as through loans or credit cards.
+
+See Also:
+* [UnderstandingInterestRates]
+
+[{SET categories='Economics'}]

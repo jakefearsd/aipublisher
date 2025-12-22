@@ -1,0 +1,10 @@
+!!! MarketTradingPlatforms
+
+A __Market Trading Platform__ is an online service that allows users to buy and sell financial instruments such as stocks, bonds, commodities, currencies, and other securities. These platforms provide traders with real-time market data, trading tools, and often offer various types of orders and investment products like ETFs (Exchange Traded Funds).
+
+* * *
+
+!! See Also
+- [ExchangeTradedFundsETFsExplained]
+
+[{SET categories='Investing Basics, Financial Markets'}]

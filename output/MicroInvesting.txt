@@ -1,0 +1,10 @@
+!!! MicroInvesting
+
+__MicroInvesting__ is an investing strategy that involves making small, frequent investments in financial assets like stocks, bonds, and mutual funds. This approach allows individuals with limited capital to start building a diversified portfolio over time. Micro-investing platforms often offer automated services to make the process convenient for users.
+
+* * *
+
+!! See Also
+* [InvestingToBuildWealth]
+
+[{SET categories='Investing Basics, Personal Finance'}]

@@ -1,0 +1,9 @@
+!!! Berlin's Reunification Process Tutorial
+
+__Berlin's Reunification Process Tutorial__ is a conceptual guide designed to explain and illustrate the historical and political steps involved in the reunification of East and West Germany, focusing particularly on the city of Berlin. This tutorial aims to provide an overview of the complex negotiations, agreements, and social changes that led to German unity.
+
+* * *
+! See Also
+* [BerlinsReunificationProcess]
+
+[{SET categories='Investing Basics,Historical Events'}]

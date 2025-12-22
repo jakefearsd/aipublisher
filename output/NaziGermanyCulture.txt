@@ -1,0 +1,9 @@
+!!! Nazi Germany Culture
+
+__Nazi Germany Culture__ refers to the cultural policies and practices that were enforced in Germany during the period of Nazi rule from 1933 to 1945. This culture was characterized by extreme nationalism, racism, and authoritarian control over artistic and intellectual expression.
+
+* * *
+! See Also
+- [CulturalMovementsInBerlinHistory]
+
+[{SET categories='Culture,HistoricalPeriods'}]

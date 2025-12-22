@@ -1,0 +1,13 @@
+!!! PassiveForeignInvestmentCompany
+
+A __Passive Foreign Investment Company__ (PFIC) is a foreign corporation that meets certain criteria under U.S. tax laws regarding the distribution of income and assets to its shareholders. If an individual holds shares in a PFIC, they may be subject to complex tax rules designed to prevent deferral of taxes through passive investments held outside the United States.
+
+* __Income Test__: More than 75% of the corporation's gross income is derived from passive sources.
+* __Asset Test__: At least 50% of the corporation's assets produce or are held for the production of passive income.
+
+PFIC rules can significantly impact the tax planning and compliance requirements for U.S. taxpayers investing in foreign companies that generate substantial passive income.
+
+See Also:
+* [RothIRAAndCompoundInterest]
+
+[{SET categories='Finance'}]

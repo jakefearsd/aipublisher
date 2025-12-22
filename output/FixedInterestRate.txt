@@ -1,0 +1,10 @@
+!!! FixedInterestRate
+
+A __fixed interest rate__ is an interest rate that remains constant for a specified period of time on a loan or financial instrument. Unlike variable rates, which can fluctuate based on market conditions, fixed rates offer stability and predictability to borrowers by ensuring the total cost of borrowing does not change over the term.
+
+* * *
+
+See Also:
+- [UnderstandingInterestRates]
+
+[{SET categories='Economics'}]

@@ -1,0 +1,12 @@
+!!! RealVsNominalInterestRates
+
+__Real interest rate__ is the nominal interest rate adjusted for inflation, which reflects the real cost of borrowing and the actual return on savings after accounting for changes in purchasing power due to inflation.
+
+__Nominal interest rate__, on the other hand, is the stated interest rate before adjustments are made for inflation. It represents the interest rate without considering the effects of price level changes over time.
+
+Understanding both rates helps investors assess the true value and purchasing power implications of their investments over time.
+
+! See Also
+* [CompoundInterestAndInflation]
+
+[{SET categories='Economics'}]

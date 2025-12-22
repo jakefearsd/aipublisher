@@ -1,0 +1,11 @@
+!!! Asset Allocation Tutorial
+
+An **Asset Allocation Tutorial** is an educational guide designed to help investors understand and apply the principles of asset allocation in their investment portfolios. This tutorial typically covers how to distribute investments among different asset classes, such as stocks, bonds, and cash equivalents, based on individual risk tolerance, financial goals, and time horizon.
+
+*It helps beginners grasp the importance of diversification and strategic planning for long-term financial health.*
+
+See Also:
+- [Asset Allocation]
+- [Investment Strategies]
+
+[{SET categories='Investing Basics, Asset Management'}]

@@ -1,0 +1,11 @@
+!!! Capital Asset Pricing Model
+
+The **Capital Asset Pricing Model** (CAPM) is a financial model that describes the relationship between systematic risk and expected return for assets, particularly stocks. It helps investors understand how to price an asset given its level of market risk and the expected rate of return.
+
+* Developed in the 1960s by Jack Treynor, John Lintner, Jan Mossin, and William Sharpe, CAPM is widely used in finance for evaluating investment opportunities.
+* The model suggests that assets with higher systematic risk should have higher expected returns to compensate investors for taking on additional risk.
+
+See Also:
+* [Asset Allocation]
+
+[{SET categories='Investing Basics,Finance'}]

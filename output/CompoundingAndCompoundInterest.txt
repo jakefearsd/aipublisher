@@ -1,0 +1,51 @@
+!!! Compounding and Compound Interest
+
+DOMAIN CONTEXT: Investing Basics
+
+Compounding and compound interest are fundamental concepts in finance that significantly influence investment returns and loan repayment over time. This article explains the mechanics of compounding, its importance in financial planning, key characteristics, and real-world applications.
+
+[{TableOfContents}]
+
+!! Introduction to Compound Interest
+
+Compound interest is a method of calculating interest where the interest earned on an initial principal amount also earns additional interest over subsequent periods. This differs from simple interest, which only calculates interest based on the original principal without considering previously earned interest. The power of compound interest lies in its ability to grow an investment exponentially over time.
+
+!! The Mathematics of Compound Interest
+
+The formula for calculating compound interest is A = P(1 + r/n)^(nt), where:
+- A represents the final amount including both principal and compounded interest
+- P denotes the initial principal balance
+- r is the annual interest rate (decimal)
+- n indicates the number of times that interest is compounded per year
+- t signifies the time in years
+Continuous compounding uses a natural logarithm base (e) to calculate interest, providing a theoretical limit for maximum growth potential.
+
+!! Types of Compounding: Continuous vs. Periodic
+
+Compounding can occur continuously or at discrete intervals. In continuous compounding, interest is calculated and added to the principal infinitely often over time, leading to exponential growth. Periodic compounding occurs at regular intervals such as monthly, quarterly, semi-annually, or annually.
+Continuous compounding uses e as its base for calculations: A = Pe^(rt). For periodic compounding, the formula simplifies based on how frequently interest is compounded within a year.
+
+!! Applications and Examples in Finance
+
+Understanding compound interest is crucial for managing loans and investments effectively. Here are some examples:
+
+__Example Main (Realistic)__
+Imagine you invest $1,000 at an annual interest rate of 5%, compounded annually over 10 years. Using the formula A = P(1 + r/n)^(nt), we calculate that your investment would grow to approximately $1,628.89 after a decade.
+
+__Example Antipattern (Anti-Pattern)__
+A common misconception is ignoring the impact of compounding frequency on returns. For instance, assuming an annual interest rate of 5%, an investment compounded monthly will yield more than one compounded annually due to the additional compounding periods throughout the year.
+
+!! Impact of Compounding Frequency on Returns
+
+Increasing the compounding frequency can significantly affect long-term financial outcomes. More frequent compounding leads to higher returns over time, as interest is earned not just on the initial principal but also on previously accumulated interest. This phenomenon underscores the importance of selecting appropriate investment products and loan terms that align with one's financial goals.
+
+!!! See Also
+
+* [[CompoundAnnualGrowthRate]]
+* [[ContinuousCompounding]]
+* [[SimpleInterest]]
+* [[InvestmentReturns]]
+* [[FinancialMathematics]]
+* [CompoundingandCompoundInterestTutorial] - Hands-on guide
+
+[{SET categories='Finance, Investing'}]

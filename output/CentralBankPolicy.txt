@@ -1,0 +1,11 @@
+!!! CentralBankPolicy
+
+__CentralBankPolicy__ refers to the actions and decisions made by central banks to manage a country's monetary system, aiming to achieve economic goals such as price stability, full employment, and sustainable economic growth. These policies often involve adjusting interest rates, managing the money supply, and implementing other financial measures.
+
+* Adjusting interest rates is one of the primary tools used in CentralBankPolicy to influence borrowing costs and spending behavior.
+* Managing the money supply involves buying or selling government bonds to control how much money circulates within an economy.
+
+!! See Also
+* [UnderstandingInterestRates]
+
+[{SET categories='Economics'}]

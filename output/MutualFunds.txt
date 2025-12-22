@@ -1,0 +1,9 @@
+!!! MutualFunds
+
+__Mutual Funds__ are investment vehicles that pool money from multiple investors to buy a diversified portfolio of stocks, bonds, or other securities. Each investor in a mutual fund owns shares representing their portion of the holdings.
+
+Investors can easily access professional management and diversification by purchasing units of a mutual fund rather than buying individual securities directly.
+
+* See Also: [ExpenseRatiosAndTheirEffectOnCompounding]
+
+[{SET categories='Investing Basics,Finance'}]

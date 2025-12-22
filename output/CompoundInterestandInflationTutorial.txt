@@ -1,0 +1,11 @@
+!!! __CompoundInterestandInflationTutorial__
+
+A tutorial explaining how compound interest and inflation interact in financial investments, helping individuals understand their impact on wealth growth over time.
+
+* Compound interest is the process where an asset's earnings are reinvested to generate additional earnings over time. Inflation, on the other hand, decreases purchasing power by reducing the value of money.
+* This tutorial aims to provide a basic understanding of how these two economic concepts affect personal finances and investment strategies.
+
+! See Also
+- [CompoundInterestAndInflation]
+
+[{SET categories='Investing Basics'}]

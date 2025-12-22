@@ -1,0 +1,11 @@
+!!! Future Value
+
+__Future Value__ refers to the estimated value of an asset or cash at a specified time in the future based on its current value and assuming a certain rate of return or discount rate.
+
+In investing, understanding future value is crucial for evaluating potential returns from investments over different periods. It helps investors assess how much their money will be worth if invested today, given expected rates of interest and inflation.
+
+! See Also
+* [CompoundInterestAndRetirementPlanning]
+* [CompoundInterestInRetirementPlanning]
+
+[{SET categories='Investing Basics, Retirement Planning'}]

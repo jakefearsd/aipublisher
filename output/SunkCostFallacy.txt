@@ -1,0 +1,10 @@
+!!! Sunk Cost Fallacy
+
+__Sunk cost fallacy__ refers to the tendency of people to continue investing in a decision or endeavor because they have already invested a significant amount of time, money, or effort into it, despite clear evidence suggesting that further investment is not likely to yield positive returns. This cognitive bias can lead investors to hold onto losing stocks or stay with underperforming investment accounts longer than advisable.
+
+* * *
+
+! See Also
+- [AvoidingCommonMistakesWithInvestmentAccounts]
+
+[{SET categories='Investing Basics, Behavioral Finance'}]

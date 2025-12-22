@@ -1,0 +1,10 @@
+!!! RothIRA
+
+__Roth IRA__ is a type of individual retirement account in which contributions are made with after-tax dollars but qualified distributions are tax-free. Unlike traditional IRAs where contributions may be tax-deductible, earnings within a Roth IRA grow tax-free and withdrawals in retirement can be made without any federal income tax liability.
+
+*Contributions to a Roth IRA can provide significant tax benefits for investors who expect to be in a higher tax bracket during retirement than they are now.*
+
+See Also:
+- [RothIRA Vs TraditionalIRA Which Is Best]
+
+[{SET categories='Investing Basics, Retirement Planning'}]

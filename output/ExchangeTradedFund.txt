@@ -1,0 +1,11 @@
+!!! ExchangeTradedFund
+
+__Exchange-Traded Fund (ETF)__ is an investment fund traded on stock exchanges that holds assets such as stocks, commodities, or bonds and tracks an index, sector, commodity, or other financial instruments. ETFs offer investors a way to buy a diversified portfolio of securities in one transaction.
+
+* ETFs are known for their low costs, tax efficiency, and transparency compared to traditional mutual funds.
+* They can be bought and sold throughout the trading day at market-determined prices.
+
+!! See Also
+- [LowCostIndexFundInvesting]
+
+[{SET categories='Investing Basics,Fund Investing'}]

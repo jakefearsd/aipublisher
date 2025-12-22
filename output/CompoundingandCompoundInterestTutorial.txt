@@ -1,0 +1,12 @@
+!!! Compounding and Compound Interest Tutorial
+
+__Compounding and Compound Interest Tutorial__ is an educational resource designed to explain how compound interest works in financial investments. It helps readers understand how their money can grow exponentially over time through reinvesting earned interest.
+
+* This tutorial covers the basics of compounding, including formulas and examples.
+* Readers learn how different factors like interest rate and investment duration impact returns.
+* It aims to demystify complex concepts for general audiences interested in personal finance and investing.
+
+!! See Also
+* [CompoundingAndCompoundInterest]
+
+[{SET categories='Investing Basics, Personal Finance'}]

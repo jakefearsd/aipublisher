@@ -1,0 +1,10 @@
+!!! MarketTiming
+
+__Market timing__ is an investment strategy that involves buying and selling securities based on predictions of future market trends. Investors who practice market timing attempt to forecast when the market will rise or fall and adjust their portfolio accordingly, aiming to minimize losses during downturns and maximize gains in upturns.
+
+This approach requires accurate prediction of short-term price movements, which is notoriously difficult due to market unpredictability and volatility. Many financial experts advise against relying solely on market timing as it can lead to increased transaction costs and missed opportunities if predictions are incorrect.
+
+See Also:
+- [AvoidingCommonInvestingMistakes]
+
+[{SET categories='Investing'}]

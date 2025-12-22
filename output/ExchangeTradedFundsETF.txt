@@ -1,0 +1,10 @@
+!!! ExchangeTradedFunds (ETF)
+
+An __Exchange Traded Fund__ (ETF) is a type of financial security that tracks an index, commodity, bond, or a basket of assets like an index fund but trades on an exchange like an individual stock. ETFs offer investors a way to diversify their portfolios and gain exposure to various markets with lower fees compared to traditional mutual funds.
+
+* * *
+
+!! See Also
+- [ExpenseRatiosWhatYouNeedToKnow]
+
+[{SET categories='Investing Basics, Financial Instruments'}]

@@ -1,0 +1,10 @@
+!!! Commodity ETFs
+
+__Commodity ETFs__ are exchange-traded funds that track the price of a commodity such as gold, oil, or agricultural products. These funds allow investors to gain exposure to physical commodities without having to physically own them.
+
+* * *
+
+!! See Also
+- [ExchangeTradedFundsETFsExplained]
+
+[{SET categories='Investing Basics, Exchange Traded Funds'}]

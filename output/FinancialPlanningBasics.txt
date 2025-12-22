@@ -1,0 +1,11 @@
+!!! Financial Planning Basics
+
+__Financial planning basics__ refer to the fundamental principles and strategies involved in managing personal finances effectively. This includes setting financial goals, budgeting, saving, investing, and planning for retirement and other life events.
+
+* It forms the foundation for understanding how to make informed decisions about money management and investment.
+* Effective financial planning helps individuals achieve financial stability and security over time.
+
+See Also:
+* [CompoundInterestAndInflation]
+
+[{SET categories='Investing Basics'}]

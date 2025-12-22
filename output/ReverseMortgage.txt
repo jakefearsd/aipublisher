@@ -1,0 +1,9 @@
+!!! Reverse Mortgage
+
+A __reverse mortgage__ is a type of loan available to homeowners aged 62 and older that allows them to convert part of their home equity into cash without having to sell their property. Unlike a traditional mortgage, there are no monthly principal or interest payments required as long as at least one borrower lives in the home and continues to pay property taxes and insurance.
+
+* * *
+__See Also:__
+- [CompoundInterestInRetirementPlanning]
+
+[{SET categories='Finance'}]

@@ -1,0 +1,12 @@
+!!! StocksAndSharesISA
+
+A __StocksAndSharesISA__ (also known as an S&S ISA) is a type of Individual Savings Account designed to allow British residents to invest in shares and unit trusts without paying tax on capital gains and dividend income, up to certain limits. This account offers a tax-efficient way for individuals to grow their wealth through investments.
+
+* Tax efficiency: Investors benefit from no capital gains tax or income tax on dividends.
+* Contribution limit: There is an annual allowance set by the UK government that can be invested in this ISA each tax year.
+
+See Also:
+* [InvestmentAccountTypes]
+* [TaxEfficientInvesting]
+
+[{SET categories='Finance'}]

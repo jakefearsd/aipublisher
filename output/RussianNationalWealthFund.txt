@@ -1,0 +1,8 @@
+!!! __Russian National Wealth Fund__
+
+The __Russian National Wealth Fund__ (RNWF) is a sovereign wealth fund managed by the Government of the Russian Federation. It was established to accumulate and manage funds derived from Russia's oil and gas revenues, as well as other sources, for long-term investment purposes. The RNWF plays a crucial role in stabilizing the Russian economy by providing financial resources during economic downturns.
+
+* See Also:
+  * [InvestingToBuildWealth]
+
+[{SET categories='Investing Basics, Wealth Management'}]

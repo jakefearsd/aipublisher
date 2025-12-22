@@ -1,0 +1,10 @@
+!!! ColdWarArchitecture
+
+__Cold War Architecture__ refers to the distinctive architectural styles and urban planning designs that emerged in Berlin during the period of political tension between the Soviet Union and Western powers (approximately 1947-1991). This style is characterized by utilitarian, often austere buildings constructed with a focus on functionality and security rather than aesthetics. Cold War Architecture played a significant role in shaping the physical appearance and urban landscape of East Berlin during its division from West Berlin.
+
+* * *
+
+! See Also
+* [UrbanDevelopmentInModernBerlin]
+
+[{SET categories='Architecture,Berlin History'}]

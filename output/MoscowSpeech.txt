@@ -1,0 +1,8 @@
+!!! Moscow_Speech
+
+The __Moscow Speech__ was a significant address delivered by Soviet leader __Nikita Khrushchev__ on November 14, 1958, in which he declared that the Soviet Union would build a ''wall'' through Berlin to prevent further emigration from East Germany. This speech marked a critical escalation of tensions during the Cold War and was a direct response to Western opposition against the construction of the Berlin Wall.
+
+* See Also:
+  * [IronCurtain]
+
+[{SET categories='History'}]

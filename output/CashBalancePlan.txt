@@ -1,0 +1,10 @@
+!!! CashBalancePlan
+
+A __CashBalancePlan__ is a defined benefit pension plan that combines features of traditional pensions and 401(k)-style plans. It guarantees a specific retirement benefit based on an employee's years of service and salary, but it also includes a cash account that grows like a savings plan with employer contributions.
+
+*Employees typically appreciate the security of knowing they will receive a certain amount in retirement, while employers can take advantage of tax benefits and flexible contribution limits.*
+
+! See Also
+- [CompoundInterestInRetirementPlanning]
+
+[{SET categories='Investing Basics,Pensions'}]

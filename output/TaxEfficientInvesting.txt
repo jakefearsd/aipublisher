@@ -1,0 +1,12 @@
+!!! TaxEfficientInvesting
+
+__Tax Efficient Investing__ refers to investment strategies designed to minimize tax liabilities and maximize after-tax returns for investors. This approach considers the impact of taxes on various financial decisions, such as choosing between different types of investments, managing asset allocation, and timing transactions.
+
+* * *
+
+By strategically selecting investments that offer tax advantages or minimizing capital gains through careful portfolio management, individuals can keep more of their investment earnings over time.
+
+!! See Also
+- [TypesOfInvestmentAccounts]
+
+[{SET categories='Personal Finance'}]

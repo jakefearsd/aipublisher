@@ -1,0 +1,10 @@
+!!! __TypesofInvestmentAccountsTutorial__
+
+A guide explaining different types of investment accounts and their unique features suitable for various financial goals and risk tolerances. This tutorial helps investors understand account options such as brokerage accounts, retirement accounts like IRAs and 401(k)s, and others.
+
+* * *
+
+!! See Also
+- [TypesOfInvestmentAccounts]
+
+[{SET categories='Investing Basics'}]

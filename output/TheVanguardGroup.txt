@@ -1,0 +1,10 @@
+!!! TheVanguardGroup
+
+__The Vanguard Group__ is an American multinational financial services company headquartered in Malvern, Pennsylvania. It was founded by John C. Bogle in 1975 and is known for its low-cost index funds and emphasis on long-term investing strategies.
+
+* * *
+
+! See Also:
+- [LowCostIndexFundInvesting]
+
+[{SET categories='InvestmentFirms,IndexFunds'}]

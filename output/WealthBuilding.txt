@@ -1,0 +1,10 @@
+!!! WealthBuilding
+
+__WealthBuilding__ refers to the process of accumulating and growing financial assets through various means such as investing, saving, and entrepreneurship. This involves making strategic decisions to increase one's net worth over time.
+
+* * *
+! See Also
+* [AvoidingCommonInvestingMistakes]
+* [UnderstandingRiskAndReturn]
+
+[{SET categories='Investing Basics,Personal Finance'}]

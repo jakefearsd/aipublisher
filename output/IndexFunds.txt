@@ -1,0 +1,10 @@
+!!! IndexFunds
+
+__Index Funds__ are investment funds that aim to track the performance of a specific market index, such as the S&P 500. These funds typically hold all or a representative sample of the securities included in an index and are designed to mimic its returns without active management. They offer investors a simple way to gain exposure to broad markets at low costs.
+
+* * *
+
+!! See Also
+- [ExchangeTradedFundsETFsExplained]
+
+[{SET categories='Finance'}]

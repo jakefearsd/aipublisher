@@ -1,0 +1,10 @@
+!!! Financial Independence Retire Early (FIRE)
+
+__Financial Independence Retire Early__, commonly known as FIRE, is a financial philosophy and lifestyle movement that emphasizes saving and investing a large percentage of one's income to achieve early retirement. The goal of FIRE is to accumulate enough wealth so that the passive income generated from investments can cover living expenses, thereby enabling an individual to retire well before traditional retirement age.
+
+* * *
+
+!! See Also
+- [CompoundInterestInRetirementPlanning]
+
+[{SET categories='Investing Basics, Retirement Planning'}]

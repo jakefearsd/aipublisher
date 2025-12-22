@@ -1,0 +1,10 @@
+!!! TaxShelter
+
+A __TaxShelter__ is an investment or financial strategy designed to reduce taxable income and thereby lower tax liability. These shelters can take various forms such as retirement accounts, real estate investments, or certain business activities that allow individuals and corporations to defer or minimize taxes through legal means.
+
+* * *
+
+__See Also:__
+- [RothIRAAndCompoundInterest]
+
+[{SET categories='Finance'}]

@@ -1,0 +1,8 @@
+!!! __PostWarEurope__
+
+__PostWarEurope__ refers to the historical period following World War II in Europe, spanning from 1945 until approximately the late 1980s and early 1990s when significant political changes occurred. This era was marked by rebuilding efforts, ideological divisions (most notably between Western democracies and Eastern communist states), and economic recovery through initiatives like the Marshall Plan.
+
+! See Also
+* [BerlinsReunificationProcess]
+
+[{SET categories='History,Economics'}]

@@ -1,0 +1,10 @@
+!!! __EuropeanCounterculture__
+
+__European Counterculture__ refers to a broad range of social and cultural movements that emerged in Europe during the mid-20th century as reactions against mainstream societal norms, particularly those related to politics, culture, and lifestyle. These movements often challenged traditional values and sought to create alternative forms of expression and community.
+
+* * *
+
+!! See Also
+- [CulturalMovementsInBerlinHistory]
+
+[{SET categories='Culture'}]

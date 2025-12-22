@@ -1,0 +1,11 @@
+!!! __Exchange-Traded Funds (ETFs) Explained Tutorial__
+
+An exchange-traded fund (ETF) is a type of investment fund that holds assets such as stocks, bonds, commodities, or other financial instruments and trades on an exchange like a common stock. ETFs offer investors the diversification and low costs of mutual funds with the flexibility of trading individual stocks.
+
+* * *
+
+! See Also
+- [ExchangeTradedFundsETFsExplained]
+- [MutualFunds]
+
+[{SET categories='Investing Basics, Financial Instruments'}]

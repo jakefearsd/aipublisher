@@ -1,0 +1,10 @@
+!!! NipponIndividualSavingsAccount
+
+__Nippon Individual Savings Account (NISA)__ is a type of tax-favored investment account in Japan designed to encourage individuals to save and invest more efficiently. Introduced by the Japanese government, this account allows investors to set aside money for investments without being subject to capital gains taxes on profits made from securities transactions within the NISA. The contributions and investment income earned are exempt from taxation for a specified period.
+
+* * *
+
+! See Also
+- [TypesOfInvestmentAccounts]
+
+[{SET categories='Investing Basics, Types of Investment Accounts'}]

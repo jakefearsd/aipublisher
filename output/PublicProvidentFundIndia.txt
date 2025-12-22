@@ -1,0 +1,11 @@
+!!! PublicProvidentFundIndia
+
+__Public Provident Fund (PPF)__ is a popular long-term investment scheme in India offered by the government to encourage savings among its citizens. It offers tax benefits and attractive interest rates, making it an ideal choice for individuals looking to save money over a period of 15 years with the option to extend beyond.
+
+* __Benefits__: Tax exemptions under section 80C of the Income Tax Act.
+* __Interest Rates__: Typically higher than most other savings schemes in India.
+* __Eligibility__: Open to all Indian residents, including individuals and Hindu Undivided Families (HUFs).
+
+See Also: [RothIRAAndCompoundInterest]
+
+[{SET categories='Finance'}]

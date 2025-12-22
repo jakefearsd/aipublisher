@@ -1,0 +1,10 @@
+!!! MilitaryStrategyInEighteenthCentury
+
+__Military Strategy in Eighteenth Century__ refers to the planning and execution of military operations during the 18th century, a period marked by significant changes in warfare tactics and organization. This era saw the rise of professional armies, greater emphasis on logistics and supply lines, and the development of more sophisticated siege techniques.
+
+* * *
+
+!! See Also
+- [TheImpactOfTheSevenYearsWarOnPrussianBerlin]
+
+[{SET categories='History'}]

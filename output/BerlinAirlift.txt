@@ -1,0 +1,15 @@
+!!! BerlinAirlift
+
+The __BerlinAirlift__ was a massive international humanitarian and military operation conducted from June 1948 to May 1949 in response to the Soviet blockade of West Berlin.
+
+* * *
+
+During this period, the Western Allies supplied the city with food, fuel, and other essential goods via an extensive airlift operation. This critical effort ensured that the nearly two million residents of West Berlin were not forced into subjugation under communist control.
+
+* * *
+
+__See Also:__
+
+- [BerlinBlockade]
+
+[{SET categories='History'}]

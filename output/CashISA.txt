@@ -1,0 +1,9 @@
+!!! Cash ISA
+
+A __Cash ISA__ (Individual Savings Account) is a tax-free savings account in the United Kingdom designed to allow individuals to save money without paying income tax on interest earned. Unlike stocks and shares ISAs, cash ISAs hold traditional deposit accounts such as savings accounts or fixed-term bonds.
+
+* * *
+!! See Also
+- [InvestmentAccountTypes]
+
+[{SET categories='Finance'}]

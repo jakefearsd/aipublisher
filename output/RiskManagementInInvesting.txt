@@ -1,0 +1,12 @@
+!!! RiskManagementInInvesting
+
+__Risk Management in Investing__ refers to the process of identifying, assessing, and mitigating potential financial risks associated with investments. It involves strategies designed to protect an investor's capital from significant losses while aiming to maximize returns relative to the level of risk taken.
+
+* * *
+
+This practice is crucial for investors as it helps them make informed decisions by understanding and managing the uncertainties inherent in financial markets.
+
+! See Also
+- [AssetAllocation]
+
+[{SET categories='Investing Basics, Risk Management'}]

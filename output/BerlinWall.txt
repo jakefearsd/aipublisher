@@ -1,0 +1,9 @@
+!!! Berlin Wall
+
+The __Berlin Wall__ was a physical and ideological barrier between East and West Berlin from 1961 to 1989. Constructed by the German Democratic Republic (GDR) in an effort to stop the large number of defections to West Germany, it divided families, friends, and communities. The wall's fall symbolized the end of the Cold War.
+
+* See Also:
+    * [Berlin History]
+    * [Cold War]
+
+[{SET categories='History,Investing Basics'}]

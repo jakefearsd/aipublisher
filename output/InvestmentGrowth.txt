@@ -1,0 +1,12 @@
+!!! InvestmentGrowth
+
+__Investment growth__ refers to the increase in value of an investment over time due to factors such as capital appreciation, dividends, and interest earned. This concept is crucial for understanding how wealth can be built through strategic investments.
+
+* Capital appreciation occurs when the market value of an asset increases.
+* Dividends are payments made by corporations to their shareholders out of profits.
+* Interest income comes from fixed-income securities like bonds.
+
+See Also:
+- [CompoundInterestAndRetirementPlanning]
+
+[{SET categories='Investing Basics,Finance'}]

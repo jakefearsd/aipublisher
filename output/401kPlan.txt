@@ -1,0 +1,10 @@
+!!! __401kPlan__
+
+A 401(k) plan is an employer-sponsored retirement savings account that allows employees in the United States to save and invest a portion of their income on a pre-tax basis, thereby reducing current taxable income. Employers often match contributions up to a certain percentage, providing additional incentive for participation.
+
+* * *
+
+__See Also:__
+- [CompoundInterestAndTaxAdvantagedAccounts]
+
+[{SET categories='Finance'}]

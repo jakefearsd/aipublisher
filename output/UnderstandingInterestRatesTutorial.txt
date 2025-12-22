@@ -1,0 +1,11 @@
+!!! UnderstandingInterestRatesTutorial
+
+__Understanding Interest Rates Tutorial__ is an educational resource aimed at helping individuals grasp the fundamental concepts of interest rates and their implications in financial investments. This tutorial covers various aspects such as how to calculate interest, different types of interest rates (simple vs compound), and practical applications in loans and savings.
+
+* Helps readers understand basic principles
+* Provides tools for making informed investment decisions
+
+!! See Also:
+* [UnderstandingInterestRates]
+
+[{SET categories='Investing Basics, Finance Education'}]

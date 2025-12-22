@@ -1,0 +1,11 @@
+!!! BerlinHistoryTutorial
+
+__Berlin History Tutorial__ is an educational resource designed to provide an overview of the historical events and developments that have shaped Berlin from 1500 to 2020. This tutorial aims to guide readers through significant periods, key figures, and transformative moments in the city's history.
+
+* Provides a structured approach to understanding Berlin’s complex past
+* Useful for students, tourists, and anyone interested in European history
+
+See Also:
+- [BerlinHistory]
+
+[{SET categories='Education,Berlin History'}]

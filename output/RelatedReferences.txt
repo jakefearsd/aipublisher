@@ -1,0 +1,10 @@
+!!! Related References
+
+__Related References__ are citations and links to other documents, studies, or resources that provide additional context, background information, or complementary data relevant to a particular topic within the field of investing basics. These references help readers explore deeper into related subjects and understand the broader implications of the investment concepts discussed.
+
+* * *
+
+! See Also
+- [UrbanPlanningAndArchitectureUnderFrederickWilliamI]
+
+[{SET categories='Investing Basics'}]

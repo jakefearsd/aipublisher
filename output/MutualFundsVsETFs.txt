@@ -1,0 +1,11 @@
+!!! __Mutual Funds vs ETFs__
+
+In finance, _mutual funds_ and _exchange-traded funds (ETFs)_ are both investment vehicles that pool money from multiple investors to buy a diversified portfolio of stocks, bonds, or other securities. However, they differ in how shares are bought and sold, trading costs, and tax efficiency.
+
+* Mutual funds are priced once per day based on their net asset value (NAV) at the end of each trading session.
+* ETFs trade like individual stocks throughout the trading day with prices fluctuating according to supply and demand.
+
+See Also:
+- [ExchangeTradedFundsETFsExplained]
+
+[{SET categories='Investing Basics, Investment Vehicles'}]

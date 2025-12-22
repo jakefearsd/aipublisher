@@ -1,0 +1,10 @@
+!!! Asset Allocation Strategies
+
+__Asset allocation strategies__ refer to the process of dividing an investment portfolio among different asset categories, such as stocks, bonds, and cash equivalents, in order to optimize the balance between __risk__ and __return__. This approach aims to maximize returns for a given level of risk or minimize risk for a desired return. Investors use these strategies based on their financial goals, time horizon, and tolerance for market volatility.
+
+* * *
+
+!! See Also
+- [Asset Allocation]
+
+[{SET categories='Investing Basics,Portfolio Management'}]

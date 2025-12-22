@@ -1,0 +1,14 @@
+!!! GermanReunification
+
+__German Reunification__ refers to the process by which East and West Germany were unified into a single sovereign state in 1990 after decades of division following World War II. This historic event was preceded by the fall of the Berlin Wall, marking the end of the Cold War era in Europe.
+
+* * *
+
+!! See Also
+- [BerlinsPoliticalLandscapePostReunification]
+- [UrbanDevelopmentInModernBerlin]
+- [FallOfTheBerlinWall]
+- [CulturalLifeInDividedBerlin]
+- [BerlinWallHistory]
+
+[{SET categories='Investing Basics, History, Politics'}]

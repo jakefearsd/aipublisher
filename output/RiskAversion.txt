@@ -1,0 +1,14 @@
+!!! RiskAversion
+
+__Risk Aversion__ refers to an investor's preference for investments that are considered less risky and more stable in terms of returns. Investors who exhibit high risk aversion tend to prioritize capital preservation over achieving high returns, often opting for assets such as bonds or money market funds.
+
+* * *
+
+Risk-averse investors typically have a lower tolerance for potential losses and volatility in their portfolios. Understanding one's level of risk aversion is crucial when setting financial goals and choosing appropriate investment strategies that align with individual comfort levels and long-term objectives.
+
+* * *
+
+!!! See Also
+[Understanding Risk Tolerance]
+
+[{SET categories='Finance'}]

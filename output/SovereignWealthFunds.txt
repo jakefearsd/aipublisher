@@ -1,0 +1,10 @@
+!!! Sovereign Wealth Funds
+
+__Sovereign wealth funds__ (SWFs) are government-owned investment funds that manage a country's excess financial reserves to diversify national assets and provide economic stability. These funds often invest in foreign stocks, bonds, real estate, and other assets to safeguard against volatility in commodity prices or currency fluctuations.
+
+* * *
+
+!! See Also
+* [InvestingToBuildWealth]
+
+[{SET categories='Investing Basics, Wealth Management'}]

@@ -1,0 +1,9 @@
+!!! __CheckpointCharlieMuseum__
+
+The __Checkpoint Charlie Museum__ is an open-air museum located in Berlin, Germany, dedicated to preserving and presenting the history of the Berlin Wall and its impact on East-West relations during the Cold War. The museum occupies a site near the famous Checkpoint Charlie crossing point between East and West Berlin.
+
+* * *
+!! See Also
+* [CheckpointCharlie]
+
+[{SET categories='Berlin,ColdWar'}]

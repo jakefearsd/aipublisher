@@ -1,0 +1,12 @@
+!!! Investment
+
+__Investment__ refers to the act of allocating resources, usually money, with the expectation of generating income or profit within a specified period. This can involve purchasing assets such as stocks, bonds, real estate, or starting a business venture.
+
+* * *
+
+Investments are an essential part of financial planning and wealth creation for individuals and organizations alike.
+
+!! See Also
+* [InvestmentAccountTypes]
+
+[{SET categories='Investing Basics'}]

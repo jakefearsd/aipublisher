@@ -1,0 +1,8 @@
+!!! InvestmentStrategy
+
+An __InvestmentStrategy__ is a plan that defines how an investor will build and manage their portfolio of assets over time to meet specific financial goals. This strategy typically includes deciding on asset allocation, risk tolerance, diversification, and the types of investments to be made.
+
+*See Also:*
+- [AvoidingCommonInvestingMistakes]
+
+[{SET categories='Investing Basics'}]

@@ -1,0 +1,38 @@
+!!! Economic Impact of the Cold War on Berlin
+
+The Cold War had significant economic implications for Berlin, particularly due to events such as the Berlin Blockade and the construction of the Berlin Wall. This article provides a concise overview of these impacts.
+
+----
+!! Introduction
+
+The Cold War (1947-1991) was characterized by political tension between Western Bloc countries led by the United States and Eastern Bloc nations under Soviet control. The division of Germany into East and West after World War II created a unique situation in Berlin, where the city itself became divided along ideological lines.
+
+!! Historical Context: Division of Germany and Berlin
+
+Following World War II, Allied powers agreed to divide Germany into four occupation zones. However, tensions between Western allies (the United States, France, and Britain) and the Soviet Union led to a division that was extended to Berlin, despite its location deep within East German territory.
+
+!! Economic Impact of the Berlin Blockade
+
+The Berlin Blockade began in June 1948 when the Soviet Union attempted to restrict all supply routes into West Berlin. In response, Western Allies initiated an airlift operation that lasted until May 1949 and delivered essential goods such as food and fuel.
+
+!! Symbolism of West and East Berlin during the Cold War
+
+West Berlin thrived economically due to support from Western nations, becoming a beacon for capitalist prosperity. Conversely, East Berlin faced austerity measures imposed by the Soviet Union. The stark contrast between the two halves of the city highlighted the ideological differences between capitalism and communism.
+
+!! Long-term Economic Consequences Post-Cold War
+
+After the fall of the Berlin Wall in 1989, the reunification process brought both opportunities and challenges for economic integration. While some areas experienced rapid development, others struggled with high unemployment rates and infrastructure issues inherited from East Germany's communist economy.
+
+!! See Also
+
+* [BerlinBlockade]
+* [ColdWar]
+* [EastGermany]
+* [WestGermany]
+* [BerlinWall]
+
+!!! See Also
+
+* [EconomicImpactoftheColdWaronBerlinTutorial] - Step-by-step guide
+----
+[{SET categories='Cold War, Berlin History'}]

@@ -1,0 +1,7 @@
+!!! __BankAccount__
+
+A __bank account__ is a financial service provided by banks and other financial institutions that allows individuals or organizations to store money securely and make transactions such as deposits, withdrawals, and transfers. Bank accounts can be of various types including checking accounts, savings accounts, and specialized accounts like certificates of deposit (CDs). They serve as the foundation for managing personal finances and are essential for conducting most forms of financial transactions.
+
+* See Also: [[InvestmentAccountTypes]]
+
+[{SET categories='Investing Basics,Financial Services'}]

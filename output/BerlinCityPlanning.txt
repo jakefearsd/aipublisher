@@ -1,0 +1,10 @@
+!!! BerlinCityPlanning
+
+__Berlin City Planning__ refers to the systematic approach and strategies employed for the development, growth, and renovation of the city of Berlin, Germany. This planning encompasses a wide range of urban development activities including housing, transportation, public spaces, and environmental sustainability.
+
+* * *
+
+! See Also:
+* [UrbanDevelopmentInModernBerlin]
+
+[{SET categories='Investing Basics,Urban Development'}]

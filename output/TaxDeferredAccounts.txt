@@ -1,0 +1,10 @@
+!!! TaxDeferredAccounts
+
+A __TaxDeferredAccount__ is an investment account that allows individuals to defer payment of taxes on capital gains and income until a later date, usually retirement. This delay can lead to significant tax savings over time due to reduced current taxable income and the ability to grow investments without immediate taxation.
+
+* * *
+
+!! See Also
+- [CompoundInterestAndTaxAdvantagedAccounts]
+
+[{SET categories='Finance'}]

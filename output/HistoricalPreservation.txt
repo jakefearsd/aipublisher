@@ -1,0 +1,10 @@
+!!! HistoricalPreservation
+
+__Historical Preservation__ is the practice of protecting and preserving sites, buildings, objects, and districts that are significant to a community's cultural heritage and history. This can include efforts to restore old structures, maintain public spaces with historical significance, and regulate development in areas with important historical value.
+
+Historical preservation plays a crucial role in urban renewal projects by balancing the need for modernization with the desire to retain elements of a city’s or town’s past that contribute to its identity and character.
+
+! See Also
+* [HistoricalPreservationAndUrbanRenewalProjects]
+
+[{SET categories='Investing Basics, Urban Planning'}]

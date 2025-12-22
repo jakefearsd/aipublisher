@@ -1,0 +1,10 @@
+!!! Marshall Plan
+
+The __Marshall Plan__ was an American initiative passed in 1948 for rebuilding and creating a stronger financial foundation for the countries of Europe, which lost significant resources during World War II. It provided over $12 billion ($130 billion adjusted for inflation in 2020) to help rebuild European economies and prevent the spread of Soviet communism.
+
+* * *
+
+! See Also
+- [EconomicImpactOfTheColdWarOnBerlin]
+
+[{SET categories='Berlin History, Cold War'}]

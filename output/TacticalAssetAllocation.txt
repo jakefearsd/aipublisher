@@ -1,0 +1,9 @@
+!!! Tactical Asset Allocation
+
+__Tactical Asset Allocation__ is an investment strategy that involves making short-term adjustments to a portfolio's asset allocation based on market conditions and forecasts. This approach aims to capitalize on anticipated changes in the relative performance of different assets, allowing investors to potentially enhance returns or reduce risk beyond what a static strategic allocation can achieve.
+
+* Unlike Strategic Asset Allocation, which focuses on long-term goals and maintains a fixed set of investment proportions, Tactical Asset Allocation is more flexible and responsive to market dynamics.
+  
+See Also: [AssetAllocation]
+
+[{SET categories='Investing Basics,PortfolioManagement'}]

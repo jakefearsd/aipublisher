@@ -1,0 +1,11 @@
+!!! StPeterAndPaulCathedralBrandenburg
+
+__St. Peter and Paul Cathedral Brandenburg__ is a historic religious building located in Cottbus, Germany, within the state of Brandenburg. It is known for its architectural significance and its role as an important landmark in the region's cultural history.
+
+* The cathedral dates back to the 13th century and has undergone several renovations over the centuries.
+* It remains an active place of worship but also serves as a venue for cultural events and concerts.
+
+! See Also
+* [HistoricalBackgroundOfBrandenburg]
+
+[{SET categories='Investing Basics, Historical Background'}]

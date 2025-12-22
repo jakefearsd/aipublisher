@@ -1,0 +1,10 @@
+!!! MutualFund
+
+A __mutual fund__ is an investment vehicle that pools money from many investors to buy a diversified portfolio of stocks, bonds, or other securities. Each investor in the mutual fund owns shares, which represent a portion of the holdings of the fund.
+
+Mutual funds are managed by professional fund managers who make decisions on how to allocate and invest the pooled money according to the fund's investment objectives. This allows individual investors to access professionally managed portfolios that might otherwise be difficult or expensive to achieve alone.
+
+* See Also:
+  * [ExpenseRatiosWhatYouNeedToKnow]
+
+[{SET categories='Investing Basics, Investment Vehicles'}]

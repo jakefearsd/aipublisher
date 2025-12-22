@@ -1,0 +1,11 @@
+!!! HealthSavingsAccount
+
+A __Health Savings Account__ (HSA) is a tax-advantaged financial account in the United States designed to help individuals save for qualified medical expenses on a pre-tax basis. HSAs are typically paired with high-deductible health plans (HDHPs), allowing individuals to set aside funds without being taxed, which can then be used to pay for eligible healthcare costs.
+
+* __Benefits__ include tax deductions, lower taxable income, and the ability to invest funds for future medical expenses.
+* __Eligibility__ generally requires enrollment in a qualifying HDHP with a higher deductible than traditional health plans.
+
+! See Also
+* [UnderstandingTaxAdvantagedAccounts]
+
+[{SET categories='Investing Basics, Tax Planning'}]

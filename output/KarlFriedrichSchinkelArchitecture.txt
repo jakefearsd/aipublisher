@@ -1,0 +1,9 @@
+!!! KarlFriedrichSchinkelArchitecture
+
+__Karl Friedrich Schinkel Architecture__ refers to the architectural style and design principles developed by the German architect Karl Friedrich Schinkel (1781-1841). His work is characterized by its neoclassical elegance, functional simplicity, and historical references that reflect the cultural and political transformations of early 19th century Germany. Schinkel's buildings played a significant role in shaping Berlin's urban landscape during its transformation from a margraviate to the capital city of a modern nation.
+
+* * *
+!! See Also
+- [BerlinsTransformationFromMargraviateToCapitalCity]
+
+[{SET categories='Investing Basics, Architecture'}]

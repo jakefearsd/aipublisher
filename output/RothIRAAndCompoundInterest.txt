@@ -1,0 +1,39 @@
+!!! Roth IRA and Compound Interest
+
+DOMAIN CONTEXT: Investing Basics
+
+This page provides a concise reference guide for understanding Roth IRAs and how compound interest applies to them.
+
+!! Introduction to Roth IRA
+A [[RothIRA]] is an individual retirement account that allows individuals to contribute after-tax dollars and earn tax-free growth on investments. Unlike traditional IRAs, contributions made to a Roth IRA are not deductible from current income taxes but can be withdrawn completely tax-free in retirement if certain conditions are met.
+
+!! Contributions and Withdrawals
+- [[RothIRA]] contributions must be made with after-tax dollars.
+- Withdrawals of original contributions can be made at any time without penalty or taxation, as long as the account has been open for five years (if you're over 59.5 years old) or if withdrawals are used to purchase a first-time home ($10K limit).
+- Non-qualified withdrawals may result in taxes and penalties.
+
+!! Tax Benefits of a Roth IRA
+Key benefits include:
+* Contributions made with after-tax dollars, meaning they do not reduce current taxable income.
+* All earnings grow tax-free within the account.
+* Qualified withdrawals are completely tax-free during retirement.
+
+!! Compound Interest in a Roth IRA
+Compound interest refers to the process of earning interest on an initial principal amount as well as the accumulated interest from previous periods. In the context of a [[RothIRA]], this means that contributions grow not just due to investment returns but also because those returns are reinvested and themselves earn additional returns over time, all without being taxed until withdrawal.
+
+!! Comparison with Traditional IRAs
+- Age limits for contributing to a Roth IRA may be higher than those for traditional IRAs.
+- Contributions to a traditional IRA can provide immediate tax benefits through deduction of contributions from current taxable income, whereas Roth IRA contributions do not offer this benefit but are withdrawn tax-free in retirement.
+- Non-qualified withdrawals from a Roth IRA might face less severe penalties compared to Traditional IRA withdrawals due to different rules regarding distributions before age 59.5 and the five-year holding period requirement for conversions or direct contributions.
+
+!!! See Also
+* [RothIRAandCompoundInterestTutorial] - Step-by-step guide
+
+[TraditionalIRA]
+[TaxShelter]
+[PublicProvidentFundIndia]
+[PassiveForeignInvestmentCompany]
+
+[{TableOfContents}]
+----
+[{SET categories='Roth IRA, Retirement Planning, Tax Benefits'}]

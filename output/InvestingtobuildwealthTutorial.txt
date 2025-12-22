@@ -1,0 +1,10 @@
+!!! InvestingtobuildwealthTutorial
+
+__InvestingtobuildwealthTutorial__ is an educational resource aimed at guiding individuals through the basics of investing to enhance their financial wealth over time. This tutorial covers essential concepts such as risk assessment, diversification, and selecting investment vehicles that align with personal financial goals.
+
+* * *
+
+! See Also
+- [InvestingToBuildWealth]
+
+[{SET categories='Investing Basics, Wealth Building'}]

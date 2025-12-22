@@ -1,0 +1,10 @@
+!!! EnglishTrustLaw
+
+__English Trust Law__ refers to the legal framework governing trusts in England and Wales. A trust is a fiduciary arrangement through which assets are held by one party for the benefit of another. This law defines how these arrangements are established, managed, and dissolved.
+
+* * *
+
+! See Also
+- [[AvoidingCommonMistakesWithInvestmentAccounts]]
+
+[{SET categories='Law,Finance'}]

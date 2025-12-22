@@ -1,0 +1,10 @@
+!!! RichDadPoorDad
+
+__Rich Dad Poor Dad__ is a best-selling book by Robert Kiyosaki that contrasts financial advice from two influential men in his life: his own father (whom he refers to as "poor dad") and the father of his best friend (referred to as "rich dad"). The book emphasizes the importance of financial education, building assets, and understanding the difference between working for money and having your money work for you.
+
+* * *
+
+!! See Also
+* [AvoidingCommonInvestingMistakes]
+
+[{SET categories='Investing Basics'}]

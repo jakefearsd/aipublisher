@@ -1,0 +1,10 @@
+!!! AssetLocationStrategy
+
+An __Asset Location Strategy__ is an investment approach that aims to minimize taxes by placing specific types of investments in accounts where they will be taxed at more favorable rates. This strategy involves considering both tax-deferred and taxable accounts when building a portfolio.
+
+*For example, high-dividend stocks might be placed in tax-advantaged retirement accounts to avoid or delay the payment of capital gains and dividend taxes.*
+
+See Also:
+* [CompoundInterestAndTaxAdvantagedAccounts]
+
+[{SET categories='Finance'}]

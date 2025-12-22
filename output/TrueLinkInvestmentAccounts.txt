@@ -1,0 +1,10 @@
+!!! TrueLinkInvestmentAccounts
+
+__TrueLink Investment Accounts__ are investment accounts designed for individuals who prefer automatic and rule-based management of their investments. These accounts typically allow users to set specific rules or parameters that dictate how funds are invested, rebalanced, or withdrawn, minimizing the need for manual intervention.
+
+* Users can tailor these accounts to align with personal financial goals, risk tolerance, and investment preferences.
+* TrueLink accounts often integrate seamlessly with other financial tools and platforms, enhancing their utility for budgeting and long-term planning.
+
+See Also: [AvoidingCommonMistakesWithInvestmentAccounts]
+
+[{SET categories='Finance'}]

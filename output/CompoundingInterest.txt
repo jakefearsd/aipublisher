@@ -1,0 +1,10 @@
+!!! CompoundingInterest
+
+__Compounding Interest__ is the process in finance where interest earned on an investment is reinvested to generate additional earnings over time. This means that the interest earned in each period includes both the initial principal and all prior interest, leading to exponential growth of wealth.
+
+*This effect is often described as "interest on interest" and can significantly increase returns over long periods.*
+
+See Also:
+- [ExpenseRatiosAndTheirEffectOnCompounding]
+
+[{SET categories='Investing Basics'}]

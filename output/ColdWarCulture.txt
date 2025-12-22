@@ -1,0 +1,10 @@
+!!! __ColdWarCulture__
+
+__Cold War Culture__ refers to the distinct cultural environment that emerged in Berlin during the Cold War era (1945-1963), heavily influenced by the city's division into East and West. This culture was characterized by a blend of ideological confrontation, artistic expression, and daily life under the shadow of political tension.
+
+* * *
+
+!! See Also
+* [CulturalMovementsInBerlinHistory]
+
+[{SET categories='Culture'}]

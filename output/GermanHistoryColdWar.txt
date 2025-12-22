@@ -1,0 +1,8 @@
+!!! GermanHistoryColdWar
+
+The period during which Germany was split into East and West during the __Cold War__ era from 1949 to 1990 is referred to as ''German History Cold War''. This division significantly influenced Berlin, turning it into a symbol of ideological confrontation between the Western Allies and the Soviet Union. The city became physically divided by the Berlin Wall in 1961, representing the broader political and social impact of the Cold War on Germany.
+
+* See Also:
+  * [BerlinsReunificationProcess]
+
+[{SET categories='History'}]

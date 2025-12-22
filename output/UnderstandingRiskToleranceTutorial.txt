@@ -1,0 +1,11 @@
+!!! UnderstandingRiskToleranceTutorial
+
+__Understanding Risk Tolerance Tutorial__ is an educational guide designed to help individuals assess their personal comfort level with financial risk when making investment decisions. This tutorial covers various aspects such as identifying risk factors, evaluating past behavior in similar situations, and setting realistic expectations for future investments.
+
+* It aims to provide practical insights and tools that investors can use to determine the appropriate mix of assets for their portfolios.
+* By completing this tutorial, participants gain a better understanding of how much risk they are willing to take on for potential rewards.
+
+!! See Also
+- [UnderstandingRiskTolerance]
+
+[{SET categories='Investing Basics'}]

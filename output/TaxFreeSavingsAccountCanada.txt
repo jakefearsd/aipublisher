@@ -1,0 +1,9 @@
+!!! TaxFreeSavingsAccountCanada
+
+__Tax-Free Savings Account Canada (TFSA)__ is a registered account in Canada that allows individuals to earn tax-free investment income and withdraw funds without paying taxes on capital gains, dividends, or interest earned within the account.
+
+Established in 2009 by the Canadian government as an alternative to Registered Retirement Savings Plans (RRSPs), TFSAs provide flexibility for Canadians to save money tax-efficiently without designating the savings for retirement. Contributions are made with after-tax dollars and are not deductible, but any income earned within the TFSA grows tax-free.
+
+* See Also: [UnderstandingTaxAdvantagedAccounts]
+
+[{SET categories='Investing Basics,Canadian Finance'}]

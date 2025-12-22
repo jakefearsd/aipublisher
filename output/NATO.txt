@@ -1,0 +1,10 @@
+!!! __NATO__
+
+__NATO__, short for the North Atlantic Treaty Organization, is an intergovernmental military alliance established on April 4, 1949. Its founding members included several Western European nations and the United States. The organization was created to ensure collective defense against potential Soviet aggression during the Cold War era.
+
+In the context of Berlin's history, NATO played a significant role in maintaining security and stability within West Berlin as part of the larger geopolitical tensions that defined the city during this period.
+
+! See Also
+* [TheIronCurtainAndBerlin]
+
+[{SET categories='ColdWar,BerlinHistory'}]

@@ -1,0 +1,10 @@
+!!! EuropeanUnion
+
+__European Union (EU)__ is a political and economic union of 27 member states that are located primarily in Europe. The EU operates through a system of supranational institutions and intergovernmental negotiated decisions by the member countries.
+
+The EU aims to ensure the free movement of people, goods, services, and capital within the internal market, enact legislation in justice and home affairs, and maintain common policies on trade, agriculture, fisheries, and regional development. It plays a crucial role in shaping political and economic landscapes across its member states, including influencing cities like Berlin's post-reunification politics.
+
+* See Also:
+  * [BerlinsPoliticalLandscapePostReunification]
+
+[{SET categories='Investing Basics, European Politics'}]

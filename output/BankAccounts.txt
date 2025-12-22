@@ -1,0 +1,10 @@
+!!! BankAccounts
+
+A __BankAccount__ is a financial service provided by banks and other financial institutions that allows individuals or businesses to store money and conduct transactions securely. It serves as a foundation for managing personal finances and can be used for various purposes such as saving, spending, and earning interest.
+
+* * *
+
+! See Also
+- [InvestmentAccountTypes]
+
+[{SET categories='Personal Finance'}]

@@ -1,0 +1,31 @@
+!!! Berlin Wall History
+
+The Berlin Wall was a physical and ideological barrier that divided East and West Berlin from August 13, 1961, until November 9, 1989. This article provides an overview of the history of the Berlin Wall, including its construction, significance, daily life during its existence, escape attempts and consequences, the fall of the wall, and its aftermath.
+
+[{TableOfContents}]
+----
+!! Introduction to the Berlin Wall
+The Berlin Wall was constructed by East Germany (the German Democratic Republic) as a means of controlling movement between the Soviet-controlled Eastern sector and the Western sectors. Officially known as the Anti-Fascist Protection Rampart, it divided not only physical space but also ideological perspectives during the Cold War era.
+
+!! Construction and Significance
+The construction of the Berlin Wall began on August 13, 1961, with barbed wire and concrete blocks initially used to create a barrier. Over time, this evolved into a fortified system comprising guard towers, anti-vehicle trenches, and fencing that separated East and West Germany.
+
+!! Daily Life Divided by the Wall
+The presence of the Berlin Wall had profound effects on daily life for those living in divided Berlin. Families were torn apart as communication and movement became severely restricted between the two zones.
+
+!! Escape Attempts and Consequences
+During its existence, more than 5,000 people attempted to cross from East to West Berlin through various means including tunnels, hot air balloons, and even crawling under barbed wire fences. Tragically, at least 140 individuals lost their lives in these attempts.
+
+!! The Fall of the Berlin Wall
+The fall of the Berlin Wall began on November 9, 1989, following months of peaceful protests known as the Peaceful Revolution in East Germany. As political pressure mounted and tensions rose within East Germany, officials announced that citizens could cross freely into West Berlin.
+
+!! Aftermath and Demolition
+Following its collapse, efforts to remove the wall began almost immediately. The demolition process was complex due to the wall's extensive network of structures and fortifications. By June 1992, most of the physical remnants had been dismantled or removed.
+
+!!! See Also
+* [BerlinWallFall]
+* [ColdWar]
+* [GermanReunification]
+* [EastGermany]
+* [WestGermany]
+* [BerlinWallHistoryTutorial] - Step-by-step guide

@@ -1,0 +1,10 @@
+!!! CulturalLifeinDividedBerlinTutorial
+
+__Cultural Life in Divided Berlin Tutorial__ is an educational resource that explores the rich cultural scene of West and East Berlin during the period when the city was divided by the Berlin Wall (1961-1989). This tutorial covers aspects such as art, literature, music, and daily life under the contrasting influences of capitalism in the West and communism in the East.
+
+* * *
+
+! See Also
+* [CulturalLifeInDividedBerlin]
+
+[{SET categories='Investing Basics'}]

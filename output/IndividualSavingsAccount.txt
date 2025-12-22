@@ -1,0 +1,10 @@
+!!! __Individual Savings Account__ (ISA)
+
+An Individual Savings Account (ISA) is a tax-efficient savings and investment product offered in the UK. ISAs allow individuals to save money free of income tax and capital gains tax on returns earned within the account, up to an annual limit set by the government.
+
+* * *
+
+! See Also
+- [InvestmentAccountTypes]
+
+[{SET categories='Investing Basics, Tax Efficient Investing'}]

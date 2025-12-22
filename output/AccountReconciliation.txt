@@ -1,0 +1,11 @@
+!!! AccountReconciliation
+
+__Account Reconciliation__ is the process of comparing two sets of records (usually from different sources) for a specific time period to ensure that their entries match and that all transactions are accurate and complete. This practice is crucial in finance and accounting to identify discrepancies, correct errors, and verify the accuracy of financial statements.
+
+* Ensures the integrity of financial data.
+* Helps detect fraud or operational inefficiencies early.
+
+See Also:
+* [AvoidingCommonMistakesWithInvestmentAccounts]
+
+[{SET categories='Investing Basics,Financial Management'}]

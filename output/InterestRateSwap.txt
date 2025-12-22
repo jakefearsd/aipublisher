@@ -1,0 +1,10 @@
+!!! Interest Rate Swap
+
+__Interest Rate Swap__ is a financial derivative contract in which two parties agree to exchange interest rate payments, typically over a fixed period of time. One party agrees to pay a fixed interest rate while the other agrees to pay a floating interest rate (such as LIBOR or EURIBOR) based on an agreed principal amount.
+
+This instrument helps entities manage their exposure to fluctuating interest rates and can be used for hedging purposes or to reduce financing costs.
+
+! See Also
+* [Understanding Interest Rates]
+
+[{SET categories='Economics'}]

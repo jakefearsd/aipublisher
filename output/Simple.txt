@@ -1,0 +1,10 @@
+!!! Simple
+
+__Simple__ refers to a method or principle that is easy to understand and straightforward in its application. In finance and investing, simple interest contrasts with compound interest by calculating interest only on the principal amount rather than on both principal and accrued interest.
+
+* Example: If you invest $100 at 5% simple annual interest for one year, your return will be $5 without any compounding effects.
+
+See Also:
+* [SimpleVsCompoundInterest]
+
+[{SET categories='Investing Basics, Interest'}]

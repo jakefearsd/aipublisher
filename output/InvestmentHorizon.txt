@@ -1,0 +1,11 @@
+!!! Investment Horizon
+
+__Investment Horizon__ refers to the period of time an investor plans to hold an investment before selling it and realizing any gains or losses. This timeframe is a critical component in shaping an individual's investment strategy, as it influences decisions related to asset allocation, risk tolerance, and the types of investments chosen.
+
+* A shorter investment horizon typically correlates with lower risk tolerance and a preference for more liquid assets.
+* Conversely, a longer investment horizon may accommodate higher-risk investments aimed at achieving greater long-term growth.
+
+See Also:
+* [ExpenseRatiosAndTheirEffectOnCompounding]
+
+[{SET categories='Investing Basics'}]

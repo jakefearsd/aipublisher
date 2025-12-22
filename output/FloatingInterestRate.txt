@@ -1,0 +1,10 @@
+!!! Floating Interest Rate
+
+A __floating interest rate__ is an adjustable rate that moves up and down based on market conditions. This type of interest rate typically adjusts according to a benchmark index such as LIBOR (London Interbank Offered Rate) plus a fixed margin set by the lender. The primary advantage for borrowers is the flexibility it provides, potentially allowing them to benefit from lower rates when the market shifts favorably.
+
+* * *
+
+__See Also:__
+- [Understanding Interest Rates]
+
+[{SET categories='Economics'}]

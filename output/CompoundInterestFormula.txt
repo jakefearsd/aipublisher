@@ -1,0 +1,19 @@
+!!! CompoundInterestFormula
+
+__Compound Interest Formula__ is a mathematical equation used to calculate the future value of an investment when interest is applied not only to the initial principal but also to any accumulated interest from previous periods. This formula allows investors to understand how their money grows over time, taking into account the power of compounding.
+
+The basic form of the compound interest formula is:
+
+\[ A = P \left(1 + \frac{r}{n}\right)^{nt} \]
+
+Where:
+- \(A\) is the amount of money accumulated after n years, including interest.
+- \(P\) is the principal amount (the initial sum of money).
+- \(r\) is the annual interest rate (decimal).
+- \(n\) is the number of times that interest is compounded per year.
+- \(t\) is the time the money is invested for in years.
+
+*See Also:*
+[CompoundInterestAndInflation]
+
+[{SET categories='Investing Basics,Mathematics'}]

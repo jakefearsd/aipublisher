@@ -1,0 +1,12 @@
+!!! Investment Principles
+
+__Investment Principles__ refer to fundamental guidelines and strategies that investors follow to make informed decisions about buying, selling, and holding assets. These principles are designed to help individuals navigate the complexities of financial markets while aiming for long-term growth and stability.
+
+* __Risk Management__: This involves understanding one's risk tolerance and diversifying investments to mitigate potential losses.
+* __Long-Term Focus__: Emphasizes patience and persistence in investing rather than chasing short-term gains or following market trends.
+* __Research and Analysis__: Thoroughly researching investment opportunities before committing capital.
+
+See Also:
+- [AvoidingCommonInvestingMistakes]
+
+[{SET categories='Personal Finance'}]

@@ -1,0 +1,11 @@
+!!! InnovativeFinanceISA
+
+__Innovative Finance ISA__ is a type of Individual Savings Account (ISA) in the UK that allows investors to hold cryptocurrencies and other innovative financial assets without paying tax on capital gains or income generated within the account.
+
+This ISA category provides an opportunity for individuals interested in investing in digital currencies and tokens listed on regulated exchanges, offering potential tax advantages compared to holding these assets outside of a tax wrapper. It is part of a broader range of investment accounts designed to cater to diverse financial products and strategies.
+
+! See Also
+* [InvestmentAccountTypes]
+* [CryptocurrencyInvestingBasics]
+
+[{SET categories='Finance'}]

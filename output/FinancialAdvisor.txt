@@ -1,0 +1,10 @@
+!!! FinancialAdvisor
+
+A __Financial Advisor__ is a professional who provides guidance and advice on investment strategies, financial planning, and wealth management to individuals or businesses. They help clients make informed decisions about their money by analyzing financial goals and risk tolerance.
+
+* * *
+
+!! See Also
+- [[ExpenseRatiosWhatYouNeedToKnow]]
+
+[{SET categories='Investing Basics'}]

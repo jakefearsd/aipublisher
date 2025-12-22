@@ -1,0 +1,10 @@
+!!! Leveraged Inverse ETFs
+
+__Leveraged inverse exchange-traded funds (ETFs)__ are financial instruments designed to provide leveraged exposure to an index or benchmark, but in the opposite direction, typically with a daily reset and rebalancing feature. These funds aim to deliver multiples of the daily percentage change in their underlying indices, but in the negative direction.
+
+These ETFs can be used by investors seeking to hedge against market downturns or capitalize on short-term declines in specific markets or sectors. However, they are complex and carry significant risks due to compounding losses over longer periods, which may not align with the expected performance of a straightforward short position.
+
+! See Also
+* [ExchangeTradedFundsETFsExplained]
+
+[{SET categories='Investing Basics, ETFs'}]

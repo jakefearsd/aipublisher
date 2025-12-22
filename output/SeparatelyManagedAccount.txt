@@ -1,0 +1,12 @@
+!!! Separately Managed Account
+
+A **Separately Managed Account (SMA)** is an investment account where a professional money manager has full discretion over which securities are bought and sold within the account on behalf of one individual investor, usually an institutional client such as a pension fund or high net worth individual. Unlike mutual funds or other pooled investments, SMAs offer personalized portfolios with direct ownership of underlying assets.
+
+* Tailored to meet specific investment goals.
+* Provides transparency as investors own the securities directly.
+* Offers tax benefits and customization options for clients.
+
+See Also:
+- [InvestmentAccountTypes]
+
+[{SET categories='Investing Basics'}]

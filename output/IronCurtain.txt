@@ -1,0 +1,11 @@
+!!! IronCurtain
+
+__Iron Curtain__ was an expression used during the Cold War era to describe the division between the Soviet-controlled Eastern Bloc and the Western nations. The term symbolized the ideological, political, and economic separation that characterized this period.
+
+The concept of the Iron Curtain was popularized by British statesman Winston Churchill in his 1946 speech in [Moscow|Moscow_Speech]. It marked a significant shift from wartime alliance to post-war enmity between Western powers and the Soviet Union. The Berlin Wall, erected in 1961, became a powerful symbol of this division.
+
+! See Also
+* [BerlinWallHistory]
+* [TheIronCurtainAndBerlin]
+
+[{SET categories='ColdWar,HistoricalEvents'}]

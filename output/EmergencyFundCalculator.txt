@@ -1,0 +1,10 @@
+!!! EmergencyFundCalculator
+
+An **Emergency Fund Calculator** is an online tool designed to help individuals determine how much money they need in their emergency fund based on various financial factors such as monthly expenses and potential unforeseen costs.
+
+This calculator typically asks users for information about their regular living expenses, job stability, number of dependents, and other relevant details. By inputting this data, users can receive a customized recommendation for the size of their emergency fund, which is often suggested to cover three to six months of essential expenses.
+
+See Also:
+* [BuildingAnEmergencyFundBeforeInvesting]
+
+[{SET categories='Personal Finance'}]

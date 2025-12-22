@@ -1,0 +1,36 @@
+!!! Cold War Berlin
+
+Cold War Berlin was a focal point of geopolitical tension between East Germany (led by the Soviet Union) and West Germany (supported by the United States, Britain, and France). This era saw significant military presence, espionage activities, and daily life challenges for residents. The division of Berlin set the stage for Cold War tensions, leading to major events such as the [[Berlin Blockade]].
+
+!! Historical Context and Division of Berlin
+
+After World War II, Allied powers divided Germany into four occupation zones: American, British, French, and Soviet. Berlin, though deep within the Soviet zone, was also split into four sectors according to the same arrangement. However, due to poor relations between the Western Allies and the Soviets, this division eventually became permanent, turning West Berlin into a de facto enclave of West Germany surrounded by East Germany.
+
+!! Key Events: The [[Berlin Blockade]]
+
+One of the most significant early crises was the Berlin Blockade (1948-1949), when the Soviet Union tried to force Western powers out of their sectors in Berlin. In response, the United States and its allies initiated the Berlin Airlift, supplying West Berliners with essential goods via air transport for nearly a year until the blockade was lifted.
+
+!! Military Presence in West Berlin
+
+The US Army maintained a strong military presence in West Berlin through units like the [[Berlin Brigade]] (1947-1994). This brigade played a crucial role not only in providing security but also in symbolizing Western commitment to defend West Berlin against potential threats from East Germany.
+
+!! Espionage and Intelligence Operations
+
+Cold War Berlin was notorious for espionage activities. Both sides used the city as a hub for intelligence gathering due to its strategic location between Eastern and Western blocs. The Stasi, East Germany's secret police force, conducted extensive surveillance of residents and foreign diplomats alike, while Western agencies like the CIA operated covertly within the city.
+
+!! Daily Life and Impact on Civilians
+
+Residents of Cold War Berlin lived under constant threat of espionage, political repression in [[EastBerlin]], and economic hardships. The barrier that eventually became the [[BerlinWall]] severely restricted movement between East and West sectors, affecting families and workers who had previously lived freely across the city.
+
+!! The Fall of the Berlin Wall
+
+The fall of the Berlin Wall on November 9, 1989, marked a pivotal moment in Cold War history. It signaled the end of division for millions of Germans and paved the way for reunification in October 7, 1990.
+
+!!! See Also
+
+* [[ColdWar]]
+* [[BerlinBlockade]]
+* [[BerlinWall]]
+* [[EastGermany]]
+* [[WestGermany]]
+* [[ColdWarBerlinTutorial]] - Hands-on guide

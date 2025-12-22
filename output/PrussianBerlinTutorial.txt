@@ -1,0 +1,7 @@
+!!! __PrussianBerlinTutorial__
+
+The *PrussianBerlinTutorial* is an educational guide designed to provide insights into the historical and economic principles that shaped Berlin during the Prussian era. This tutorial aims to offer a foundational understanding of how past policies and practices influenced modern financial strategies and urban development.
+
+*See Also:* [PrussianBerlin]
+
+[{SET categories='Investing Basics,History'}]

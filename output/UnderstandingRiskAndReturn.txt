@@ -1,0 +1,10 @@
+!!! Understanding Risk And Return
+
+__Understanding Risk and Return__ is the concept in investing that describes the relationship between potential gains (returns) and the chance of losing some or all of an investment's value (risk). Investors typically aim to achieve a balance where they can maximize returns while managing risk according to their personal tolerance. This principle is fundamental for making informed decisions about asset allocation, diversification, and selecting investments that align with financial goals.
+
+* * *
+
+!! See Also
+- [Wealth Building]
+
+[{SET categories='Personal Finance'}]

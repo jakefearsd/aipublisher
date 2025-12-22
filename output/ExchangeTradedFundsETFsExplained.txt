@@ -1,0 +1,45 @@
+!!! Exchange-Traded Funds (ETFs) Explained
+
+DOMAIN CONTEXT: Investing Basics
+
+Exchange-Traded Funds (ETFs) are investment funds traded on stock exchanges similar to individual stocks. Unlike mutual funds which are priced once at the end of each trading day, ETFs can be bought and sold throughout the trading session at any time. This makes them highly liquid and accessible for investors seeking diversified exposure or specific market segments.
+
+----
+
+!! Introduction to ETFs
+Exchange-Traded Funds (ETFs) were first introduced in Canada in 1990, marking a significant development in the investment landscape. They are essentially mutual funds that trade like stocks on exchanges such as NASDAQ or NYSE American. This unique characteristic allows for greater flexibility and liquidity compared to traditional mutual funds.
+
+!! Types of ETFs
+ETFs come in various forms:
+__Index-based:__ These track a specific market index, like the S&P 500.
+__Thematic:__ Focus on sectors such as technology or healthcare.
+__Actively Managed:__ Unlike passive index-tracking ETFs, these are managed by fund managers aiming to outperform the benchmark.
+
+Leveraged and inverse ETFs also exist. Leveraged ETFs use financial derivatives like swaps and futures contracts to amplify returns of an underlying asset or index, whereas inverse ETFs move in the opposite direction of their reference assets.
+
+!! Benefits and Risks of Investing in ETFs
+__Benefits:__
+- __Diversification:__ By buying a single ETF, investors can gain exposure to multiple securities, reducing risk through diversification.
+- __Cost Efficiency:__ Generally lower management fees compared to mutual funds due to passive index-tracking nature.
+- __Flexibility and Liquidity:__ Ability to trade throughout the day at market prices rather than end-of-day net asset value (NAV).
+
+__Risks:__
+- __Tracking Error:__ The difference between an ETF's performance and its benchmark can be influenced by factors like management fees or trading costs.
+- __Compliance Risks:__ Recent regulatory changes may affect liquidity, although the exact impact is uncertain.
+- __Complex Products Risk:__ Inverse and leveraged ETFs carry higher risk profiles due to potential for significant losses if not used correctly.
+
+!! How ETFs Work
+ETFs operate through a creation/redemption mechanism. Authorized Participants (APs), typically large financial institutions, can create or redeem ETF shares by exchanging in-kind baskets of securities with the fund issuer. These transactions help maintain an orderly market and keep prices close to NAV.
+
+!! History of ETFs
+The first ETF was introduced in Canada in 1990 as the Index Participation Shares (TIP). However, it wasn't until 1993 when the Toronto Stock Exchange launched the TSE 300 Index Participation Fund that ETFs gained widespread popularity. The U.S. followed suit in 1993 with the Standard & Poor's Depositary Receipts (SPDR), which still trades today under the ticker symbol SPY.
+
+!! See Also
+* [ExchangeTradedFund]
+* [StockMarket]
+* [MutualFunds]
+* [IndexFunds]
+* [FinancialDerivatives]
+
+!!! See Also
+* [Exchange-TradedFunds(ETFs)ExplainedTutorial] - Hands-on guide

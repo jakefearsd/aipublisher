@@ -1,0 +1,10 @@
+!!! Dynamic Asset Allocation
+
+__Dynamic Asset Allocation__ is an investment strategy that involves adjusting the mix of assets in a portfolio based on market conditions and economic forecasts to optimize returns for a given level of risk. Unlike static asset allocation, which maintains a fixed percentage of asset classes regardless of market movements, dynamic asset allocation allows for more flexibility and can help investors take advantage of changing market environments.
+
+* * *
+
+! See Also
+- [Asset Allocation]
+
+[{SET categories='Finance'}]

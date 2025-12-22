@@ -1,0 +1,10 @@
+!!! __Johann Sebastian Bach__
+
+__Johann Sebastian Bach__ (1685-1750) was a German composer and musician of the Baroque period. His works include the Brandenburg Concertos, Mass in B minor, The Well-Tempered Clavier, and many cantatas, oratorios, and organ pieces.
+
+Although primarily known for his contributions to classical music, Bach's legacy is referenced in discussions on historical branding and artistic influence, such as the context of the [Brandenburg Concertos] in the article [Historical Background Of Brandenburg].
+
+! See Also
+* [Historical Background Of Brandenburg]
+
+[{SET categories='Music History, Classical Music'}]
