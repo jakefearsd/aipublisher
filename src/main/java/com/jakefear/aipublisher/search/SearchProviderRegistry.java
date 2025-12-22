@@ -27,13 +27,13 @@ public class SearchProviderRegistry {
      * Default constructor for Spring.
      */
     public SearchProviderRegistry() {
-        this.defaultProviderName = "wikipedia";
+        this.defaultProviderName = "wikidata";
     }
 
     /**
      * Constructor with configurable default provider.
      */
-    public SearchProviderRegistry(@Value("${search.default-provider:wikipedia}") String defaultProviderName) {
+    public SearchProviderRegistry(@Value("${search.default-provider:wikidata}") String defaultProviderName) {
         this.defaultProviderName = defaultProviderName;
     }
 

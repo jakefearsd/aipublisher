@@ -80,11 +80,11 @@ class SearchProviderRegistryTest {
         @Test
         @DisplayName("Returns default provider when registered")
         void returnsDefaultProviderWhenRegistered() {
-            MockSearchProvider wikipedia = new MockSearchProvider("wikipedia");
-            registry.register(wikipedia);
+            MockSearchProvider wikidata = new MockSearchProvider("wikidata");
+            registry.register(wikidata);
 
             SearchProvider defaultProvider = registry.getDefault();
-            assertEquals("wikipedia", defaultProvider.getProviderName());
+            assertEquals("wikidata", defaultProvider.getProviderName());
         }
 
         @Test
@@ -110,9 +110,9 @@ class SearchProviderRegistryTest {
         @Test
         @DisplayName("Can change default provider")
         void canChangeDefaultProvider() {
-            MockSearchProvider wikipedia = new MockSearchProvider("wikipedia");
+            MockSearchProvider wikidata = new MockSearchProvider("wikidata");
             MockSearchProvider google = new MockSearchProvider("google");
-            registry.registerProviders(List.of(wikipedia, google));
+            registry.registerProviders(List.of(wikidata, google));
 
             registry.setDefault("google");
 
@@ -122,13 +122,13 @@ class SearchProviderRegistryTest {
         @Test
         @DisplayName("Ignores invalid default provider name")
         void ignoresInvalidDefaultProviderName() {
-            MockSearchProvider wikipedia = new MockSearchProvider("wikipedia");
-            registry.register(wikipedia);
+            MockSearchProvider wikidata = new MockSearchProvider("wikidata");
+            registry.register(wikidata);
 
             registry.setDefault("nonexistent");
 
-            // Should still be wikipedia
-            assertEquals("wikipedia", registry.getDefault().getProviderName());
+            // Should still be wikidata
+            assertEquals("wikidata", registry.getDefault().getProviderName());
         }
     }
 

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.search.SearchResult;
-import com.jakefear.aipublisher.search.WikipediaSearchService;
+import com.jakefear.aipublisher.search.WikidataSearchService;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,7 @@ import static com.jakefear.aipublisher.util.JsonParsingUtils.*;
 @Component
 public class ResearchAgent extends BaseAgent {
 
-    private WikipediaSearchService wikipediaSearchService;
+    private WikidataSearchService wikidataSearchService;
 
     /**
      * Default constructor for Spring - uses setter injection.
@@ -43,11 +43,11 @@ public class ResearchAgent extends BaseAgent {
     }
 
     /**
-     * Set the Wikipedia search service (called by Spring via @Autowired).
+     * Set the Wikidata search service (called by Spring via @Autowired).
      */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
-    public void setWikipediaSearchService(WikipediaSearchService wikipediaSearchService) {
-        this.wikipediaSearchService = wikipediaSearchService;
+    public void setWikidataSearchService(WikidataSearchService wikidataSearchService) {
+        this.wikidataSearchService = wikidataSearchService;
     }
 
     // Constructor for testing
@@ -55,10 +55,10 @@ public class ResearchAgent extends BaseAgent {
         super(model, systemPrompt);
     }
 
-    // Constructor for testing with Wikipedia search
-    public ResearchAgent(ChatLanguageModel model, String systemPrompt, WikipediaSearchService wikipediaSearchService) {
+    // Constructor for testing with Wikidata search
+    public ResearchAgent(ChatLanguageModel model, String systemPrompt, WikidataSearchService wikidataSearchService) {
         super(model, systemPrompt);
-        this.wikipediaSearchService = wikipediaSearchService;
+        this.wikidataSearchService = wikidataSearchService;
     }
 
     @Override
@@ -105,13 +105,13 @@ public class ResearchAgent extends BaseAgent {
             }
         }
 
-        // Add Wikipedia search results if available
-        List<SearchResult> searchResults = performWikipediaSearch(brief.topic());
+        // Add Wikidata search results if available
+        List<SearchResult> searchResults = performWikidataSearch(brief.topic());
         if (!searchResults.isEmpty()) {
-            prompt.append("\n--- WIKIPEDIA SEARCH RESULTS ---\n");
-            prompt.append("The following are Wikipedia articles about this topic.\n");
+            prompt.append("\n--- WIKIDATA SEARCH RESULTS ---\n");
+            prompt.append("The following are Wikidata entities about this topic.\n");
             prompt.append("Use these as authoritative sources for encyclopedic information.\n");
-            prompt.append("Cite Wikipedia URLs when using information from these sources.\n\n");
+            prompt.append("Cite Wikidata URLs when using information from these sources.\n\n");
             for (SearchResult result : searchResults) {
                 prompt.append(result.toPromptFormat());
             }
@@ -125,18 +125,18 @@ public class ResearchAgent extends BaseAgent {
     }
 
     /**
-     * Perform Wikipedia search for the topic.
+     * Perform Wikidata search for the topic.
      */
-    private List<SearchResult> performWikipediaSearch(String topic) {
-        if (wikipediaSearchService == null || !wikipediaSearchService.isEnabled()) {
+    private List<SearchResult> performWikidataSearch(String topic) {
+        if (wikidataSearchService == null || !wikidataSearchService.isEnabled()) {
             return List.of();
         }
         try {
-            List<SearchResult> results = wikipediaSearchService.search(topic);
-            log.debug("Wikipedia search for '{}' returned {} results", topic, results.size());
+            List<SearchResult> results = wikidataSearchService.search(topic);
+            log.debug("Wikidata search for '{}' returned {} results", topic, results.size());
             return results;
         } catch (Exception e) {
-            log.warn("Wikipedia search failed for topic '{}': {}", topic, e.getMessage());
+            log.warn("Wikidata search failed for topic '{}': {}", topic, e.getMessage());
             return List.of();
         }
     }

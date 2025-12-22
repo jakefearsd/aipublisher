@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.config.QualityProperties;
 import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.search.SearchResult;
-import com.jakefear.aipublisher.search.WikipediaSearchService;
+import com.jakefear.aipublisher.search.WikidataSearchService;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -24,7 +24,7 @@ import static com.jakefear.aipublisher.util.JsonParsingUtils.*;
 @Component
 public class FactCheckerAgent extends BaseAgent {
 
-    private WikipediaSearchService wikipediaSearchService;
+    private WikidataSearchService wikidataSearchService;
     private QualityProperties qualityProperties;
 
     /**
@@ -43,11 +43,11 @@ public class FactCheckerAgent extends BaseAgent {
     }
 
     /**
-     * Set the Wikipedia search service (called by Spring via @Autowired).
+     * Set the Wikidata search service (called by Spring via @Autowired).
      */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
-    public void setWikipediaSearchService(WikipediaSearchService wikipediaSearchService) {
-        this.wikipediaSearchService = wikipediaSearchService;
+    public void setWikidataSearchService(WikidataSearchService wikidataSearchService) {
+        this.wikidataSearchService = wikidataSearchService;
     }
 
     /**
@@ -63,10 +63,10 @@ public class FactCheckerAgent extends BaseAgent {
         super(model, systemPrompt);
     }
 
-    // Constructor for testing with Wikipedia search
-    public FactCheckerAgent(ChatLanguageModel model, String systemPrompt, WikipediaSearchService wikipediaSearchService) {
+    // Constructor for testing with Wikidata search
+    public FactCheckerAgent(ChatLanguageModel model, String systemPrompt, WikidataSearchService wikidataSearchService) {
         super(model, systemPrompt);
-        this.wikipediaSearchService = wikipediaSearchService;
+        this.wikidataSearchService = wikidataSearchService;
     }
 
     @Override
@@ -122,12 +122,12 @@ public class FactCheckerAgent extends BaseAgent {
             }
         }
 
-        // Add Wikipedia verification results
+        // Add Wikidata verification results
         String topic = document.getTopicBrief().topic();
-        List<SearchResult> verificationResults = performWikipediaVerificationSearch(topic);
+        List<SearchResult> verificationResults = performWikidataVerificationSearch(topic);
         if (!verificationResults.isEmpty()) {
-            prompt.append("\n--- WIKIPEDIA VERIFICATION RESULTS ---\n");
-            prompt.append("The following are Wikipedia articles about this topic.\n");
+            prompt.append("\n--- WIKIDATA VERIFICATION RESULTS ---\n");
+            prompt.append("The following are Wikidata entities about this topic.\n");
             prompt.append("Use these to verify claims in the article with authoritative information.\n\n");
             for (SearchResult result : verificationResults) {
                 prompt.append(result.toPromptFormat());
@@ -142,18 +142,18 @@ public class FactCheckerAgent extends BaseAgent {
     }
 
     /**
-     * Perform Wikipedia search to help verify claims about the topic.
+     * Perform Wikidata search to help verify claims about the topic.
      */
-    private List<SearchResult> performWikipediaVerificationSearch(String topic) {
-        if (wikipediaSearchService == null || !wikipediaSearchService.isEnabled()) {
+    private List<SearchResult> performWikidataVerificationSearch(String topic) {
+        if (wikidataSearchService == null || !wikidataSearchService.isEnabled()) {
             return List.of();
         }
         try {
-            List<SearchResult> results = wikipediaSearchService.searchForVerification(topic);
-            log.debug("Wikipedia verification search for '{}' returned {} results", topic, results.size());
+            List<SearchResult> results = wikidataSearchService.searchForVerification(topic);
+            log.debug("Wikidata verification search for '{}' returned {} results", topic, results.size());
             return results;
         } catch (Exception e) {
-            log.warn("Wikipedia verification search failed for topic '{}': {}", topic, e.getMessage());
+            log.warn("Wikidata verification search failed for topic '{}': {}", topic, e.getMessage());
             return List.of();
         }
     }
