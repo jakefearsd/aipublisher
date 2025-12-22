@@ -9,6 +9,7 @@ import com.jakefear.aipublisher.examples.ExamplePlan;
 import com.jakefear.aipublisher.examples.ExamplePlanner;
 import com.jakefear.aipublisher.prerequisites.PrerequisiteAnalyzer;
 import com.jakefear.aipublisher.prerequisites.PrerequisiteSet;
+import com.jakefear.aipublisher.util.WikiSyntaxValidator;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -228,6 +229,13 @@ public class WriterAgent extends BaseAgent {
         String wikiContent = getMultilineString(root, "wikiContent", "");
         if (wikiContent.isBlank()) {
             throw new JsonProcessingException("No wikiContent found in response") {};
+        }
+
+        // Auto-fix any Markdown syntax that the LLM may have produced
+        // Some models (especially smaller local models) occasionally slip into Markdown
+        if (WikiSyntaxValidator.containsMarkdown(wikiContent)) {
+            log.debug("Detected Markdown in writer output, auto-fixing to JSPWiki syntax");
+            wikiContent = WikiSyntaxValidator.autoFix(wikiContent);
         }
 
         // Parse summary (required)
