@@ -819,7 +819,6 @@ class AiPublisherCommandTest {
             // Verify key examples are present
             String[] requiredExamples = {
                     "aipublisher -t",           // Basic topic usage
-                    "--discover",               // Discovery mode
                     "--universe",               // Universe mode
                     "--stubs-only",             // Stub generation
                     "--analyze-gaps",           // Gap analysis

@@ -5,10 +5,6 @@ import com.jakefear.aipublisher.approval.ApprovalDecision;
 import com.jakefear.aipublisher.approval.ApprovalService;
 import com.jakefear.aipublisher.content.ContentType;
 import com.jakefear.aipublisher.content.ContentTypeSelector;
-import com.jakefear.aipublisher.discovery.CostProfile;
-import com.jakefear.aipublisher.discovery.GapAnalyzer;
-import com.jakefear.aipublisher.discovery.RelationshipSuggester;
-import com.jakefear.aipublisher.discovery.TopicExpander;
 import com.jakefear.aipublisher.config.OutputProperties;
 import com.jakefear.aipublisher.domain.Topic;
 import com.jakefear.aipublisher.domain.TopicRelationship;
@@ -96,11 +92,6 @@ import java.util.concurrent.Callable;
                 "                                  Minimum confidence: LOW, MEDIUM, HIGH (default: MEDIUM)",
                 "  --quality.min-editor-score=<n>  Minimum editor score 0.0-1.0 (default: 0.8)",
                 "",
-                "Discovery Mode:",
-                "  aipublisher --discover                         # Interactive domain discovery",
-                "  aipublisher --discover -c minimal              # Quick prototype mode",
-                "  aipublisher --discover --cost-profile balanced # Standard coverage",
-                "",
                 "Universe Mode (generate from saved universe):",
                 "  aipublisher --universe investing-basics        # Generate from universe ID",
                 "  aipublisher -u investing-basics                # Short form",
@@ -112,11 +103,6 @@ import java.util.concurrent.Callable;
                 "  aipublisher --stubs-only                       # Generate stubs for existing content",
                 "  aipublisher --stubs-only -u my-wiki            # Generate stubs with universe context",
                 "  aipublisher --stubs-only --context \"Finance\"   # With manual domain context",
-                "",
-                "Cost Profiles (for --discover):",
-                "  MINIMAL       Quick prototype, 2-4 topics, ~$0.50-2",
-                "  BALANCED      Good coverage, 9-31 topics, ~$2-5 (default)",
-                "  COMPREHENSIVE Full coverage, 25-150 topics, ~$5-15",
                 "",
                 "Using Ollama (local inference - free):",
                 "  aipublisher -t \"Topic\" --llm.provider=ollama",
@@ -146,9 +132,6 @@ public class AiPublisherCommand implements Callable<Integer> {
     private Supplier<PublishingPipeline> pipelineSupplier;
     private Supplier<ApprovalService> approvalServiceSupplier;
     private Supplier<ContentTypeSelector> contentTypeSelectorSupplier;
-    private Supplier<TopicExpander> topicExpanderSupplier;
-    private Supplier<RelationshipSuggester> relationshipSuggesterSupplier;
-    private Supplier<GapAnalyzer> gapAnalyzerSupplier;
     private Supplier<TopicUniverseRepository> universeRepositorySupplier;
     private Supplier<OutputProperties> outputPropertiesSupplier;
     private Supplier<ChatLanguageModel> summaryModelSupplier;
@@ -202,14 +185,6 @@ public class AiPublisherCommand implements Callable<Integer> {
     @Option(names = {"-i", "--interactive"},
             description = "Force interactive mode even with topic specified")
     private boolean forceInteractive;
-
-    @Option(names = {"--discover"},
-            description = "Launch interactive domain discovery session")
-    private boolean discoverMode;
-
-    @Option(names = {"--cost-profile", "-c"},
-            description = "Cost profile for discovery: MINIMAL (quick prototype), BALANCED (most projects), COMPREHENSIVE (enterprise docs)")
-    private String costProfileStr;
 
     @Option(names = {"--universe", "-u"},
             description = "Generate articles from a saved topic universe (by ID or file path)")
@@ -287,30 +262,6 @@ public class AiPublisherCommand implements Callable<Integer> {
     }
 
     /**
-     * Set the topic expander supplier (called by Spring via @Autowired).
-     */
-    @org.springframework.beans.factory.annotation.Autowired
-    public void setTopicExpanderProvider(ObjectProvider<TopicExpander> topicExpanderProvider) {
-        this.topicExpanderSupplier = topicExpanderProvider::getObject;
-    }
-
-    /**
-     * Set the relationship suggester supplier (called by Spring via @Autowired).
-     */
-    @org.springframework.beans.factory.annotation.Autowired
-    public void setRelationshipSuggesterProvider(ObjectProvider<RelationshipSuggester> relationshipSuggesterProvider) {
-        this.relationshipSuggesterSupplier = relationshipSuggesterProvider::getObject;
-    }
-
-    /**
-     * Set the gap analyzer supplier (called by Spring via @Autowired).
-     */
-    @org.springframework.beans.factory.annotation.Autowired
-    public void setGapAnalyzerProvider(ObjectProvider<GapAnalyzer> gapAnalyzerProvider) {
-        this.gapAnalyzerSupplier = gapAnalyzerProvider::getObject;
-    }
-
-    /**
      * Set the universe repository supplier (called by Spring via @Autowired).
      */
     @org.springframework.beans.factory.annotation.Autowired
@@ -369,11 +320,6 @@ public class AiPublisherCommand implements Callable<Integer> {
             // Configure API key if provided via CLI
             if (!configureApiKey(out)) {
                 return 1;
-            }
-
-            // Handle discovery mode
-            if (discoverMode) {
-                return runDiscoveryMode(in, out);
             }
 
             // Handle stubs-only mode - generate stubs for existing content
@@ -612,73 +558,6 @@ public class AiPublisherCommand implements Callable<Integer> {
         return forceInteractive;
     }
 
-    public boolean isDiscoverMode() {
-        return discoverMode;
-    }
-
-    public String getCostProfileStr() {
-        return costProfileStr;
-    }
-
-    /**
-     * Run the interactive domain discovery session.
-     */
-    private Integer runDiscoveryMode(BufferedReader in, PrintWriter out) {
-        try {
-            // Parse cost profile from CLI if provided
-            CostProfile costProfile = null;
-            if (costProfileStr != null && !costProfileStr.isBlank()) {
-                costProfile = CostProfile.fromName(costProfileStr);
-                if (costProfile == null) {
-                    out.println("WARNING: Unrecognized cost profile '" + costProfileStr + "'. Will prompt for selection.");
-                }
-            }
-
-            DiscoveryInteractiveSession discoverySession = new DiscoveryInteractiveSession(
-                    in,
-                    out,
-                    topicExpanderSupplier.get(),
-                    relationshipSuggesterSupplier.get(),
-                    gapAnalyzerSupplier.get(),
-                    costProfile
-            );
-
-            TopicUniverse universe = discoverySession.run();
-
-            if (universe == null) {
-                // User cancelled
-                return 0;
-            }
-
-            // Save the universe
-            TopicUniverseRepository repository = universeRepositorySupplier.get();
-            Path savedPath = repository.save(universe);
-
-            out.println();
-            out.println("═".repeat(67));
-            out.println("Topic universe saved!");
-            out.println();
-            out.printf("  ID:       %s%n", universe.id());
-            out.printf("  Name:     %s%n", universe.name());
-            out.printf("  Topics:   %d accepted%n", universe.getAcceptedCount());
-            out.printf("  Location: %s%n", savedPath);
-            out.println();
-            out.println("To generate articles from this universe, use:");
-            out.printf("  aipublisher --universe %s%n", universe.id());
-            out.println("═".repeat(67));
-
-            return 0;
-
-        } catch (Exception e) {
-            out.println();
-            out.println("ERROR in discovery mode: " + e.getMessage());
-            if (verbose) {
-                e.printStackTrace(out);
-            }
-            return 1;
-        }
-    }
-
     /**
      * Run article generation from a saved topic universe.
      */
@@ -709,7 +588,7 @@ public class AiPublisherCommand implements Callable<Integer> {
                     }
                 }
                 out.println();
-                out.println("Create a new universe with: aipublisher --discover");
+                out.println("Create a new universe with: aidiscovery --discover");
                 return 1;
             }
 
