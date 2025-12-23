@@ -75,7 +75,7 @@ import java.util.concurrent.Callable;
                 "LLM Provider Options (Spring Boot properties):",
                 "  --llm.provider=<provider>       LLM provider: \"anthropic\" or \"ollama\" (default: anthropic)",
                 "  --ollama.base-url=<url>         Ollama server URL (default: http://localhost:11434)",
-                "  --ollama.model=<model>          Ollama model name (default: qwen2.5:14b)",
+                "  --ollama.model=<model>          Ollama model name (default: qwen3:14b)",
                 "  --ollama.timeout=<duration>     Request timeout, ISO-8601 (default: PT5M)",
                 "  --anthropic.model=<model>       Anthropic model (default: claude-sonnet-4-20250514)",
                 "",
@@ -124,7 +124,7 @@ import java.util.concurrent.Callable;
                 "Environment Variables:",
                 "  ANTHROPIC_API_KEY   Anthropic API key (for Claude)",
                 "  OLLAMA_BASE_URL     Ollama server URL (enables Ollama in tests)",
-                "  OLLAMA_MODEL        Ollama model to use (default: qwen2.5:14b)"
+                "  OLLAMA_MODEL        Ollama model to use (default: qwen3:14b)"
         }
 )
 public class AiPublisherCommand implements Callable<Integer> {

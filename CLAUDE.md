@@ -389,7 +389,7 @@ java -jar target/aipublisher.jar --help
 
 Integration tests use Ollama by default:
 - **Default URL:** `http://inference.jakefear.com:11434`
-- **Default model:** `qwen2.5:14b`
+- **Default model:** `qwen3:14b`
 - **Override:** Set `OLLAMA_BASE_URL` and `OLLAMA_MODEL` environment variables
 
 ## Related Projects
