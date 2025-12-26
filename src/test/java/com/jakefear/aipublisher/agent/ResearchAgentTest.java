@@ -1,5 +1,7 @@
 package com.jakefear.aipublisher.agent;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.jakefear.aipublisher.document.*;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -146,39 +149,63 @@ class ResearchAgentTest {
         @Test
         @DisplayName("Throws on missing key facts")
         void throwsOnMissingKeyFacts() {
-            String jsonResponse = """
-                    {
-                      "keyFacts": [],
-                      "suggestedOutline": ["Intro"]
-                    }
-                    """;
+            // Suppress ERROR logs for this expected-failure test
+            Logger agentLogger = (Logger) LoggerFactory.getLogger(ResearchAgent.class);
+            Level originalLevel = agentLogger.getLevel();
+            agentLogger.setLevel(Level.OFF);
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            try {
+                String jsonResponse = """
+                        {
+                          "keyFacts": [],
+                          "suggestedOutline": ["Intro"]
+                        }
+                        """;
 
-            assertThrows(AgentException.class, () -> agent.process(document));
+                when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+                assertThrows(AgentException.class, () -> agent.process(document));
+            } finally {
+                agentLogger.setLevel(originalLevel);
+            }
         }
 
         @Test
         @DisplayName("Throws on missing outline")
         void throwsOnMissingOutline() {
-            String jsonResponse = """
-                    {
-                      "keyFacts": ["Fact 1"],
-                      "suggestedOutline": []
-                    }
-                    """;
+            // Suppress ERROR logs for this expected-failure test
+            Logger agentLogger = (Logger) LoggerFactory.getLogger(ResearchAgent.class);
+            Level originalLevel = agentLogger.getLevel();
+            agentLogger.setLevel(Level.OFF);
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            try {
+                String jsonResponse = """
+                        {
+                          "keyFacts": ["Fact 1"],
+                          "suggestedOutline": []
+                        }
+                        """;
 
-            assertThrows(AgentException.class, () -> agent.process(document));
+                when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+                assertThrows(AgentException.class, () -> agent.process(document));
+            } finally {
+                agentLogger.setLevel(originalLevel);
+            }
         }
 
         @Test
         @DisplayName("Throws on invalid JSON")
         void throwsOnInvalidJson() {
-            when(mockModel.generate(anyString())).thenReturn("This is not JSON");
+            // Suppress ERROR logs for this expected-failure test
+            Logger agentLogger = (Logger) LoggerFactory.getLogger(ResearchAgent.class);
+            Level originalLevel = agentLogger.getLevel();
+            agentLogger.setLevel(Level.OFF);
 
-            assertThrows(AgentException.class, () -> agent.process(document));
+            try {
+                when(mockModel.generate(anyString())).thenReturn("This is not JSON");
+                assertThrows(AgentException.class, () -> agent.process(document));
+            } finally {
+                agentLogger.setLevel(originalLevel);
+            }
         }
     }
 
