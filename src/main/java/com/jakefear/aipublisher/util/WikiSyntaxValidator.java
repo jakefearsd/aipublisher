@@ -27,6 +27,15 @@ public class WikiSyntaxValidator {
     private static final Pattern MARKDOWN_INLINE_CODE = Pattern.compile("`[^`]+`");
     private static final Pattern MARKDOWN_TABLE_SEPARATOR = Pattern.compile("^\\|[-:|]+\\|$", Pattern.MULTILINE);
 
+    // Additional patterns for Wikipedia-style and other Markdown variants
+    private static final Pattern DOUBLE_BRACKET_LINK = Pattern.compile("\\[\\[[^\\]]+\\]\\]");
+    private static final Pattern MARKDOWN_LIST_DASH = Pattern.compile("^\\s*-\\s+", Pattern.MULTILINE);
+    private static final Pattern MARKDOWN_HR_ASTERISK = Pattern.compile("^\\*\\s*\\*\\s*\\*\\s*$", Pattern.MULTILINE);
+
+    // Chain-of-thought tags that leak from LLM responses
+    private static final Pattern THINK_TAGS = Pattern.compile("<think>.*?</think>",
+            Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+
     /**
      * Result of validating wiki content.
      */
@@ -119,6 +128,21 @@ public class WikiSyntaxValidator {
         checkPattern(content, MARKDOWN_TABLE_SEPARATOR, "TABLE",
                 "Markdown table separator found (JSPWiki tables don't use separator rows)", issues);
 
+        // Check for double-bracket wiki links (Wikipedia style, not JSPWiki)
+        checkPattern(content, DOUBLE_BRACKET_LINK, "DOUBLE_BRACKET",
+                "Double-bracket links found (use [PageName] instead of [[PageName]])", issues);
+
+        // Check for Markdown dash lists (- item instead of * item)
+        checkPattern(content, MARKDOWN_LIST_DASH, "LIST_DASH",
+                "Markdown list dashes found (use * for bullets, not -)", issues);
+
+        // Check for Markdown horizontal rules (* * *)
+        checkPattern(content, MARKDOWN_HR_ASTERISK, "HORIZONTAL_RULE",
+                "Markdown horizontal rule found (use ---- instead of * * *)", issues);
+
+        // Check for leaked chain-of-thought tags
+        checkThinkTags(content, issues);
+
         if (issues.isEmpty()) {
             return ValidationResult.success();
         }
@@ -143,7 +167,11 @@ public class WikiSyntaxValidator {
                MARKDOWN_LINK.matcher(content).find() ||
                MARKDOWN_CODE_BLOCK.matcher(content).find() ||
                MARKDOWN_INLINE_CODE.matcher(content).find() ||
-               MARKDOWN_TABLE_SEPARATOR.matcher(content).find();
+               MARKDOWN_TABLE_SEPARATOR.matcher(content).find() ||
+               DOUBLE_BRACKET_LINK.matcher(content).find() ||
+               MARKDOWN_LIST_DASH.matcher(content).find() ||
+               MARKDOWN_HR_ASTERISK.matcher(content).find() ||
+               THINK_TAGS.matcher(content).find();
     }
 
     /**
@@ -187,6 +215,18 @@ public class WikiSyntaxValidator {
         // Convert Markdown inline code
         result = result.replaceAll("`([^`]+)`", "{{$1}}");
 
+        // Convert double brackets to single
+        result = result.replaceAll("\\[\\[([^\\]]+)\\]\\]", "[$1]");
+
+        // Convert dash lists to asterisk lists
+        result = result.replaceAll("(?m)^(\\s*)-\\s+", "$1* ");
+
+        // Convert * * * horizontal rules to ----
+        result = result.replaceAll("(?m)^\\*\\s*\\*\\s*\\*\\s*$", "----");
+
+        // Remove any leaked chain-of-thought tags
+        result = THINK_TAGS.matcher(result).replaceAll("");
+
         return result;
     }
 
@@ -199,6 +239,23 @@ public class WikiSyntaxValidator {
         }
         if (!matches.isEmpty()) {
             issues.add(ValidationIssue.markdown(type, description, matches.get(0), matches.size()));
+        }
+    }
+
+    private static void checkThinkTags(String content, List<ValidationIssue> issues) {
+        Matcher matcher = THINK_TAGS.matcher(content);
+        int count = 0;
+        String example = null;
+        while (matcher.find()) {
+            count++;
+            if (example == null) {
+                String match = matcher.group();
+                example = match.length() > 50 ? match.substring(0, 50) + "..." : match;
+            }
+        }
+        if (count > 0) {
+            issues.add(new ValidationIssue("THINK_TAG",
+                    "Chain-of-thought tags leaked from LLM response", example, count));
         }
     }
 }

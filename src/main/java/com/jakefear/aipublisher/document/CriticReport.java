@@ -62,6 +62,22 @@ public record CriticReport(
     }
 
     /**
+     * Check if the issues are primarily syntax-related (Markdown, formatting).
+     * If true, these can likely be fixed automatically without LLM intervention.
+     */
+    public boolean hasPrimarilySyntaxIssues() {
+        // Syntax issues exist and are the main problem
+        if (syntaxIssues.isEmpty()) {
+            return false;
+        }
+
+        // If there are significant structure or style issues, they need LLM attention
+        boolean hasSignificantOtherIssues = structureIssues.size() > 1 || styleIssues.size() > 2;
+
+        return !hasSignificantOtherIssues;
+    }
+
+    /**
      * Get a summary of all issues found.
      */
     public String getIssueSummary() {

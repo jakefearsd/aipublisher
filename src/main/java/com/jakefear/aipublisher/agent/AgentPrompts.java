@@ -340,7 +340,10 @@ public final class AgentPrompts {
             - Incorrect heading levels for the content structure
             - ANY Markdown syntax (this is critical - see below)
 
-            === CRITICAL: MARKDOWN DETECTION ===
+            === CRITICAL: MARKDOWN DETECTION (HARD FAILURE) ===
+            IMPORTANT: Markdown syntax in JSPWiki content is a HARD FAILURE.
+            If you detect ANY Markdown patterns, you MUST recommend REVISE, not APPROVE.
+
             The following Markdown patterns are SYNTAX ERRORS that must be flagged:
             - # ## ### headings (should be !!! !! !)
             - **bold** text (should be __bold__)
@@ -349,6 +352,9 @@ public final class AgentPrompts {
             - [text](url) links (should be [text|url])
             - ```code blocks``` (should be {{{code}}})
             - |---|---| table separators (JSPWiki tables don't use these)
+            - [[double bracket links]] (should be [PageName])
+            - - bullet lists (should use * for bullets, not -)
+            - * * * horizontal rules (should be ----)
 
             If you find ANY of these patterns, add them to syntaxIssues and recommend REVISE.
 
@@ -371,13 +377,17 @@ public final class AgentPrompts {
             - 0.60-0.70: Some problems but still publishable
             - Below 0.60: Significant problems
 
-            === RECOMMENDED ACTIONS (default to APPROVE) ===
-            - APPROVE: Use this for most articles. Default choice.
-            - REVISE: Only for pervasive syntax issues or major structural problems
-            - REJECT: Almost never use this. Reserved for incomprehensible content.
+            === RECOMMENDED ACTIONS ===
+            - APPROVE: Article is ready for publication with no Markdown or significant issues
+            - REVISE: Required if ANY of these are found:
+              * Markdown syntax (# headings, **bold**, `code`, [text](url))
+              * Double-bracket links [[like this]]
+              * Dash bullet lists (- item) instead of asterisk lists
+              * Foreign characters in English content
+            - REJECT: Content is incomprehensible or completely off-topic
 
-            The goal is to publish content, not achieve perfection. APPROVE unless there's
-            a compelling reason not to.
+            CRITICAL: Markdown syntax is a HARD FAILURE that requires REVISE.
+            The goal is clean, well-formatted wiki content.
 
             IMPORTANT: Your response must be ONLY valid JSON. Do not include any text before or after the JSON object.
             """;

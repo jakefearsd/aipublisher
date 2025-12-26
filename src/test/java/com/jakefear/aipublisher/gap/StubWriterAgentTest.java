@@ -60,8 +60,8 @@ class StubWriterAgentTest {
 
         assertNotNull(result);
         verify(mockModel, never()).generate(anyString());
-        assertTrue(result.contains("[CompoundInterest]"));
-        assertTrue(result.contains("Redirects"));
+        // Uses native JSPWiki ALIAS directive for automatic redirect
+        assertTrue(result.contains("[{ALIAS CompoundInterest}]"));
     }
 
     @Test
@@ -128,9 +128,8 @@ class StubWriterAgentTest {
         String result = agent.generateRedirectPage(gap);
 
         assertNotNull(result);
-        assertTrue(result.contains("[CompoundInterest]"));
-        assertTrue(result.contains("redirects to"));
-        assertTrue(result.contains("Redirects"));
+        // Uses native JSPWiki ALIAS directive for automatic redirect
+        assertTrue(result.contains("[{ALIAS CompoundInterest}]"));
     }
 
     @Test
@@ -197,6 +196,26 @@ class StubWriterAgentTest {
         String cleaned = agent.cleanResponse(response);
 
         assertEquals("Content", cleaned);
+    }
+
+    @Test
+    void cleanResponse_appliesWikiSyntaxAutoFix() {
+        // LLM sometimes returns Markdown syntax that needs conversion
+        String response = """
+                # Heading
+                - List item
+                **Bold text**
+                """;
+
+        String cleaned = agent.cleanResponse(response);
+
+        // Should convert Markdown to JSPWiki syntax
+        assertFalse(cleaned.contains("# Heading"));
+        assertFalse(cleaned.contains("- List"));
+        assertFalse(cleaned.contains("**Bold"));
+        assertTrue(cleaned.contains("!!! Heading"));
+        assertTrue(cleaned.contains("* List item"));
+        assertTrue(cleaned.contains("__Bold text__"));
     }
 
     @Test

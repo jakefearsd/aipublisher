@@ -45,6 +45,16 @@ public class GapDetectionService {
             "^\\{(SET|INSERT|ALLOW|Image|TableOfContents)"
     );
 
+    // Patterns for invalid page names
+    private static final Pattern NUMERIC_ONLY = Pattern.compile("^\\d+$");
+    private static final Pattern TOO_SHORT = Pattern.compile("^.{1,2}$");
+
+    // Common words that shouldn't be separate pages
+    private static final Set<String> INVALID_PAGE_NAMES = Set.of(
+            "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
+            "a", "an", "the", "and", "or", "but", "is", "are", "was", "were"
+    );
+
     private final OutputProperties outputProperties;
     private final ChatLanguageModel categorizationModel;
     private final ObjectMapper objectMapper;
@@ -197,6 +207,11 @@ public class GapDetectionService {
                 continue;
             }
 
+            // Skip invalid page names (numeric only, too short, common words)
+            if (shouldSkipPageName(linkTarget)) {
+                continue;
+            }
+
             links.add(linkTarget);
         }
 
@@ -208,28 +223,27 @@ public class GapDetectionService {
      */
     List<GapConcept> findGaps(Map<String, Set<String>> linkToSources, Set<String> existingPages) {
         List<GapConcept> gaps = new ArrayList<>();
-
-        // Create a normalized lookup for existing pages
-        Map<String, String> normalizedToActual = new HashMap<>();
-        for (String page : existingPages) {
-            normalizedToActual.put(normalizeName(page), page);
-        }
+        Set<String> processedNormalized = new HashSet<>();
 
         for (Map.Entry<String, Set<String>> entry : linkToSources.entrySet()) {
             String linkTarget = entry.getKey();
             Set<String> sources = entry.getValue();
 
+            // Check for duplicate within this batch
             String normalized = normalizeName(linkTarget);
+            if (processedNormalized.contains(normalized)) {
+                continue; // Skip duplicate
+            }
+            processedNormalized.add(normalized);
 
-            // Check if page exists (with normalized comparison)
-            if (normalizedToActual.containsKey(normalized)) {
-                // Page exists - check if it's an alias that could use a redirect
-                String actualPage = normalizedToActual.get(normalized);
-                if (!linkTarget.equals(actualPage) && !PageNameUtils.toCamelCaseOrDefault(linkTarget, "").equals(actualPage)) {
-                    // This is an alias - might need a redirect
+            // Check for fuzzy match against existing pages
+            String canonicalPage = findCanonicalPage(linkTarget, existingPages);
+            if (canonicalPage != null) {
+                // Page exists (or close variant) - create redirect if name differs
+                if (!linkTarget.equals(canonicalPage) && !PageNameUtils.toCamelCaseOrDefault(linkTarget, "").equals(canonicalPage)) {
                     gaps.add(GapConcept.builder(linkTarget)
                             .type(GapType.REDIRECT)
-                            .redirectTarget(actualPage)
+                            .redirectTarget(canonicalPage)
                             .referencedBy(new ArrayList<>(sources))
                             .build());
                 }
@@ -253,6 +267,103 @@ public class GapDetectionService {
         if (name == null) return "";
         return name.toLowerCase()
                 .replaceAll("[^a-z0-9]", "");
+    }
+
+    /**
+     * Check if a page name should be skipped (too generic or invalid).
+     */
+    boolean shouldSkipPageName(String pageName) {
+        if (pageName == null || pageName.isBlank()) return true;
+
+        String lower = pageName.toLowerCase().trim();
+
+        // Skip known invalid names
+        if (INVALID_PAGE_NAMES.contains(lower)) return true;
+
+        // Skip purely numeric names
+        if (NUMERIC_ONLY.matcher(pageName.trim()).matches()) return true;
+
+        // Skip very short names (likely initials or typos)
+        if (TOO_SHORT.matcher(pageName.trim()).matches()) return true;
+
+        return false;
+    }
+
+    /**
+     * Check if a potential gap name is a duplicate of an existing page.
+     * Returns the canonical page name if a match is found, null otherwise.
+     */
+    String findCanonicalPage(String gapName, Set<String> existingPages) {
+        String normalized = normalizeName(gapName);
+
+        for (String existing : existingPages) {
+            // Exact normalized match
+            if (normalized.equals(normalizeName(existing))) {
+                return existing;
+            }
+
+            // Fuzzy match for common variations
+            if (isFuzzyMatch(gapName, existing)) {
+                return existing;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check for fuzzy matches that should be treated as duplicates.
+     */
+    private boolean isFuzzyMatch(String name1, String name2) {
+        String n1 = normalizeForFuzzy(name1);
+        String n2 = normalizeForFuzzy(name2);
+
+        // Direct match after normalization
+        if (n1.equals(n2)) return true;
+
+        // Check for number/word substitutions (401k vs Four01K)
+        String digits1 = n1.replaceAll("[^0-9]", "");
+        String digits2 = n2.replaceAll("[^0-9]", "");
+        String letters1 = n1.replaceAll("[^a-z]", "");
+        String letters2 = n2.replaceAll("[^a-z]", "");
+
+        // Same digits and similar letters = likely duplicate
+        if (digits1.equals(digits2) && levenshteinDistance(letters1, letters2) <= 2) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private String normalizeForFuzzy(String name) {
+        if (name == null) return "";
+        return name.toLowerCase()
+                .replaceAll("[áàâãä]", "a")
+                .replaceAll("[éèêë]", "e")
+                .replaceAll("[íìîï]", "i")
+                .replaceAll("[óòôõö]", "o")
+                .replaceAll("[úùûü]", "u")
+                .replaceAll("[ñ]", "n")
+                .replaceAll("[^a-z0-9]", "");
+    }
+
+    private int levenshteinDistance(String s1, String s2) {
+        int[][] dp = new int[s1.length() + 1][s2.length() + 1];
+
+        for (int i = 0; i <= s1.length(); i++) dp[i][0] = i;
+        for (int j = 0; j <= s2.length(); j++) dp[0][j] = j;
+
+        for (int i = 1; i <= s1.length(); i++) {
+            for (int j = 1; j <= s2.length(); j++) {
+                int cost = (s1.charAt(i - 1) == s2.charAt(j - 1)) ? 0 : 1;
+                dp[i][j] = Math.min(
+                        Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1),
+                        dp[i - 1][j - 1] + cost
+                );
+            }
+        }
+
+        return dp[s1.length()][s2.length()];
     }
 
     /**

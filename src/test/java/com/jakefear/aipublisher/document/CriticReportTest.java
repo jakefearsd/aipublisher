@@ -141,6 +141,86 @@ class CriticReportTest {
     }
 
     @Nested
+    @DisplayName("Primarily Syntax Issues Detection")
+    class PrimarilySyntaxIssuesDetection {
+
+        @Test
+        @DisplayName("hasPrimarilySyntaxIssues returns true when only syntax issues exist")
+        void returnsTrueForOnlySyntaxIssues() {
+            CriticReport report = new CriticReport(
+                    0.75, 0.9, 0.7, 0.85,
+                    List.of(),  // No structure issues
+                    List.of("Uses **bold** instead of __bold__"),
+                    List.of(),  // No style issues
+                    List.of(),
+                    RecommendedAction.REVISE
+            );
+
+            assertTrue(report.hasPrimarilySyntaxIssues());
+        }
+
+        @Test
+        @DisplayName("hasPrimarilySyntaxIssues returns true with 1 structure issue")
+        void returnsTrueWithOneStructureIssue() {
+            CriticReport report = new CriticReport(
+                    0.75, 0.85, 0.7, 0.85,
+                    List.of("Minor structure issue"),  // 1 structure issue is OK
+                    List.of("Uses **bold**"),
+                    List.of(),
+                    List.of(),
+                    RecommendedAction.REVISE
+            );
+
+            assertTrue(report.hasPrimarilySyntaxIssues());
+        }
+
+        @Test
+        @DisplayName("hasPrimarilySyntaxIssues returns false when too many structure issues")
+        void returnsFalseWithManyStructureIssues() {
+            CriticReport report = new CriticReport(
+                    0.65, 0.6, 0.7, 0.7,
+                    List.of("Missing intro", "Poor organization"),  // >1 structure issue
+                    List.of("Uses **bold**"),
+                    List.of(),
+                    List.of(),
+                    RecommendedAction.REVISE
+            );
+
+            assertFalse(report.hasPrimarilySyntaxIssues());
+        }
+
+        @Test
+        @DisplayName("hasPrimarilySyntaxIssues returns false when too many style issues")
+        void returnsFalseWithManyStyleIssues() {
+            CriticReport report = new CriticReport(
+                    0.7, 0.85, 0.7, 0.65,
+                    List.of(),
+                    List.of("Uses # heading"),
+                    List.of("Passive voice", "Long sentences", "Jargon"),  // >2 style issues
+                    List.of(),
+                    RecommendedAction.REVISE
+            );
+
+            assertFalse(report.hasPrimarilySyntaxIssues());
+        }
+
+        @Test
+        @DisplayName("hasPrimarilySyntaxIssues returns false when no syntax issues")
+        void returnsFalseWhenNoSyntaxIssues() {
+            CriticReport report = new CriticReport(
+                    0.75, 0.7, 0.9, 0.75,
+                    List.of("Structure issue"),
+                    List.of(),  // No syntax issues
+                    List.of(),
+                    List.of(),
+                    RecommendedAction.REVISE
+            );
+
+            assertFalse(report.hasPrimarilySyntaxIssues());
+        }
+    }
+
+    @Nested
     @DisplayName("Issue Summary")
     class IssueSummary {
 

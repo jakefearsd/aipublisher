@@ -276,4 +276,106 @@ class GapDetectionServiceTest {
         assertTrue(gapNames.contains("RiskManagement"));
         assertTrue(gapNames.contains("Time Value of Money") || gapNames.contains("TimeValueOfMoney"));
     }
+
+    // Tests for invalid page name filtering
+    @Test
+    void shouldSkipPageName_skipsNumericOnly() {
+        assertTrue(service.shouldSkipPageName("1"));
+        assertTrue(service.shouldSkipPageName("123"));
+        assertTrue(service.shouldSkipPageName("42"));
+    }
+
+    @Test
+    void shouldSkipPageName_skipsTooShort() {
+        assertTrue(service.shouldSkipPageName("a"));
+        assertTrue(service.shouldSkipPageName("ab"));
+    }
+
+    @Test
+    void shouldSkipPageName_skipsCommonWords() {
+        assertTrue(service.shouldSkipPageName("the"));
+        assertTrue(service.shouldSkipPageName("and"));
+        assertTrue(service.shouldSkipPageName("is"));
+    }
+
+    @Test
+    void shouldSkipPageName_allowsValidNames() {
+        assertFalse(service.shouldSkipPageName("CompoundInterest"));
+        assertFalse(service.shouldSkipPageName("401k"));
+        assertFalse(service.shouldSkipPageName("RothIRA"));
+    }
+
+    @Test
+    void shouldSkipPageName_handlesNullAndBlank() {
+        assertTrue(service.shouldSkipPageName(null));
+        assertTrue(service.shouldSkipPageName(""));
+        assertTrue(service.shouldSkipPageName("  "));
+    }
+
+    @Test
+    void extractLinksFromContent_filtersInvalidNames() {
+        String content = """
+                See [1] and [2] for numbering.
+                Also [the] and [CompoundInterest].
+                """;
+
+        Set<String> links = service.extractLinksFromContent(content);
+
+        assertFalse(links.contains("1"));
+        assertFalse(links.contains("2"));
+        assertFalse(links.contains("the"));
+        assertTrue(links.contains("CompoundInterest"));
+    }
+
+    // Tests for duplicate/fuzzy matching
+    @Test
+    void findCanonicalPage_findsExactNormalizedMatch() {
+        Set<String> existingPages = Set.of("CompoundInterest", "PresentValue");
+
+        // Different case, spaces
+        assertEquals("CompoundInterest", service.findCanonicalPage("compound interest", existingPages));
+        assertEquals("CompoundInterest", service.findCanonicalPage("compoundinterest", existingPages));
+    }
+
+    @Test
+    void findCanonicalPage_findsAccentVariations() {
+        Set<String> existingPages = Set.of("EstadoDaIndia");
+
+        // Accented variations should match
+        assertEquals("EstadoDaIndia", service.findCanonicalPage("EstadoDaÍndia", existingPages));
+        assertEquals("EstadoDaIndia", service.findCanonicalPage("EstadoDaIndía", existingPages));
+    }
+
+    @Test
+    void findCanonicalPage_findsNumberWordVariations() {
+        Set<String> existingPages = Set.of("401kPlan");
+
+        // Common variations of 401k
+        String canonical = service.findCanonicalPage("401KPlan", existingPages);
+        assertEquals("401kPlan", canonical);
+    }
+
+    @Test
+    void findCanonicalPage_returnsNullForNoMatch() {
+        Set<String> existingPages = Set.of("CompoundInterest", "PresentValue");
+
+        assertNull(service.findCanonicalPage("TotallyDifferent", existingPages));
+    }
+
+    @Test
+    void findGaps_createRedirectForNearDuplicates() {
+        Map<String, Set<String>> linkToSources = Map.of(
+                "compound-interest", Set.of("Source1"),
+                "COMPOUND_INTEREST", Set.of("Source2")
+        );
+        Set<String> existingPages = Set.of("CompoundInterest");
+
+        List<GapConcept> gaps = service.findGaps(linkToSources, existingPages);
+
+        // Should create redirects, not new pages
+        assertTrue(gaps.stream().allMatch(g -> g.type() == GapType.REDIRECT));
+        for (GapConcept gap : gaps) {
+            assertEquals("CompoundInterest", gap.redirectTarget());
+        }
+    }
 }

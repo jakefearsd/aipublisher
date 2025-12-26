@@ -8,6 +8,7 @@ import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.glossary.GlossaryService;
 import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
+import com.jakefear.aipublisher.util.LanguageValidator;
 import com.jakefear.aipublisher.util.WikiSyntaxValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -426,6 +427,7 @@ public class PublishingPipeline {
 
         int revisionCount = 0;
         int maxRevisions = pipelineProperties.getMaxRevisionCycles();
+        boolean autoFixAttempted = false; // Prevent infinite auto-fix loops
 
         while (revisionCount < maxRevisions) {
             try {
@@ -458,10 +460,27 @@ public class PublishingPipeline {
                             DocumentState.CRITIQUING);
                 }
 
-                // Needs revision - go back to editing
+                // Needs revision
                 revisionCount++;
                 if (revisionCount < maxRevisions) {
-                    log.info("Critique requires revision ({}/{}), returning to editor",
+                    // Check if issues are primarily syntax-related (can be auto-fixed)
+                    // Only try auto-fix once to prevent infinite loops
+                    if (!autoFixAttempted && report.hasPrimarilySyntaxIssues()) {
+                        log.info("Critique found syntax issues - attempting auto-fix before LLM revision");
+                        autoFixAttempted = true;
+
+                        // Try auto-fix first (no LLM call needed)
+                        boolean fixed = tryAutoFixSyntaxIssues(document);
+                        if (fixed) {
+                            // Re-run critique on the fixed content without counting as revision
+                            revisionCount--; // Don't count auto-fix as a revision cycle
+                            log.info("Auto-fix applied, re-running critique");
+                            continue;
+                        }
+                    }
+
+                    // Auto-fix didn't help or there are non-syntax issues - use LLM
+                    log.info("Critique requires LLM revision ({}/{}), returning to editor",
                             revisionCount, maxRevisions);
                     monitoringService.revisionStarted(document, revisionCount, maxRevisions);
 
@@ -556,11 +575,47 @@ public class PublishingPipeline {
 
     /**
      * Execute the publish phase - write to output.
+     * Includes final validation and cleanup before writing.
      */
     private Path executePublishPhase(PublishingDocument document) {
         log.info("Phase 6: Publishing");
 
         try {
+            // Final content validation and cleanup
+            FinalArticle article = document.getFinalArticle();
+            String content = article.wikiContent();
+
+            // One last syntax fix pass
+            if (WikiSyntaxValidator.containsMarkdown(content)) {
+                log.warn("Markdown detected in final output - applying emergency fix");
+                content = WikiSyntaxValidator.autoFix(content);
+                article = new FinalArticle(
+                        content,
+                        article.metadata(),
+                        article.editSummary() + " (final syntax fix)",
+                        article.qualityScore(),
+                        article.addedLinks()
+                );
+                document.setFinalArticle(article);
+            }
+
+            // Check for foreign characters
+            LanguageValidator.ValidationResult langCheck =
+                    LanguageValidator.validate(content, "en");
+            if (!langCheck.valid()) {
+                log.warn("Foreign characters in final output - removing: {}",
+                        langCheck.getSummary());
+                content = LanguageValidator.removeForeignText(content);
+                article = new FinalArticle(
+                        content,
+                        article.metadata(),
+                        article.editSummary() + " (foreign text removed)",
+                        article.qualityScore(),
+                        article.addedLinks()
+                );
+                document.setFinalArticle(article);
+            }
+
             Path outputPath = outputService.writeDocument(document);
             document.transitionTo(DocumentState.PUBLISHED);
 
@@ -647,6 +702,52 @@ public class PublishingPipeline {
 
     public GlossaryService getGlossaryService() {
         return glossaryService;
+    }
+
+    /**
+     * Try to fix syntax issues automatically without LLM intervention.
+     * This runs WikiSyntaxValidator.autoFix and LanguageValidator.removeForeignText.
+     *
+     * @param document The document to fix
+     * @return true if changes were made, false if no changes needed
+     */
+    boolean tryAutoFixSyntaxIssues(PublishingDocument document) {
+        FinalArticle article = document.getFinalArticle();
+        if (article == null || article.wikiContent() == null) {
+            return false;
+        }
+
+        String content = article.wikiContent();
+        String originalContent = content;
+
+        // Check for and fix Markdown syntax
+        if (WikiSyntaxValidator.containsMarkdown(content)) {
+            log.info("Auto-fixing Markdown syntax without LLM revision");
+            content = WikiSyntaxValidator.autoFix(content);
+        }
+
+        // Check for and remove foreign characters
+        LanguageValidator.ValidationResult langCheck = LanguageValidator.validate(content, "en");
+        if (!langCheck.valid()) {
+            log.info("Auto-fixing foreign characters without LLM revision: {}", langCheck.getSummary());
+            content = LanguageValidator.removeForeignText(content);
+        }
+
+        // If content changed, update the document
+        if (!content.equals(originalContent)) {
+            FinalArticle fixedArticle = new FinalArticle(
+                    content,
+                    article.metadata(),
+                    article.editSummary() + " (auto-fixed syntax)",
+                    article.qualityScore(),
+                    article.addedLinks()
+            );
+            document.setFinalArticle(fixedArticle);
+            log.info("Syntax issues auto-fixed, skipping LLM revision cycle");
+            return true;
+        }
+
+        return false;
     }
 
     /**

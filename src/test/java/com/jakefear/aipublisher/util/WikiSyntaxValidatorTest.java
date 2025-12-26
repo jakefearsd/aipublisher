@@ -160,6 +160,71 @@ class WikiSyntaxValidatorTest {
         }
 
         @Test
+        @DisplayName("Detects double-bracket wiki links")
+        void detectsDoubleBracketLinks() {
+            String content = "See the [[Main Page]] for more information.";
+
+            WikiSyntaxValidator.ValidationResult result = WikiSyntaxValidator.validate(content);
+
+            assertFalse(result.valid());
+            assertTrue(result.issues().stream()
+                    .anyMatch(i -> i.type().equals("MARKDOWN_DOUBLE_BRACKET")));
+        }
+
+        @Test
+        @DisplayName("Detects Markdown dash lists")
+        void detectsMarkdownDashLists() {
+            String content = """
+                    Items:
+                    - First item
+                    - Second item
+                    - Third item
+                    """;
+
+            WikiSyntaxValidator.ValidationResult result = WikiSyntaxValidator.validate(content);
+
+            assertFalse(result.valid());
+            assertTrue(result.issues().stream()
+                    .anyMatch(i -> i.type().equals("MARKDOWN_LIST_DASH")));
+        }
+
+        @Test
+        @DisplayName("Detects Markdown horizontal rules (* * *)")
+        void detectsMarkdownHorizontalRules() {
+            String content = """
+                    First section.
+
+                    * * *
+
+                    Second section.
+                    """;
+
+            WikiSyntaxValidator.ValidationResult result = WikiSyntaxValidator.validate(content);
+
+            assertFalse(result.valid());
+            assertTrue(result.issues().stream()
+                    .anyMatch(i -> i.type().equals("MARKDOWN_HORIZONTAL_RULE")));
+        }
+
+        @Test
+        @DisplayName("Detects chain-of-thought think tags")
+        void detectsThinkTags() {
+            String content = """
+                    <think>
+                    Let me think about this...
+                    </think>
+
+                    The answer is 42.
+                    """;
+
+            WikiSyntaxValidator.ValidationResult result = WikiSyntaxValidator.validate(content);
+
+            assertFalse(result.valid());
+            assertTrue(result.issues().stream()
+                    .anyMatch(i -> i.type().equals("THINK_TAG")));
+        }
+
+        @Test
         @DisplayName("Summary includes all issues")
         void summaryIncludesAllIssues() {
             String content = "# Heading\n\n**bold**";
@@ -211,6 +276,30 @@ class WikiSyntaxValidatorTest {
         @DisplayName("Returns true for Markdown link")
         void returnsTrueForMarkdownLink() {
             assertTrue(WikiSyntaxValidator.containsMarkdown("[text](url)"));
+        }
+
+        @Test
+        @DisplayName("Returns true for double-bracket link")
+        void returnsTrueForDoubleBracketLink() {
+            assertTrue(WikiSyntaxValidator.containsMarkdown("[[PageName]]"));
+        }
+
+        @Test
+        @DisplayName("Returns true for dash list")
+        void returnsTrueForDashList() {
+            assertTrue(WikiSyntaxValidator.containsMarkdown("- list item"));
+        }
+
+        @Test
+        @DisplayName("Returns true for horizontal rule")
+        void returnsTrueForHorizontalRule() {
+            assertTrue(WikiSyntaxValidator.containsMarkdown("* * *"));
+        }
+
+        @Test
+        @DisplayName("Returns true for think tags")
+        void returnsTrueForThinkTags() {
+            assertTrue(WikiSyntaxValidator.containsMarkdown("<think>something</think>"));
         }
     }
 
@@ -301,6 +390,69 @@ class WikiSyntaxValidatorTest {
             String result = WikiSyntaxValidator.autoFix(input);
 
             assertEquals(input, result);
+        }
+
+        @Test
+        @DisplayName("Converts double-bracket links to single brackets")
+        void convertsDoubleBracketLinks() {
+            String input = "See [[Main Page]] and [[Another|Page]].";
+            String result = WikiSyntaxValidator.autoFix(input);
+
+            assertFalse(result.contains("[["));
+            assertTrue(result.contains("[Main Page]"));
+            assertTrue(result.contains("[Another|Page]"));
+        }
+
+        @Test
+        @DisplayName("Converts dash lists to asterisk lists")
+        void convertsDashListsToAsterisk() {
+            String input = """
+                    Items:
+                    - First item
+                    - Second item
+                      - Nested item
+                    """;
+            String result = WikiSyntaxValidator.autoFix(input);
+
+            assertFalse(result.contains("- First"));
+            assertTrue(result.contains("* First item"));
+            assertTrue(result.contains("* Second item"));
+            assertTrue(result.contains("* Nested item"));
+        }
+
+        @Test
+        @DisplayName("Converts horizontal rules to JSPWiki format")
+        void convertsHorizontalRules() {
+            String input = """
+                    First section.
+
+                    * * *
+
+                    Second section.
+                    """;
+            String result = WikiSyntaxValidator.autoFix(input);
+
+            assertFalse(result.contains("* * *"));
+            assertTrue(result.contains("----"));
+        }
+
+        @Test
+        @DisplayName("Removes think tags")
+        void removesThinkTags() {
+            String input = """
+                    <think>
+                    Let me reason about this...
+                    The answer seems to be...
+                    </think>
+
+                    The answer is 42.
+                    """;
+            String result = WikiSyntaxValidator.autoFix(input);
+
+            assertFalse(result.contains("<think>"));
+            assertFalse(result.contains("</think>"));
+            assertFalse(result.contains("Let me reason"));
+            assertTrue(result.contains("The answer is 42."));
         }
     }
 

@@ -1276,4 +1276,104 @@ class PublishingPipelineTest {
             assertTrue(result.errorMessage().contains("Changes requested"));
         }
     }
+
+    @Nested
+    @DisplayName("tryAutoFixSyntaxIssues")
+    class TryAutoFixSyntaxIssues {
+
+        private PublishingDocument createDocumentInEditingState() {
+            TopicBrief brief = TopicBrief.simple("Test", "audience", 500);
+            PublishingDocument document = new PublishingDocument(brief);
+            // Transition through states to reach EDITING
+            document.transitionTo(DocumentState.RESEARCHING);
+            document.transitionTo(DocumentState.DRAFTING);
+            document.transitionTo(DocumentState.FACT_CHECKING);
+            document.transitionTo(DocumentState.EDITING);
+            return document;
+        }
+
+        @Test
+        @DisplayName("Returns true and fixes Markdown content")
+        void returnsTrueAndFixesMarkdown() {
+            // Create document with Markdown content
+            PublishingDocument document = createDocumentInEditingState();
+
+            FinalArticle articleWithMarkdown = new FinalArticle(
+                    "# Bad Heading\n\n**Bold text** and - list item",
+                    DocumentMetadata.create("Title", "Summary"),
+                    "Edit summary",
+                    0.85,
+                    List.of()
+            );
+            document.setFinalArticle(articleWithMarkdown);
+
+            // Act
+            boolean fixed = pipeline.tryAutoFixSyntaxIssues(document);
+
+            // Assert
+            assertTrue(fixed);
+            String fixedContent = document.getFinalArticle().wikiContent();
+            assertFalse(fixedContent.contains("# Bad Heading"));
+            assertFalse(fixedContent.contains("**Bold"));
+            assertTrue(fixedContent.contains("!!! Bad Heading"));
+            assertTrue(fixedContent.contains("__Bold text__"));
+        }
+
+        @Test
+        @DisplayName("Returns false when no fixes needed")
+        void returnsFalseWhenNoFixesNeeded() {
+            // Create document with clean JSPWiki content
+            PublishingDocument document = createDocumentInEditingState();
+
+            FinalArticle cleanArticle = new FinalArticle(
+                    "!!! Good Heading\n\n__Bold text__ and * list item",
+                    DocumentMetadata.create("Title", "Summary"),
+                    "Edit summary",
+                    0.85,
+                    List.of()
+            );
+            document.setFinalArticle(cleanArticle);
+
+            // Act
+            boolean fixed = pipeline.tryAutoFixSyntaxIssues(document);
+
+            // Assert
+            assertFalse(fixed);
+        }
+
+        @Test
+        @DisplayName("Returns false when article is null")
+        void returnsFalseWhenArticleNull() {
+            TopicBrief brief = TopicBrief.simple("Test", "audience", 500);
+            PublishingDocument document = new PublishingDocument(brief);
+            // Document is in CREATED state with no article set
+
+            boolean fixed = pipeline.tryAutoFixSyntaxIssues(document);
+
+            assertFalse(fixed);
+        }
+
+        @Test
+        @DisplayName("Removes foreign characters")
+        void removesForeignCharacters() {
+            PublishingDocument document = createDocumentInEditingState();
+
+            FinalArticle articleWithForeign = new FinalArticle(
+                    "!!! Heading\n\nContains 中文 characters",
+                    DocumentMetadata.create("Title", "Summary"),
+                    "Edit summary",
+                    0.85,
+                    List.of()
+            );
+            document.setFinalArticle(articleWithForeign);
+
+            // Act
+            boolean fixed = pipeline.tryAutoFixSyntaxIssues(document);
+
+            // Assert
+            assertTrue(fixed);
+            String fixedContent = document.getFinalArticle().wikiContent();
+            assertFalse(fixedContent.contains("中文"));
+        }
+    }
 }
