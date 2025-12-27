@@ -10,7 +10,7 @@ import com.jakefear.aipublisher.examples.ExamplePlanner;
 import com.jakefear.aipublisher.prerequisites.PrerequisiteAnalyzer;
 import com.jakefear.aipublisher.prerequisites.PrerequisiteSet;
 import com.jakefear.aipublisher.util.WikiSyntaxValidator;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -46,7 +46,7 @@ public class WriterAgent extends BaseAgent {
      * Set the chat model (called by Spring via @Autowired).
      */
     @org.springframework.beans.factory.annotation.Autowired
-    public void setChatModel(@Qualifier("writerChatModel") ChatLanguageModel model) {
+    public void setChatModel(@Qualifier("writerChatModel") ChatModel model) {
         this.model = model;
     }
 
@@ -67,12 +67,12 @@ public class WriterAgent extends BaseAgent {
     }
 
     // Constructor for testing
-    public WriterAgent(ChatLanguageModel model, String systemPrompt) {
+    public WriterAgent(ChatModel model, String systemPrompt) {
         super(model, systemPrompt);
     }
 
     // Constructor for testing with ExamplePlanner
-    public WriterAgent(ChatLanguageModel model, String systemPrompt, ExamplePlanner examplePlanner) {
+    public WriterAgent(ChatModel model, String systemPrompt, ExamplePlanner examplePlanner) {
         super(model, systemPrompt);
         this.examplePlanner = examplePlanner;
     }

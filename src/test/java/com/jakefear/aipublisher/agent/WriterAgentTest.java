@@ -1,7 +1,7 @@
 package com.jakefear.aipublisher.agent;
 
 import com.jakefear.aipublisher.document.*;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class WriterAgentTest {
 
     @Mock
-    private ChatLanguageModel mockModel;
+    private ChatModel mockModel;
 
     private WriterAgent agent;
     private PublishingDocument document;
@@ -84,7 +84,7 @@ class WriterAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -110,7 +110,7 @@ class WriterAgentTest {
                     ```
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -128,7 +128,7 @@ class WriterAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -148,7 +148,7 @@ class WriterAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             assertThrows(AgentException.class, () -> agent.process(document));
         }
@@ -163,7 +163,7 @@ class WriterAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             assertThrows(AgentException.class, () -> agent.process(document));
         }
@@ -171,7 +171,7 @@ class WriterAgentTest {
         @Test
         @DisplayName("Throws on invalid JSON")
         void throwsOnInvalidJson() {
-            when(mockModel.generate(anyString())).thenReturn("This is not JSON");
+            when(mockModel.chat(anyString())).thenReturn("This is not JSON");
 
             assertThrows(AgentException.class, () -> agent.process(document));
         }
@@ -193,7 +193,7 @@ class WriterAgentTest {
                     }
                     """.formatted(longContent.replace("\n", "\\n"));
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             agent.process(document);
 
@@ -219,7 +219,7 @@ class WriterAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
             agent.process(document);
 
             // Validation passes even with insufficient words - it only warns
@@ -243,7 +243,7 @@ class WriterAgentTest {
                     }
                     """.formatted(longContent.replace("\n", "\\n"));
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("Apache Kafka"));
                 return jsonResponse;
@@ -263,7 +263,7 @@ class WriterAgentTest {
                     }
                     """.formatted(longContent.replace("\n", "\\n"));
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("distributed streaming platform"));
                 return jsonResponse;
@@ -283,7 +283,7 @@ class WriterAgentTest {
                     }
                     """.formatted(longContent.replace("\n", "\\n"));
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("Core Concepts"));
                 assertTrue(prompt.contains("Use Cases"));
@@ -304,7 +304,7 @@ class WriterAgentTest {
                     }
                     """.formatted(longContent.replace("\n", "\\n"));
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("EventStreaming"));
                 assertTrue(prompt.contains("MessageQueue"));
@@ -330,7 +330,7 @@ class WriterAgentTest {
                     }
                     """.formatted(longContent.replace("\n", "\\n"));
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             assertEquals(0, document.getContributions().size());
 

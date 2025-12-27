@@ -6,13 +6,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jakefear.aipublisher.document.AgentContribution;
 import com.jakefear.aipublisher.document.PublishingDocument;
 import com.jakefear.aipublisher.util.JsonParsingUtils;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Base implementation for all agents, providing common functionality:
@@ -25,7 +29,7 @@ public abstract class BaseAgent implements Agent {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
-    protected ChatLanguageModel model;
+    protected ChatModel model;
     protected final String systemPrompt;
     protected final ObjectMapper objectMapper;
 
@@ -34,6 +38,12 @@ public abstract class BaseAgent implements Agent {
     private final Duration initialRetryDelay;
     private final double backoffMultiplier;
 
+    // Pattern to match <think>...</think> blocks (including multiline content)
+    private static final Pattern THINKING_BLOCK_PATTERN = Pattern.compile(
+            "<think>(.*?)</think>",
+            Pattern.DOTALL
+    );
+
     /**
      * Constructor for Spring setter injection - model will be set later.
      */
@@ -41,12 +51,12 @@ public abstract class BaseAgent implements Agent {
         this(null, systemPrompt, 3, Duration.ofSeconds(1), 2.0);
     }
 
-    protected BaseAgent(ChatLanguageModel model, String systemPrompt) {
+    protected BaseAgent(ChatModel model, String systemPrompt) {
         this(model, systemPrompt, 3, Duration.ofSeconds(1), 2.0);
     }
 
     protected BaseAgent(
-            ChatLanguageModel model,
+            ChatModel model,
             String systemPrompt,
             int maxRetries,
             Duration initialRetryDelay,
@@ -132,11 +142,76 @@ public abstract class BaseAgent implements Agent {
 
     /**
      * Call the language model with the given user prompt.
+     * Automatically extracts and logs any thinking blocks from the response.
      */
     protected String callModel(String userPrompt) {
         // LangChain4j handles the system prompt + user prompt combination
         String fullPrompt = systemPrompt + "\n\n---\n\n" + userPrompt;
-        return model.generate(fullPrompt);
+        String response = model.chat(fullPrompt);
+        return extractAndLogThinking(response);
+    }
+
+    /**
+     * Extract thinking blocks from the response, log them, and return the cleaned response.
+     * <p>
+     * Some models (like qwen3) emit {@code <think>...</think>} blocks as part of their
+     * chain-of-thought reasoning. These blocks can appear in the middle of JSON output,
+     * breaking parsing. This method:
+     * <ol>
+     *   <li>Extracts all {@code <think>...</think>} blocks</li>
+     *   <li>Logs the thinking content at INFO level</li>
+     *   <li>Returns the response with thinking blocks removed</li>
+     * </ol>
+     *
+     * @param response The raw response from the language model
+     * @return The response with thinking blocks removed
+     */
+    protected String extractAndLogThinking(String response) {
+        if (response == null) {
+            return null;
+        }
+
+        if (response.isEmpty()) {
+            return response;
+        }
+
+        // Check if there are any thinking tags at all
+        if (!response.contains("<think>") && !response.contains("</think>")) {
+            return response;
+        }
+
+        // Extract and collect all thinking blocks
+        List<String> thinkingBlocks = new ArrayList<>();
+        Matcher matcher = THINKING_BLOCK_PATTERN.matcher(response);
+        while (matcher.find()) {
+            String thinkingContent = matcher.group(1).trim();
+            if (!thinkingContent.isEmpty()) {
+                thinkingBlocks.add(thinkingContent);
+            }
+        }
+
+        // Remove complete thinking blocks
+        String cleaned = THINKING_BLOCK_PATTERN.matcher(response).replaceAll("");
+
+        // Remove any orphaned tags (incomplete blocks)
+        cleaned = cleaned.replace("</think>", "").replace("<think>", "");
+
+        // Log the thinking content if any was found
+        if (!thinkingBlocks.isEmpty()) {
+            String combinedThinking = String.join("\n---\n", thinkingBlocks);
+            logThinkingContent(combinedThinking);
+        }
+
+        return cleaned;
+    }
+
+    /**
+     * Log the extracted thinking content. Can be overridden for testing.
+     *
+     * @param thinkingContent The extracted thinking content to log
+     */
+    protected void logThinkingContent(String thinkingContent) {
+        log.info("Model thinking: {}", thinkingContent);
     }
 
     /**

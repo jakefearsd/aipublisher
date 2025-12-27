@@ -1,7 +1,7 @@
 package com.jakefear.aipublisher.gap;
 
 import com.jakefear.aipublisher.util.WikiSyntaxValidator;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -61,9 +61,9 @@ public class StubWriterAgent {
 
     private static final String REDIRECT_CONTENT = "[{ALIAS %s}]\n";
 
-    private final ChatLanguageModel writerModel;
+    private final ChatModel writerModel;
 
-    public StubWriterAgent(@Qualifier("writerChatModel") ChatLanguageModel writerModel) {
+    public StubWriterAgent(@Qualifier("writerChatModel") ChatModel writerModel) {
         this.writerModel = writerModel;
     }
 
@@ -110,7 +110,7 @@ public class StubWriterAgent {
                 universeName);        // %s - universe for categories (8th)
 
         try {
-            String response = writerModel.generate(prompt);
+            String response = writerModel.chat(prompt);
             return cleanResponse(response);
         } catch (Exception e) {
             log.error("Failed to generate definition for '{}': {}", gap.name(), e.getMessage());

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.document.DocumentState;
 import com.jakefear.aipublisher.document.PublishingDocument;
 import com.jakefear.aipublisher.document.TopicBrief;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 class BaseAgentTest {
 
     @Mock
-    private ChatLanguageModel mockModel;
+    private ChatModel mockModel;
 
     private TestableAgent agent;
     private PublishingDocument document;
@@ -141,18 +141,18 @@ class BaseAgentTest {
         @Test
         @DisplayName("Succeeds on first attempt")
         void succeedsOnFirstAttempt() {
-            when(mockModel.generate(anyString())).thenReturn("success");
+            when(mockModel.chat(anyString())).thenReturn("success");
 
             agent.process(document);
 
-            verify(mockModel, times(1)).generate(anyString());
+            verify(mockModel, times(1)).chat(anyString());
             assertTrue(agent.wasProcessed());
         }
 
         @Test
         @DisplayName("Retries on transient failure")
         void retriesOnTransientFailure() {
-            when(mockModel.generate(anyString()))
+            when(mockModel.chat(anyString()))
                     .thenThrow(new RuntimeException("timeout"))
                     .thenReturn("success");
 
@@ -160,13 +160,13 @@ class BaseAgentTest {
             TestableAgent fastAgent = new TestableAgent(mockModel, 3, Duration.ofMillis(10), 1.0);
             fastAgent.process(document);
 
-            verify(mockModel, times(2)).generate(anyString());
+            verify(mockModel, times(2)).chat(anyString());
         }
 
         @Test
         @DisplayName("Throws after max retries")
         void throwsAfterMaxRetries() {
-            when(mockModel.generate(anyString()))
+            when(mockModel.chat(anyString()))
                     .thenThrow(new RuntimeException("timeout"));
 
             TestableAgent fastAgent = new TestableAgent(mockModel, 2, Duration.ofMillis(10), 1.0);
@@ -175,7 +175,180 @@ class BaseAgentTest {
                     () -> fastAgent.process(document));
 
             assertEquals(AgentRole.RESEARCHER, exception.getAgentRole());
-            verify(mockModel, times(2)).generate(anyString());
+            verify(mockModel, times(2)).chat(anyString());
+        }
+    }
+
+    @Nested
+    @DisplayName("Thinking Tag Extraction")
+    class ThinkingTagExtraction {
+
+        @Test
+        @DisplayName("Passes through response with no thinking tags unchanged")
+        void passesThruResponseWithNoThinkingTags() {
+            String input = "{\"key\": \"value\", \"content\": \"Hello world\"}";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals(input, result);
+        }
+
+        @Test
+        @DisplayName("Removes complete thinking block at start of response")
+        void removesThinkingBlockAtStart() {
+            String input = "<think>Let me analyze this problem...</think>{\"key\": \"value\"}";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("{\"key\": \"value\"}", result);
+        }
+
+        @Test
+        @DisplayName("Removes complete thinking block at end of response")
+        void removesThinkingBlockAtEnd() {
+            String input = "{\"key\": \"value\"}<think>I should verify this...</think>";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("{\"key\": \"value\"}", result);
+        }
+
+        @Test
+        @DisplayName("Removes complete thinking block in middle of response")
+        void removesThinkingBlockInMiddle() {
+            String input = "{\"start\": \"value\",<think>processing...</think>\"end\": \"value\"}";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("{\"start\": \"value\",\"end\": \"value\"}", result);
+        }
+
+        @Test
+        @DisplayName("Removes multiple thinking blocks")
+        void removesMultipleThinkingBlocks() {
+            String input = "<think>First thought</think>Hello<think>Second thought</think>World";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("HelloWorld", result);
+        }
+
+        @Test
+        @DisplayName("Removes orphaned closing think tag")
+        void removesOrphanedClosingTag() {
+            String input = "{\"content\": \"Some text\"}</think>More text";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("{\"content\": \"Some text\"}More text", result);
+        }
+
+        @Test
+        @DisplayName("Removes orphaned opening think tag")
+        void removesOrphanedOpeningTag() {
+            String input = "Some text<think>{\"key\": \"value\"}";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("Some text{\"key\": \"value\"}", result);
+        }
+
+        @Test
+        @DisplayName("Handles multiline thinking content")
+        void handlesMultilineThinkingContent() {
+            String input = "<think>\nLine 1\nLine 2\nLine 3\n</think>{\"result\": \"success\"}";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("{\"result\": \"success\"}", result);
+        }
+
+        @Test
+        @DisplayName("Handles thinking block with special characters")
+        void handlesThinkingWithSpecialCharacters() {
+            String input = "<think>Let's analyze: {\"temp\": 123} and [1,2,3]</think>{\"final\": true}";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("{\"final\": true}", result);
+        }
+
+        @Test
+        @DisplayName("Returns null for null input")
+        void returnsNullForNullInput() {
+            String result = agent.testExtractAndLogThinking(null);
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("Returns empty string for empty input")
+        void returnsEmptyForEmptyInput() {
+            String result = agent.testExtractAndLogThinking("");
+            assertEquals("", result);
+        }
+
+        @Test
+        @DisplayName("Handles response that is only a thinking block")
+        void handlesResponseThatIsOnlyThinkingBlock() {
+            String input = "<think>All thinking, no output</think>";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("", result);
+        }
+
+        @Test
+        @DisplayName("Preserves whitespace outside thinking blocks")
+        void preservesWhitespaceOutsideThinkingBlocks() {
+            String input = "  {\"key\": \"value\"}  ";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("  {\"key\": \"value\"}  ", result);
+        }
+
+        @Test
+        @DisplayName("Handles nested angle brackets in thinking content")
+        void handlesNestedAngleBracketsInThinking() {
+            String input = "<think>Compare: a < b and c > d</think>{\"done\": true}";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("{\"done\": true}", result);
+        }
+
+        @Test
+        @DisplayName("Handles real-world qwen3 failure scenario")
+        void handlesRealWorldQwen3FailureScenario() {
+            // This simulates the actual failure from session.log
+            String input = "{\"wikiContent\": \"!!! Docker Guide\\n\\n" +
+                    "Docker is a containerization platform...\\n\\n" +
+                    "you can ensure that your Docker applications run smoothly and efficiently.\\n\\n\\n" +
+                    "</think>\\n\\nTo effectively work with Docker, it's essential...\"," +
+                    "\"summary\": \"A guide to Docker\"}";
+            String result = agent.testExtractAndLogThinking(input);
+            // Should remove the </think> but keep the rest
+            assertFalse(result.contains("</think>"));
+            assertTrue(result.contains("wikiContent"));
+            assertTrue(result.contains("Docker Guide"));
+        }
+
+        @Test
+        @DisplayName("Handles thinking block with escaped characters")
+        void handlesThinkingWithEscapedCharacters() {
+            String input = "<think>Processing \\\"quoted\\\" text and \\n newlines</think>{\"ok\": true}";
+            String result = agent.testExtractAndLogThinking(input);
+            assertEquals("{\"ok\": true}", result);
+        }
+
+        @Test
+        @DisplayName("Thinking content is logged at INFO level")
+        void thinkingContentIsLogged() {
+            // This test verifies that logging happens - we check via the TestableAgent's capture
+            String input = "<think>Important reasoning here</think>{\"result\": 42}";
+            String result = agent.testExtractAndLogThinking(input);
+
+            assertEquals("{\"result\": 42}", result);
+            // Verify thinking was captured (TestableAgent stores it for verification)
+            assertEquals("Important reasoning here", agent.getLastCapturedThinking());
+        }
+
+        @Test
+        @DisplayName("Multiple thinking blocks are all logged")
+        void multipleThinkingBlocksAreAllLogged() {
+            String input = "<think>First</think>middle<think>Second</think>end";
+            String result = agent.testExtractAndLogThinking(input);
+
+            assertEquals("middleend", result);
+            // All thinking content should be captured
+            assertTrue(agent.getLastCapturedThinking().contains("First"));
+            assertTrue(agent.getLastCapturedThinking().contains("Second"));
+        }
+
+        @Test
+        @DisplayName("No logging occurs when no thinking blocks present")
+        void noLoggingWhenNoThinkingBlocks() {
+            agent.clearCapturedThinking();
+            String input = "{\"plain\": \"json\"}";
+            agent.testExtractAndLogThinking(input);
+
+            assertNull(agent.getLastCapturedThinking());
         }
     }
 
@@ -219,12 +392,13 @@ class BaseAgentTest {
      */
     private static class TestableAgent extends BaseAgent {
         private boolean processed = false;
+        private String lastCapturedThinking = null;
 
-        TestableAgent(ChatLanguageModel model) {
+        TestableAgent(ChatModel model) {
             super(model, "Test system prompt");
         }
 
-        TestableAgent(ChatLanguageModel model, int maxRetries, Duration delay, double backoff) {
+        TestableAgent(ChatModel model, int maxRetries, Duration delay, double backoff) {
             super(model, "Test system prompt", maxRetries, delay, backoff);
         }
 
@@ -253,6 +427,21 @@ class BaseAgentTest {
             return processed;
         }
 
+        // Override to capture thinking content for test verification
+        @Override
+        protected void logThinkingContent(String thinkingContent) {
+            this.lastCapturedThinking = thinkingContent;
+            super.logThinkingContent(thinkingContent);
+        }
+
+        String getLastCapturedThinking() {
+            return lastCapturedThinking;
+        }
+
+        void clearCapturedThinking() {
+            lastCapturedThinking = null;
+        }
+
         // Expose protected methods for testing
         String testCleanJsonResponse(String response) {
             return cleanJsonResponse(response);
@@ -276,6 +465,10 @@ class BaseAgentTest {
 
         boolean testIsRetryableError(Exception e) {
             return isRetryableError(e);
+        }
+
+        String testExtractAndLogThinking(String response) {
+            return extractAndLogThinking(response);
         }
     }
 }

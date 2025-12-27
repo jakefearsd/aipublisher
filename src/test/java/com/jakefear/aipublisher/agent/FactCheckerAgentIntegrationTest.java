@@ -3,7 +3,7 @@ package com.jakefear.aipublisher.agent;
 import com.jakefear.aipublisher.EnabledIfLlmAvailable;
 import com.jakefear.aipublisher.IntegrationTestHelper;
 import com.jakefear.aipublisher.document.*;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests run when Ollama server is reachable:
  * - Default URL: http://inference.jakefear.com:11434
  * - Override with OLLAMA_BASE_URL environment variable
- * - Default model: qwen2.5:14b (override with OLLAMA_MODEL)
+ * - Default model: qwen3:14b (override with OLLAMA_MODEL)
  *
  * Run with: mvn test -Dtest=FactCheckerAgentIntegrationTest
  * Or run all integration tests: mvn test -Dgroups=integration
@@ -35,7 +35,7 @@ class FactCheckerAgentIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        ChatLanguageModel model = IntegrationTestHelper.buildModel(0.1);
+        ChatModel model = IntegrationTestHelper.buildModel(0.1);
         agent = new FactCheckerAgent(model, AgentPrompts.FACT_CHECKER);
         System.out.println("Using LLM: " + IntegrationTestHelper.getProviderName());
 

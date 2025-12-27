@@ -1,7 +1,7 @@
 package com.jakefear.aipublisher.agent;
 
 import com.jakefear.aipublisher.document.*;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class FactCheckerAgentTest {
 
     @Mock
-    private ChatLanguageModel mockModel;
+    private ChatModel mockModel;
 
     private FactCheckerAgent agent;
     private PublishingDocument document;
@@ -99,7 +99,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -130,7 +130,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -158,7 +158,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -187,7 +187,7 @@ class FactCheckerAgentTest {
                     ```
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -206,7 +206,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -229,7 +229,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -240,7 +240,7 @@ class FactCheckerAgentTest {
         @Test
         @DisplayName("Throws on invalid JSON")
         void throwsOnInvalidJson() {
-            when(mockModel.generate(anyString())).thenReturn("This is not JSON");
+            when(mockModel.chat(anyString())).thenReturn("This is not JSON");
 
             assertThrows(AgentException.class, () -> agent.process(document));
         }
@@ -261,7 +261,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FactCheckReport report = agent.process(document).getFactCheckReport();
             assertEquals(ConfidenceLevel.HIGH, report.overallConfidence());
@@ -278,7 +278,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FactCheckReport report = agent.process(document).getFactCheckReport();
             assertEquals(ConfidenceLevel.MEDIUM, report.overallConfidence());
@@ -295,7 +295,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FactCheckReport report = agent.process(document).getFactCheckReport();
             assertEquals(ConfidenceLevel.LOW, report.overallConfidence());
@@ -319,7 +319,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             agent.process(document);
 
@@ -345,7 +345,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             agent.process(document);
 
@@ -368,7 +368,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("Apache Kafka is a distributed streaming platform"));
                 return jsonResponse;
@@ -388,7 +388,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("Created at LinkedIn in 2011"));
                 return jsonResponse;
@@ -408,7 +408,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("Performance numbers vary by configuration"));
                 return jsonResponse;
@@ -441,7 +441,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FactCheckReport report = agent.process(document).getFactCheckReport();
 
@@ -466,7 +466,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FactCheckReport report = agent.process(document).getFactCheckReport();
 
@@ -492,7 +492,7 @@ class FactCheckerAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             // Document already has contributions from previous phases (simulated)
             int initialContributions = document.getContributions().size();

@@ -13,7 +13,7 @@ import com.jakefear.aipublisher.document.TopicBrief;
 import com.jakefear.aipublisher.glossary.GlossaryService;
 import com.jakefear.aipublisher.monitoring.PipelineMonitoringService;
 import com.jakefear.aipublisher.output.WikiOutputService;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests run when Ollama server is reachable:
  * - Default URL: http://inference.jakefear.com:11434
  * - Override with OLLAMA_BASE_URL environment variable
- * - Default model: qwen2.5:14b (override with OLLAMA_MODEL)
+ * - Default model: qwen3:14b (override with OLLAMA_MODEL)
  *
  * Run with: mvn test -Dtest=PublishingPipelineIntegrationTest
  * Or run all integration tests: mvn test -Dgroups=integration
@@ -49,11 +49,11 @@ class PublishingPipelineIntegrationTest {
         System.out.println("Using LLM: " + IntegrationTestHelper.getProviderName());
 
         // Create agents with appropriate temperatures
-        ChatLanguageModel researchModel = IntegrationTestHelper.buildModel(0.3);
-        ChatLanguageModel writerModel = IntegrationTestHelper.buildModel(0.7);
-        ChatLanguageModel factCheckerModel = IntegrationTestHelper.buildModel(0.1);
-        ChatLanguageModel editorModel = IntegrationTestHelper.buildModel(0.5);
-        ChatLanguageModel criticModel = IntegrationTestHelper.buildModel(0.3);
+        ChatModel researchModel = IntegrationTestHelper.buildModel(0.3);
+        ChatModel writerModel = IntegrationTestHelper.buildModel(0.7);
+        ChatModel factCheckerModel = IntegrationTestHelper.buildModel(0.1);
+        ChatModel editorModel = IntegrationTestHelper.buildModel(0.5);
+        ChatModel criticModel = IntegrationTestHelper.buildModel(0.3);
 
         ResearchAgent researchAgent = new ResearchAgent(researchModel, AgentPrompts.RESEARCH);
         WriterAgent writerAgent = new WriterAgent(writerModel, AgentPrompts.WRITER);

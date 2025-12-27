@@ -1,6 +1,6 @@
 package com.jakefear.aipublisher;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 
 import java.net.HttpURLConnection;
@@ -13,12 +13,12 @@ import java.time.Duration;
  *
  * Configuration:
  * - OLLAMA_BASE_URL: Ollama server URL (default: http://inference.jakefear.com:11434)
- * - OLLAMA_MODEL: Model to use (default: qwen2.5:14b)
+ * - OLLAMA_MODEL: Model to use (default: qwen3:14b)
  */
 public final class IntegrationTestHelper {
 
     private static final String DEFAULT_OLLAMA_URL = "http://inference.jakefear.com:11434";
-    private static final String DEFAULT_OLLAMA_MODEL = "qwen2.5:14b";
+    private static final String DEFAULT_OLLAMA_MODEL = "qwen3:14b";
 
     private IntegrationTestHelper() {
         // Utility class
@@ -59,13 +59,13 @@ public final class IntegrationTestHelper {
     }
 
     /**
-     * Build a ChatLanguageModel for integration tests using Ollama.
+     * Build a ChatModel for integration tests using Ollama.
      *
      * @param temperature The temperature setting (0.0-1.0)
-     * @return Configured ChatLanguageModel
+     * @return Configured ChatModel
      * @throws IllegalStateException if Ollama is not reachable
      */
-    public static ChatLanguageModel buildModel(double temperature) {
+    public static ChatModel buildModel(double temperature) {
         if (!isOllamaReachable()) {
             throw new IllegalStateException(
                     "Ollama server not reachable at " + getOllamaBaseUrl() +
@@ -75,19 +75,41 @@ public final class IntegrationTestHelper {
     }
 
     /**
-     * Build an Ollama model for testing.
+     * Build an Ollama model for testing with thinking and GPU optimization enabled.
      */
-    public static ChatLanguageModel buildOllamaModel(double temperature) {
+    public static ChatModel buildOllamaModel(double temperature) {
         String baseUrl = getOllamaBaseUrl();
         String model = getOllamaModel();
+        boolean think = isThinkingEnabled();
+        boolean returnThinking = isReturnThinkingEnabled();
 
         return OllamaChatModel.builder()
                 .baseUrl(baseUrl)
                 .modelName(model)
                 .temperature(temperature)
-                .numPredict(4096)
+                .numPredict(8192)
+                .numCtx(8192)
+                .repeatPenalty(1.1)
                 .timeout(Duration.ofMinutes(5))
+                .think(think)
+                .returnThinking(returnThinking)
                 .build();
+    }
+
+    /**
+     * Check if thinking mode is enabled (default: true).
+     */
+    public static boolean isThinkingEnabled() {
+        String value = System.getenv("OLLAMA_THINK");
+        return value == null || value.isBlank() || Boolean.parseBoolean(value);
+    }
+
+    /**
+     * Check if return thinking is enabled (default: true).
+     */
+    public static boolean isReturnThinkingEnabled() {
+        String value = System.getenv("OLLAMA_RETURN_THINKING");
+        return value == null || value.isBlank() || Boolean.parseBoolean(value);
     }
 
     /**

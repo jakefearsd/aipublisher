@@ -1,7 +1,7 @@
 package com.jakefear.aipublisher.agent;
 
 import com.jakefear.aipublisher.document.*;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class CriticAgentTest {
 
     @Mock
-    private ChatLanguageModel mockModel;
+    private ChatModel mockModel;
 
     private CriticAgent agent;
     private PublishingDocument document;
@@ -133,7 +133,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -172,7 +172,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -205,7 +205,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -231,7 +231,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -260,7 +260,7 @@ class CriticAgentTest {
                     ```
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -271,7 +271,7 @@ class CriticAgentTest {
         @Test
         @DisplayName("Throws on invalid JSON")
         void throwsOnInvalidJson() {
-            when(mockModel.generate(anyString())).thenReturn("This is not JSON");
+            when(mockModel.chat(anyString())).thenReturn("This is not JSON");
 
             assertThrows(AgentException.class, () -> agent.process(document));
         }
@@ -298,7 +298,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             agent.process(document);
 
@@ -329,7 +329,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             agent.process(document);
 
@@ -358,7 +358,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             agent.process(document);
 
@@ -385,7 +385,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             agent.process(document);
 
@@ -420,7 +420,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("Apache Kafka"));
                 assertTrue(prompt.contains("[{TableOfContents}]"));
@@ -447,7 +447,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("Title:"));
                 assertTrue(prompt.contains("Editor quality score:"));
@@ -474,7 +474,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.toLowerCase().contains("jspwiki") || prompt.contains("Markdown"));
                 return jsonResponse;
@@ -553,7 +553,7 @@ class CriticAgentTest {
                       "recommendedAction": "APPROVE"
                     }
                     """;
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             assertDoesNotThrow(() -> agent.process(document),
                     "CriticAgent should process successfully when FinalArticle is present");
@@ -581,7 +581,7 @@ class CriticAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             int initialContributions = document.getContributions().size();
             agent.process(document);

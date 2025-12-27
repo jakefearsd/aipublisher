@@ -1,7 +1,7 @@
 package com.jakefear.aipublisher;
 
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -22,7 +22,7 @@ public class HelloClaudeRunner implements CommandLineRunner {
         System.out.println("AI Publisher - Hello World with Claude");
         System.out.println("=".repeat(60));
 
-        ChatLanguageModel model = AnthropicChatModel.builder()
+        ChatModel model = AnthropicChatModel.builder()
                 .apiKey(apiKey)
                 .modelName(modelName)
                 .maxTokens(1024)
@@ -33,7 +33,7 @@ public class HelloClaudeRunner implements CommandLineRunner {
 
         System.out.println("\nSending prompt to Claude (" + modelName + ")...\n");
 
-        String response = model.generate(prompt);
+        String response = model.chat(prompt);
 
         System.out.println("Claude's response:");
         System.out.println("-".repeat(40));

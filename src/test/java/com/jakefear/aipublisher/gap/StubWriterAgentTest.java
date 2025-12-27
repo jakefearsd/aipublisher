@@ -1,6 +1,6 @@
 package com.jakefear.aipublisher.gap;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +15,12 @@ import static org.mockito.Mockito.*;
  */
 class StubWriterAgentTest {
 
-    private ChatLanguageModel mockModel;
+    private ChatModel mockModel;
     private StubWriterAgent agent;
 
     @BeforeEach
     void setUp() {
-        mockModel = mock(ChatLanguageModel.class);
+        mockModel = mock(ChatModel.class);
         agent = new StubWriterAgent(mockModel);
     }
 
@@ -37,7 +37,7 @@ class StubWriterAgentTest {
                 [{SET categories='Finance'}]
                 """;
 
-        when(mockModel.generate(anyString())).thenReturn(expectedContent);
+        when(mockModel.chat(anyString())).thenReturn(expectedContent);
 
         GapConcept gap = GapConcept.definition(
                 "Present Value",
@@ -48,7 +48,7 @@ class StubWriterAgentTest {
         String result = agent.generateStub(gap, "Investing Basics", "general readers");
 
         assertNotNull(result);
-        verify(mockModel).generate(anyString());
+        verify(mockModel).chat(anyString());
         assertTrue(result.contains("Present Value"));
     }
 
@@ -59,7 +59,7 @@ class StubWriterAgentTest {
         String result = agent.generateStub(gap, "Investing Basics", "general readers");
 
         assertNotNull(result);
-        verify(mockModel, never()).generate(anyString());
+        verify(mockModel, never()).chat(anyString());
         // Uses native JSPWiki ALIAS directive for automatic redirect
         assertTrue(result.contains("[{ALIAS CompoundInterest}]"));
     }
@@ -84,7 +84,7 @@ class StubWriterAgentTest {
 
     @Test
     void generateDefinitionPage_includesContextInPrompt() {
-        when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+        when(mockModel.chat(anyString())).thenAnswer(invocation -> {
             String prompt = invocation.getArgument(0);
             // Verify prompt contains the context
             assertTrue(prompt.contains("Finance Wiki"));
@@ -101,12 +101,12 @@ class StubWriterAgentTest {
 
         agent.generateDefinitionPage(gap, "Finance Wiki", "financial professionals");
 
-        verify(mockModel).generate(anyString());
+        verify(mockModel).chat(anyString());
     }
 
     @Test
     void generateDefinitionPage_llmFailure_returnsFallback() {
-        when(mockModel.generate(anyString())).thenThrow(new RuntimeException("API error"));
+        when(mockModel.chat(anyString())).thenThrow(new RuntimeException("API error"));
 
         GapConcept gap = GapConcept.definition(
                 "Test Term",
@@ -220,7 +220,7 @@ class StubWriterAgentTest {
 
     @Test
     void generateStubs_batchGeneration() {
-        when(mockModel.generate(anyString())).thenReturn("Generated content");
+        when(mockModel.chat(anyString())).thenReturn("Generated content");
 
         List<GapConcept> gaps = List.of(
                 GapConcept.of("Term1", GapType.DEFINITION),
@@ -238,7 +238,7 @@ class StubWriterAgentTest {
 
     @Test
     void generateStubs_handlesIndividualFailures() {
-        when(mockModel.generate(anyString()))
+        when(mockModel.chat(anyString()))
                 .thenReturn("Success")
                 .thenThrow(new RuntimeException("API error"))
                 .thenReturn("Success");

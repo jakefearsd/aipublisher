@@ -16,7 +16,9 @@ import com.jakefear.aipublisher.gap.StubGenerationService;
 import com.jakefear.aipublisher.pipeline.PipelineResult;
 import com.jakefear.aipublisher.pipeline.PublishingPipeline;
 import com.jakefear.aipublisher.util.PageNameUtils;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -77,6 +79,11 @@ import java.util.concurrent.Callable;
                 "  --ollama.base-url=<url>         Ollama server URL (default: http://localhost:11434)",
                 "  --ollama.model=<model>          Ollama model name (default: qwen3:14b)",
                 "  --ollama.timeout=<duration>     Request timeout, ISO-8601 (default: PT5M)",
+                "  --ollama.num-predict=<n>        Max tokens to generate (default: 4096)",
+                "  --ollama.num-ctx=<n>            Context window size (default: 8192)",
+                "  --ollama.repeat-penalty=<n>     Repetition penalty 1.0-2.0 (default: 1.1)",
+                "  --ollama.think=<bool>           Enable chain-of-thought thinking mode (default: true)",
+                "  --ollama.return-thinking=<bool> Return thinking content in response (default: true)",
                 "  --anthropic.model=<model>       Anthropic model (default: claude-sonnet-4-20250514)",
                 "",
                 "Pipeline Options (Spring Boot properties):",
@@ -129,12 +136,14 @@ import java.util.concurrent.Callable;
 )
 public class AiPublisherCommand implements Callable<Integer> {
 
+    private static final Logger log = LoggerFactory.getLogger(AiPublisherCommand.class);
+
     private Supplier<PublishingPipeline> pipelineSupplier;
     private Supplier<ApprovalService> approvalServiceSupplier;
     private Supplier<ContentTypeSelector> contentTypeSelectorSupplier;
     private Supplier<TopicUniverseRepository> universeRepositorySupplier;
     private Supplier<OutputProperties> outputPropertiesSupplier;
-    private Supplier<ChatLanguageModel> summaryModelSupplier;
+    private Supplier<ChatModel> summaryModelSupplier;
     private Supplier<StubGenerationService> stubGenerationServiceSupplier;
 
     @Option(names = {"-t", "--topic"},
@@ -282,7 +291,7 @@ public class AiPublisherCommand implements Callable<Integer> {
      * Uses the writer model for generating summaries.
      */
     @org.springframework.beans.factory.annotation.Autowired
-    public void setSummaryModelProvider(@Qualifier("writerChatModel") ObjectProvider<ChatLanguageModel> summaryModelProvider) {
+    public void setSummaryModelProvider(@Qualifier("writerChatModel") ObjectProvider<ChatModel> summaryModelProvider) {
         this.summaryModelSupplier = summaryModelProvider::getObject;
     }
 
@@ -311,8 +320,85 @@ public class AiPublisherCommand implements Callable<Integer> {
         this.outputWriter = writer;
     }
 
+    /**
+     * Build a string representation of the command line parameters for logging.
+     * Includes all parameters with their current values (including defaults).
+     */
+    private String buildCommandLineString() {
+        StringBuilder cmd = new StringBuilder("aipublisher");
+
+        // Core options (always show, mark defaults)
+        if (topic != null && !topic.isBlank()) {
+            cmd.append(" -t \"").append(topic).append("\"");
+        }
+        cmd.append(" --type ").append(contentTypeStr != null ? contentTypeStr : "(auto)");
+        cmd.append(" -a \"").append(audience != null ? audience : "general readers").append("\"");
+        cmd.append(" -w ").append(wordCount);
+        cmd.append(" -o \"").append(outputDirectory != null ? outputDirectory : "./output").append("\"");
+
+        // Optional content options
+        if (requiredSections != null && !requiredSections.isEmpty()) {
+            cmd.append(" --sections ").append(String.join(",", requiredSections));
+        }
+        if (relatedPages != null && !relatedPages.isEmpty()) {
+            cmd.append(" --related ").append(String.join(",", relatedPages));
+        }
+        if (domainContext != null && !domainContext.isBlank()) {
+            cmd.append(" --context \"").append(domainContext).append("\"");
+        }
+        if (specificGoal != null && !specificGoal.isBlank()) {
+            cmd.append(" --goal \"").append(specificGoal).append("\"");
+        }
+
+        // Mode flags
+        if (autoApprove) {
+            cmd.append(" --auto-approve");
+        }
+        if (forceInteractive) {
+            cmd.append(" --interactive");
+        }
+        if (universeId != null && !universeId.isBlank()) {
+            cmd.append(" -u ").append(universeId);
+        }
+        if (generateStubs) {
+            cmd.append(" --generate-stubs");
+        }
+        if (stubsOnly) {
+            cmd.append(" --stubs-only");
+        }
+        if (analyzeGaps) {
+            cmd.append(" --analyze-gaps");
+        }
+        if (verbose) {
+            cmd.append(" --verbose");
+        }
+        if (quiet) {
+            cmd.append(" --quiet");
+        }
+
+        // API key (masked for security)
+        if (apiKey != null && !apiKey.isBlank()) {
+            cmd.append(" -k ***");
+        }
+        if (keyFile != null) {
+            cmd.append(" --key-file ").append(keyFile);
+        }
+
+        // Spring Boot properties (unmatched options)
+        if (unmatchedOptions != null && !unmatchedOptions.isEmpty()) {
+            for (String opt : unmatchedOptions) {
+                cmd.append(" ").append(opt);
+            }
+        }
+
+        return cmd.toString();
+    }
+
     @Override
     public Integer call() {
+        // Log the full command line at the start
+        log.info("Command line: {}", buildCommandLineString());
+
         PrintWriter out = outputWriter != null ? outputWriter : new PrintWriter(System.out, true);
         BufferedReader in = inputReader != null ? inputReader : new BufferedReader(new InputStreamReader(System.in));
 
@@ -938,8 +1024,8 @@ public class AiPublisherCommand implements Callable<Integer> {
             // Generate summary using LLM
             String generatedSummary;
             try {
-                ChatLanguageModel model = summaryModelSupplier.get();
-                generatedSummary = model.generate(prompt);
+                ChatModel model = summaryModelSupplier.get();
+                generatedSummary = model.chat(prompt);
             } catch (Exception e) {
                 out.printf("Warning: LLM summary generation failed, using fallback: %s%n", e.getMessage());
                 generatedSummary = buildFallbackSummary(universe, successfulTopics);

@@ -472,4 +472,166 @@ class WikiSyntaxValidatorTest {
             assertEquals(1, issue.count());
         }
     }
+
+    @Nested
+    @DisplayName("removeDuplicateSections()")
+    class RemoveDuplicateSections {
+
+        @Test
+        @DisplayName("Returns null for null input")
+        void returnsNullForNull() {
+            assertNull(WikiSyntaxValidator.removeDuplicateSections(null));
+        }
+
+        @Test
+        @DisplayName("Returns empty string for empty input")
+        void returnsEmptyForEmpty() {
+            assertEquals("", WikiSyntaxValidator.removeDuplicateSections(""));
+        }
+
+        @Test
+        @DisplayName("Preserves content without duplicate sections")
+        void preservesContentWithoutDuplicates() {
+            String content = """
+                    !!! Main Title
+
+                    Some content here.
+
+                    !! See Also
+
+                    * [RelatedTopic]
+                    """;
+
+            String result = WikiSyntaxValidator.removeDuplicateSections(content);
+
+            assertEquals(content, result);
+        }
+
+        @Test
+        @DisplayName("Removes duplicate See Also sections")
+        void removesDuplicateSeeAlsoSections() {
+            String content = """
+                    !!! Main Title
+
+                    Some content here.
+
+                    !! See Also
+
+                    * [RelatedTopic]
+
+                    !! See Also
+
+                    * [RelatedTopic]
+
+                    !! See Also
+
+                    * [RelatedTopic]
+                    """;
+
+            String result = WikiSyntaxValidator.removeDuplicateSections(content);
+
+            // Count occurrences of "!! See Also"
+            int count = countOccurrences(result, "!! See Also");
+            assertEquals(1, count, "Should have exactly one See Also section");
+        }
+
+        @Test
+        @DisplayName("Removes duplicate Related Topics sections")
+        void removesDuplicateRelatedTopicsSections() {
+            String content = """
+                    !!! Main Title
+
+                    !! Related Topics
+
+                    * [Topic1]
+
+                    !! Related Topics
+
+                    * [Topic2]
+                    """;
+
+            String result = WikiSyntaxValidator.removeDuplicateSections(content);
+
+            int count = countOccurrences(result, "!! Related Topics");
+            assertEquals(1, count, "Should have exactly one Related Topics section");
+        }
+
+        @Test
+        @DisplayName("Handles mixed duplicate sections")
+        void handlesMixedDuplicateSections() {
+            String content = """
+                    !!! Main Title
+
+                    !! See Also
+
+                    * [Topic1]
+
+                    !! Related Topics
+
+                    * [Topic2]
+
+                    !! See Also
+
+                    * [Topic1]
+
+                    !! Related Topics
+
+                    * [Topic2]
+                    """;
+
+            String result = WikiSyntaxValidator.removeDuplicateSections(content);
+
+            assertEquals(1, countOccurrences(result, "!! See Also"));
+            assertEquals(1, countOccurrences(result, "!! Related Topics"));
+        }
+
+        @Test
+        @DisplayName("Preserves first occurrence content")
+        void preservesFirstOccurrenceContent() {
+            String content = """
+                    !! See Also
+
+                    __Broader Topics__
+                    * [Containerization]
+
+                    !! See Also
+
+                    __Broader Topics__
+                    * [Containerization]
+                    """;
+
+            String result = WikiSyntaxValidator.removeDuplicateSections(content);
+
+            assertTrue(result.contains("__Broader Topics__"));
+            assertTrue(result.contains("[Containerization]"));
+            assertEquals(1, countOccurrences(result, "!! See Also"));
+        }
+
+        @Test
+        @DisplayName("Handles many duplicate sections (like LLM repetition bug)")
+        void handlesManyDuplicateSections() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("!!! Main Title\n\nContent here.\n\n");
+
+            // Simulate LLM repetition bug with 20+ duplicates
+            for (int i = 0; i < 25; i++) {
+                sb.append("!! See Also\n\n__Broader Topics__\n* [Topic]\n\n");
+            }
+
+            String result = WikiSyntaxValidator.removeDuplicateSections(sb.toString());
+
+            assertEquals(1, countOccurrences(result, "!! See Also"));
+            assertTrue(result.length() < sb.length() / 2, "Result should be significantly shorter");
+        }
+
+        private int countOccurrences(String text, String substring) {
+            int count = 0;
+            int index = 0;
+            while ((index = text.indexOf(substring, index)) != -1) {
+                count++;
+                index += substring.length();
+            }
+            return count;
+        }
+    }
 }

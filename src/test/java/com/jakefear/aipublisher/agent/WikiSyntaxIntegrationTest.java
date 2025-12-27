@@ -4,7 +4,7 @@ import com.jakefear.aipublisher.EnabledIfLlmAvailable;
 import com.jakefear.aipublisher.IntegrationTestHelper;
 import com.jakefear.aipublisher.document.*;
 import com.jakefear.aipublisher.util.WikiSyntaxValidator;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.junit.jupiter.api.*;
 
 import java.util.List;
@@ -24,14 +24,14 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * Environment:
  * - OLLAMA_BASE_URL: Use local Ollama (e.g., http://localhost:11434)
- * - OLLAMA_MODEL: Model to test (e.g., qwen2.5:14b)
+ * - OLLAMA_MODEL: Model to test (e.g., qwen3:14b)
  */
 @Tag("integration")
 @EnabledIfLlmAvailable
 @DisplayName("Wiki Syntax Integration Tests")
 class WikiSyntaxIntegrationTest {
 
-    private ChatLanguageModel model;
+    private ChatModel model;
 
     @BeforeEach
     void setUp() {

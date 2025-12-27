@@ -3,7 +3,7 @@ package com.jakefear.aipublisher.agent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakefear.aipublisher.document.*;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -31,12 +31,12 @@ public class CriticAgent extends BaseAgent {
      * Set the chat model (called by Spring via @Autowired).
      */
     @org.springframework.beans.factory.annotation.Autowired
-    public void setChatModel(@Qualifier("criticChatModel") ChatLanguageModel model) {
+    public void setChatModel(@Qualifier("criticChatModel") ChatModel model) {
         this.model = model;
     }
 
     // Constructor for testing
-    public CriticAgent(ChatLanguageModel model, String systemPrompt) {
+    public CriticAgent(ChatModel model, String systemPrompt) {
         super(model, systemPrompt);
     }
 

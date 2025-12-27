@@ -1,7 +1,7 @@
 package com.jakefear.aipublisher.agent;
 
 import com.jakefear.aipublisher.document.*;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class EditorAgentTest {
 
     @Mock
-    private ChatLanguageModel mockModel;
+    private ChatModel mockModel;
 
     private EditorAgent agent;
     private PublishingDocument document;
@@ -148,7 +148,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -176,7 +176,7 @@ class EditorAgentTest {
                     ```
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -194,7 +194,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             PublishingDocument result = agent.process(document);
 
@@ -214,7 +214,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FinalArticle article = agent.process(document).getFinalArticle();
 
@@ -231,7 +231,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             assertThrows(AgentException.class, () -> agent.process(document));
         }
@@ -239,7 +239,7 @@ class EditorAgentTest {
         @Test
         @DisplayName("Throws on invalid JSON")
         void throwsOnInvalidJson() {
-            when(mockModel.generate(anyString())).thenReturn("Not JSON");
+            when(mockModel.chat(anyString())).thenReturn("Not JSON");
 
             assertThrows(AgentException.class, () -> agent.process(document));
         }
@@ -259,7 +259,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FinalArticle article = agent.process(document).getFinalArticle();
             assertEquals(0.95, article.qualityScore(), 0.001);
@@ -276,7 +276,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FinalArticle article = agent.process(document).getFinalArticle();
             assertEquals(0.65, article.qualityScore(), 0.001);
@@ -292,7 +292,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FinalArticle article = agent.process(document).getFinalArticle();
             assertEquals(0.8, article.qualityScore(), 0.001);
@@ -313,7 +313,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             agent.process(document);
 
@@ -336,7 +336,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             agent.process(document);
 
@@ -353,7 +353,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             agent.process(document);
 
@@ -375,7 +375,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("Apache Kafka is a distributed streaming platform"));
                 return jsonResponse;
@@ -394,7 +394,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("Overall Confidence: HIGH"));
                 assertTrue(prompt.contains("Recommendation: APPROVE"));
@@ -455,7 +455,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("Kafka is the fastest"));
                 assertTrue(prompt.contains("No evidence"));
@@ -479,7 +479,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("EXISTING PAGES"));
                 assertTrue(prompt.contains("EventStreaming"));
@@ -502,7 +502,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertFalse(prompt.contains("EXISTING PAGES"));
                 return jsonResponse;
@@ -531,7 +531,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FinalArticle article = agent.process(document).getFinalArticle();
 
@@ -549,7 +549,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FinalArticle article = agent.process(document).getFinalArticle();
 
@@ -572,7 +572,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FinalArticle article = agent.process(document).getFinalArticle();
 
@@ -593,7 +593,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             FinalArticle article = agent.process(document).getFinalArticle();
 
@@ -615,7 +615,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             int initialContributions = document.getContributions().size();
 
@@ -680,7 +680,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             // Should not throw NullPointerException
             PublishingDocument result = agent.process(documentWithoutFactCheck);
@@ -701,7 +701,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 assertTrue(prompt.contains("Fact-checking was skipped") ||
                            prompt.contains("skipped"),
@@ -724,7 +724,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenAnswer(invocation -> {
+            when(mockModel.chat(anyString())).thenAnswer(invocation -> {
                 String prompt = invocation.getArgument(0);
                 // Should not contain confidence level from a fact-check report
                 assertFalse(prompt.contains("Overall Confidence: HIGH") ||
@@ -749,7 +749,7 @@ class EditorAgentTest {
                     }
                     """;
 
-            when(mockModel.generate(anyString())).thenReturn(jsonResponse);
+            when(mockModel.chat(anyString())).thenReturn(jsonResponse);
 
             agent.process(documentWithoutFactCheck);
 

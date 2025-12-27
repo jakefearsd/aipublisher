@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jakefear.aipublisher.config.OutputProperties;
 import com.jakefear.aipublisher.util.PageNameUtils;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -56,20 +56,20 @@ public class GapDetectionService {
     );
 
     private final OutputProperties outputProperties;
-    private final ChatLanguageModel categorizationModel;
+    private final ChatModel categorizationModel;
     private final ObjectMapper objectMapper;
 
     @org.springframework.beans.factory.annotation.Autowired
     public GapDetectionService(
             OutputProperties outputProperties,
-            @Qualifier("researchChatModel") ChatLanguageModel categorizationModel) {
+            @Qualifier("researchChatModel") ChatModel categorizationModel) {
         this.outputProperties = outputProperties;
         this.categorizationModel = categorizationModel;
         this.objectMapper = new ObjectMapper();
     }
 
     // Constructor for testing
-    public GapDetectionService(OutputProperties outputProperties, ChatLanguageModel categorizationModel, ObjectMapper objectMapper) {
+    public GapDetectionService(OutputProperties outputProperties, ChatModel categorizationModel, ObjectMapper objectMapper) {
         this.outputProperties = outputProperties;
         this.categorizationModel = categorizationModel;
         this.objectMapper = objectMapper;
@@ -378,7 +378,7 @@ public class GapDetectionService {
         String prompt = buildCategorizationPrompt(gaps, universeName);
 
         try {
-            String response = categorizationModel.generate(prompt);
+            String response = categorizationModel.chat(prompt);
             return parseCategorizationResponse(response, gaps);
         } catch (Exception e) {
             log.warn("Failed to categorize gaps with LLM, using defaults: {}", e.getMessage());

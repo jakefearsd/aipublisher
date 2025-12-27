@@ -1,7 +1,7 @@
 package com.jakefear.aipublisher.config;
 
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +38,9 @@ public class LlmConfig {
     @Value("${anthropic.max-tokens:4096}")
     private int anthropicMaxTokens;
 
+    @Value("${anthropic.timeout:PT5M}")
+    private Duration anthropicTimeout;
+
     // Ollama settings
     @Value("${ollama.base-url:http://localhost:11434}")
     private String ollamaBaseUrl;
@@ -50,6 +53,19 @@ public class LlmConfig {
 
     @Value("${ollama.num-predict:4096}")
     private int ollamaNumPredict;
+
+    @Value("${ollama.num-ctx:8192}")
+    private int ollamaNumCtx;
+
+    @Value("${ollama.repeat-penalty:1.1}")
+    private double ollamaRepeatPenalty;
+
+    // Ollama thinking mode settings (for models that support chain-of-thought reasoning)
+    @Value("${ollama.think:true}")
+    private boolean ollamaThink;
+
+    @Value("${ollama.return-thinking:true}")
+    private boolean ollamaReturnThinking;
 
     // Temperature settings (shared across providers)
     @Value("${llm.temperature.research:0.3}")
@@ -72,7 +88,7 @@ public class LlmConfig {
      */
     @Bean
     @Primary
-    public ChatLanguageModel chatLanguageModel() {
+    public ChatModel chatModel() {
         return buildModel(0.7);
     }
 
@@ -80,7 +96,7 @@ public class LlmConfig {
      * Chat model configured for research tasks (lower temperature for factual accuracy).
      */
     @Bean
-    public ChatLanguageModel researchChatModel() {
+    public ChatModel researchChatModel() {
         return buildModel(researchTemperature);
     }
 
@@ -88,7 +104,7 @@ public class LlmConfig {
      * Chat model configured for writing tasks (higher temperature for creativity).
      */
     @Bean
-    public ChatLanguageModel writerChatModel() {
+    public ChatModel writerChatModel() {
         return buildModel(writerTemperature);
     }
 
@@ -96,7 +112,7 @@ public class LlmConfig {
      * Chat model configured for fact-checking (very low temperature for precision).
      */
     @Bean
-    public ChatLanguageModel factCheckerChatModel() {
+    public ChatModel factCheckerChatModel() {
         return buildModel(factCheckerTemperature);
     }
 
@@ -104,7 +120,7 @@ public class LlmConfig {
      * Chat model configured for editing tasks (moderate temperature).
      */
     @Bean
-    public ChatLanguageModel editorChatModel() {
+    public ChatModel editorChatModel() {
         return buildModel(editorTemperature);
     }
 
@@ -112,11 +128,11 @@ public class LlmConfig {
      * Chat model configured for critic tasks (lower temperature for consistent evaluation).
      */
     @Bean
-    public ChatLanguageModel criticChatModel() {
+    public ChatModel criticChatModel() {
         return buildModel(criticTemperature);
     }
 
-    private ChatLanguageModel buildModel(double temperature) {
+    private ChatModel buildModel(double temperature) {
         if ("ollama".equalsIgnoreCase(provider)) {
             return buildOllamaModel(temperature);
         } else {
@@ -124,26 +140,31 @@ public class LlmConfig {
         }
     }
 
-    private ChatLanguageModel buildAnthropicModel(double temperature) {
+    private ChatModel buildAnthropicModel(double temperature) {
         String apiKey = resolveAnthropicApiKey();
-        log.debug("Building Anthropic model: {} with temperature {}", anthropicModel, temperature);
+        log.debug("Building Anthropic model: {} with temperature {}, timeout {}", anthropicModel, temperature, anthropicTimeout);
         return AnthropicChatModel.builder()
                 .apiKey(apiKey)
                 .modelName(anthropicModel)
                 .maxTokens(anthropicMaxTokens)
                 .temperature(temperature)
+                .timeout(anthropicTimeout)
                 .build();
     }
 
-    private ChatLanguageModel buildOllamaModel(double temperature) {
-        log.info("Building Ollama model: {} at {} with temperature {}, numPredict {}",
-                ollamaModel, ollamaBaseUrl, temperature, ollamaNumPredict);
+    private ChatModel buildOllamaModel(double temperature) {
+        log.info("Building Ollama model: {} at {} with temperature {}, numPredict {}, numCtx {}, repeatPenalty {}, think={}, returnThinking={}",
+                ollamaModel, ollamaBaseUrl, temperature, ollamaNumPredict, ollamaNumCtx, ollamaRepeatPenalty, ollamaThink, ollamaReturnThinking);
         return OllamaChatModel.builder()
                 .baseUrl(ollamaBaseUrl)
                 .modelName(ollamaModel)
                 .temperature(temperature)
                 .numPredict(ollamaNumPredict)
+                .numCtx(ollamaNumCtx)
+                .repeatPenalty(ollamaRepeatPenalty)
                 .timeout(ollamaTimeout)
+                .think(ollamaThink)
+                .returnThinking(ollamaReturnThinking)
                 .build();
     }
 
@@ -178,5 +199,13 @@ public class LlmConfig {
 
     public boolean isAnthropic() {
         return "anthropic".equalsIgnoreCase(provider);
+    }
+
+    public boolean isThinkingEnabled() {
+        return isOllama() && ollamaThink;
+    }
+
+    public boolean isReturnThinkingEnabled() {
+        return isOllama() && ollamaReturnThinking;
     }
 }

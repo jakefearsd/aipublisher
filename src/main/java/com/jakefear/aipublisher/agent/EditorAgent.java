@@ -8,7 +8,7 @@ import com.jakefear.aipublisher.linking.LinkEvaluator;
 import com.jakefear.aipublisher.linking.WikiLinkContext;
 import com.jakefear.aipublisher.seealso.SeeAlsoGenerator;
 import com.jakefear.aipublisher.seealso.SeeAlsoSection;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -48,7 +48,7 @@ public class EditorAgent extends BaseAgent {
      * Set the chat model (called by Spring via @Autowired).
      */
     @org.springframework.beans.factory.annotation.Autowired
-    public void setChatModel(@Qualifier("editorChatModel") ChatLanguageModel model) {
+    public void setChatModel(@Qualifier("editorChatModel") ChatModel model) {
         this.model = model;
     }
 
@@ -69,12 +69,12 @@ public class EditorAgent extends BaseAgent {
     }
 
     // Constructor for testing
-    public EditorAgent(ChatLanguageModel model, String systemPrompt) {
+    public EditorAgent(ChatModel model, String systemPrompt) {
         super(model, systemPrompt);
     }
 
     // Constructor for testing with LinkEvaluator
-    public EditorAgent(ChatLanguageModel model, String systemPrompt, LinkEvaluator linkEvaluator) {
+    public EditorAgent(ChatModel model, String systemPrompt, LinkEvaluator linkEvaluator) {
         super(model, systemPrompt);
         this.linkEvaluator = linkEvaluator;
     }

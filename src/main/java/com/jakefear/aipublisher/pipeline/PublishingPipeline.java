@@ -706,7 +706,7 @@ public class PublishingPipeline {
 
     /**
      * Try to fix syntax issues automatically without LLM intervention.
-     * This runs WikiSyntaxValidator.autoFix and LanguageValidator.removeForeignText.
+     * This runs WikiSyntaxValidator.autoFix, removeDuplicateSections, and LanguageValidator.removeForeignText.
      *
      * @param document The document to fix
      * @return true if changes were made, false if no changes needed
@@ -724,6 +724,13 @@ public class PublishingPipeline {
         if (WikiSyntaxValidator.containsMarkdown(content)) {
             log.info("Auto-fixing Markdown syntax without LLM revision");
             content = WikiSyntaxValidator.autoFix(content);
+        }
+
+        // Remove duplicate sections (LLM repetition bug)
+        String beforeDupeCheck = content;
+        content = WikiSyntaxValidator.removeDuplicateSections(content);
+        if (!content.equals(beforeDupeCheck)) {
+            log.info("Auto-removed duplicate sections from content");
         }
 
         // Check for and remove foreign characters
@@ -753,6 +760,7 @@ public class PublishingPipeline {
     /**
      * Validate wiki content for Markdown syntax and auto-fix if found.
      * This provides a safety net to catch any Markdown that slips through from the LLM.
+     * Also removes duplicate sections caused by LLM repetition bugs.
      *
      * @param article The article to validate
      * @param pageName The page name for logging context
@@ -764,30 +772,44 @@ public class PublishingPipeline {
         }
 
         String content = article.wikiContent();
-        WikiSyntaxValidator.ValidationResult validation = WikiSyntaxValidator.validate(content);
+        String originalContent = content;
+        boolean hasChanges = false;
 
-        if (validation.valid()) {
-            return article;
+        // Check for Markdown syntax issues
+        WikiSyntaxValidator.ValidationResult validation = WikiSyntaxValidator.validate(content);
+        if (!validation.valid()) {
+            // Log the issues found
+            log.warn("Markdown syntax detected in {} - auto-fixing: {}", pageName, validation.getSummary());
+
+            // Auto-fix the content
+            content = WikiSyntaxValidator.autoFix(content);
+            hasChanges = true;
+
+            // Verify the fix worked
+            WikiSyntaxValidator.ValidationResult afterFix = WikiSyntaxValidator.validate(content);
+            if (!afterFix.valid()) {
+                log.warn("Some Markdown patterns could not be auto-fixed in {}: {}",
+                        pageName, afterFix.getSummary());
+            }
         }
 
-        // Log the issues found
-        log.warn("Markdown syntax detected in {} - auto-fixing: {}", pageName, validation.getSummary());
+        // Remove duplicate sections (LLM repetition bug)
+        String beforeDupeCheck = content;
+        content = WikiSyntaxValidator.removeDuplicateSections(content);
+        if (!content.equals(beforeDupeCheck)) {
+            log.info("Auto-removed duplicate sections from {}", pageName);
+            hasChanges = true;
+        }
 
-        // Auto-fix the content
-        String fixedContent = WikiSyntaxValidator.autoFix(content);
-
-        // Verify the fix worked
-        WikiSyntaxValidator.ValidationResult afterFix = WikiSyntaxValidator.validate(fixedContent);
-        if (!afterFix.valid()) {
-            log.warn("Some Markdown patterns could not be auto-fixed in {}: {}",
-                    pageName, afterFix.getSummary());
+        if (!hasChanges) {
+            return article;
         }
 
         // Return a new FinalArticle with the fixed content
         return new FinalArticle(
-                fixedContent,
+                content,
                 article.metadata(),
-                article.editSummary() + " (auto-fixed Markdown syntax)",
+                article.editSummary() + " (auto-fixed syntax)",
                 article.qualityScore(),
                 article.addedLinks()
         );

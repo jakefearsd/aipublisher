@@ -1,7 +1,9 @@
 package com.jakefear.aipublisher.util;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,6 +37,9 @@ public class WikiSyntaxValidator {
     // Chain-of-thought tags that leak from LLM responses
     private static final Pattern THINK_TAGS = Pattern.compile("<think>.*?</think>",
             Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+
+    // Pattern for JSPWiki section headings (!! or !!! followed by text)
+    private static final Pattern SECTION_HEADING = Pattern.compile("^(!!+)\\s+(.+?)\\s*$", Pattern.MULTILINE);
 
     /**
      * Result of validating wiki content.
@@ -228,6 +233,79 @@ public class WikiSyntaxValidator {
         result = THINK_TAGS.matcher(result).replaceAll("");
 
         return result;
+    }
+
+    /**
+     * Remove duplicate sections from wiki content.
+     * LLMs sometimes enter repetitive loops and generate the same section multiple times.
+     * This method keeps only the first occurrence of each section heading.
+     *
+     * @param content The wiki content potentially containing duplicate sections
+     * @return Content with duplicate sections removed
+     */
+    public static String removeDuplicateSections(String content) {
+        if (content == null) {
+            return null;
+        }
+        if (content.isEmpty()) {
+            return content;
+        }
+
+        // Split content into lines for processing (don't use -1 to avoid empty trailing element)
+        String[] lines = content.split("\n");
+        StringBuilder result = new StringBuilder();
+        Set<String> seenSections = new HashSet<>();
+        boolean skipping = false;
+        String currentSectionLevel = null;
+
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            Matcher matcher = SECTION_HEADING.matcher(line);
+
+            if (matcher.matches()) {
+                String level = matcher.group(1);  // !! or !!!
+                String heading = matcher.group(2).trim();  // Section name
+                String sectionKey = level + " " + heading;
+
+                if (seenSections.contains(sectionKey)) {
+                    // This is a duplicate section - start skipping
+                    skipping = true;
+                    currentSectionLevel = level;
+                } else {
+                    // First occurrence - keep it
+                    seenSections.add(sectionKey);
+                    skipping = false;
+                    currentSectionLevel = null;
+                    result.append(line).append("\n");
+                }
+            } else if (skipping) {
+                // Check if we've hit a new section at the same or higher level
+                Matcher nextSectionMatcher = SECTION_HEADING.matcher(line);
+                if (nextSectionMatcher.matches()) {
+                    String nextLevel = nextSectionMatcher.group(1);
+                    // If next section is at same or higher level (fewer !'s means higher),
+                    // stop skipping and process this line again
+                    if (nextLevel.length() <= currentSectionLevel.length()) {
+                        skipping = false;
+                        currentSectionLevel = null;
+                        // Re-process this line
+                        i--;
+                    }
+                    // Otherwise, continue skipping (subsection of duplicate)
+                }
+                // Skip this line (part of duplicate section)
+            } else {
+                result.append(line).append("\n");
+            }
+        }
+
+        // Preserve original trailing newline behavior
+        String resultStr = result.toString();
+        if (!content.endsWith("\n") && resultStr.endsWith("\n")) {
+            resultStr = resultStr.substring(0, resultStr.length() - 1);
+        }
+
+        return resultStr;
     }
 
     private static void checkPattern(String content, Pattern pattern, String type,

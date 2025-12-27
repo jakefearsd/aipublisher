@@ -2,7 +2,7 @@ package com.jakefear.aipublisher.gap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jakefear.aipublisher.config.OutputProperties;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -28,7 +28,7 @@ class GapDetectionServiceTest {
     Path tempDir;
 
     private OutputProperties outputProperties;
-    private ChatLanguageModel mockModel;
+    private ChatModel mockModel;
     private ObjectMapper objectMapper;
     private GapDetectionService service;
 
@@ -38,7 +38,7 @@ class GapDetectionServiceTest {
         when(outputProperties.getDirectoryPath()).thenReturn(tempDir);
         when(outputProperties.getFileExtension()).thenReturn(".txt");
 
-        mockModel = mock(ChatLanguageModel.class);
+        mockModel = mock(ChatModel.class);
         objectMapper = new ObjectMapper();
 
         service = new GapDetectionService(outputProperties, mockModel, objectMapper);
@@ -201,7 +201,7 @@ class GapDetectionServiceTest {
                 ]
                 """;
 
-        when(mockModel.generate(anyString())).thenReturn(llmResponse);
+        when(mockModel.chat(anyString())).thenReturn(llmResponse);
 
         List<GapConcept> originalGaps = List.of(
                 GapConcept.of("Present Value", GapType.DEFINITION),
